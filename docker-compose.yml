@@ -1,0 +1,33 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    command: ["/app/entrypoint.sh"]
+
+    expose:
+      - "8001"
+
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      PORT: ${PORT:-8001}
+
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_ENCRYPTION_KEY: ${DJANGO_ENCRYPTION_KEY}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
+
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-jhfre.vihub.site}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-https://jhfre.vihub.site}
+
+      DJANGO_SESSION_COOKIE_SAMESITE: ${DJANGO_SESSION_COOKIE_SAMESITE:-None}
+      DJANGO_SESSION_COOKIE_SECURE: ${DJANGO_SESSION_COOKIE_SECURE:-true}
+
+      DJANGO_SECURE_SSL_REDIRECT: ${DJANGO_SECURE_SSL_REDIRECT:-true}
+      DJANGO_TRUST_X_FORWARDED_PROTO: ${DJANGO_TRUST_X_FORWARDED_PROTO:-true}
+      SSO_FORCE_HTTPS: ${SSO_FORCE_HTTPS:-true}
+
+      DATABASE_URL: ${DATABASE_URL}
+      AUTO_MIGRATE: ${AUTO_MIGRATE:-true}
+
+    restart: unless-stopped
