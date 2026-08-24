@@ -1,0 +1,583 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{ formname|default:"Form" }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        :root {
+            --primary-color: {{ custom_colors.primary_color|default:"#1e40af" }};
+            --secondary-color: {{ custom_colors.secondary_color|default:"#64748b" }};
+            --background-color: {{ custom_colors.background_color|default:"#f8fafc" }};
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background-color);
+            color: #1e293b;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .corporate-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .corporate-header {
+            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        
+        .corporate-header .logo {
+            max-height: 80px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .corporate-header h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .corporate-header .subtitle {
+            font-size: 1.125rem;
+            opacity: 0.9;
+        }
+        
+        .form-content {
+            padding: 3rem 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 2rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+        
+        .form-control::placeholder {
+            color: #9ca3af;
+        }
+        
+        .radio-group, .checkbox-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .radio-group > div, .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-submit {
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 2rem;
+        }
+        
+        .btn-submit:hover {
+            background: #1e40af;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+        
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .corporate-footer {
+            background: #f8fafc;
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .corporate-footer p {
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+        }
+        
+        .spinner-border {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .success-message {
+            color: #059669;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        
+        .error-message {
+            color: #dc2626;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .corporate-container {
+                margin: 1rem;
+                border-radius: 8px;
+            }
+            
+            .corporate-header {
+                padding: 2rem 1.5rem;
+            }
+            
+            .corporate-header h1 {
+                font-size: 1.875rem;
+            }
+            
+            .form-content {
+                padding: 2rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="corporate-container">
+        <!-- Header -->
+        <div class="corporate-header">
+            {% if custom_logo %}
+                <img src="{{ custom_logo.url }}" alt="{{ formname }}" class="logo">
+            {% endif %}
+            <h1>{{ formname|default:"Form" }}</h1>
+            {% if header_text %}
+                <p class="subtitle">{{ header_text }}</p>
+            {% elif dynamic_form.form_description %}
+                <p class="subtitle">{{ dynamic_form.form_description }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Form Content -->
+        <div class="form-content">
+            <form method="POST" id="dynamicForm" enctype="multipart/form-data" onsubmit="submitForm(event)">
+                {% csrf_token %}
+                <div id="formFields"></div> <!-- Form fields will be generated here by JavaScript -->
+                <button type="submit" id="submitButton" class="btn-submit">
+                    <span class="button-text">Submit Form</span>
+                    <span class="spinner-border ms-2" id="loadingSpinner" style="display: none;"></span>
+                </button>
+            </form>
+            
+            <div id="errorMessage" class="error-message" style="display: none;">
+                Failed to submit form. Something went wrong!
+            </div>
+            
+            <!-- Success Modal -->
+            <div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title" id="successModalLabel">
+                                <i class="fas fa-check-circle me-2"></i>Success!
+                            </h5>
+                        </div>
+                        <div class="modal-body text-center">
+                            <p id="successModalMessage"></p>
+                            <div id="redirectCountdown" style="display: none;">
+                                <p class="text-muted">Redirecting in <span id="countdownTimer">3</span> seconds...</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-success" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="corporate-footer">
+            {% if footer_text %}
+                <p>{{ footer_text }}</p>
+            {% else %}
+                <p>Powered by JHF Integrator</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/plugins/global/plugins.bundle.js' %}"></script>
+    <script>
+        // Form configuration from Django backend
+        const formConfig = {{ form_config|safe }};
+        
+        // SSO user data and settings
+        const ssoUserData = {{ sso_user_data|safe }};
+        const ssoPrepopulateFields = {{ sso_prepopulate_fields|safe }};
+        const ssoDisabledFields = {{ sso_disabled_fields|safe }};
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            generateFormFields();
+        });
+
+        function generateFormFields() {
+            const formFieldsContainer = document.getElementById('formFields');
+            if (!formConfig || !Array.isArray(formConfig)) {
+                console.error('Form configuration is not available or invalid');
+                return;
+            }
+            
+            formConfig.forEach(field => {
+                const fieldGroup = document.createElement('div');
+                fieldGroup.className = 'form-group';
+                
+                const label = document.createElement('label');
+                label.className = 'form-label';
+                label.textContent = field.label;
+                fieldGroup.appendChild(label);
+                
+                let inputElement;
+                
+                switch(field.type) {
+                    case 'text':
+                    case 'email':
+                    case 'tel':
+                    case 'number':
+                        inputElement = document.createElement('input');
+                        inputElement.type = field.type;
+                        inputElement.name = field.name;
+                        inputElement.className = 'form-control';
+                        if (field.placeholder) inputElement.placeholder = field.placeholder;
+                        if (field.required) inputElement.required = true;
+                        
+                        // SSO field prepopulation
+                        if (ssoPrepopulateFields && ssoPrepopulateFields[field.name]) {
+                            const ssoAttribute = ssoPrepopulateFields[field.name];
+                            if (ssoUserData && ssoUserData[ssoAttribute]) {
+                                inputElement.value = ssoUserData[ssoAttribute];
+                            }
+                        }
+                        
+                        // SSO field disabling
+                        if (ssoDisabledFields && ssoDisabledFields.includes(field.name)) {
+                            inputElement.disabled = true;
+                            inputElement.readOnly = true;
+                            inputElement.classList.add('sso-disabled');
+                        }
+                        break;
+                        
+                    case 'currency':
+                        inputElement = document.createElement('input');
+                        inputElement.type = 'text';
+                        inputElement.name = field.name;
+                        inputElement.className = 'form-control';
+                        inputElement.setAttribute('data-currency', field.currency_symbol || '$');
+                        if (field.placeholder) inputElement.placeholder = field.placeholder;
+                        if (field.required) inputElement.required = true;
+                        
+                        // Add currency formatting
+                        inputElement.addEventListener('input', function(e) {
+                            formatCurrency(e, field.currency_symbol || '$');
+                        });
+                        break;
+                        
+                    case 'textarea':
+                        inputElement = document.createElement('textarea');
+                        inputElement.name = field.name;
+                        inputElement.className = 'form-control';
+                        inputElement.style.resize = 'vertical';
+                        inputElement.style.minHeight = '100px';
+                        if (field.placeholder) inputElement.placeholder = field.placeholder;
+                        if (field.required) inputElement.required = true;
+                        break;
+                        
+                    case 'select':
+                        inputElement = document.createElement('select');
+                        inputElement.name = field.name;
+                        inputElement.className = 'form-control';
+                        if (field.required) inputElement.required = true;
+                        
+                        // Add default option
+                        if (!field.required) {
+                            const defaultOption = document.createElement('option');
+                            defaultOption.value = '';
+                            defaultOption.textContent = '-- Select an option --';
+                            inputElement.appendChild(defaultOption);
+                        }
+                        
+                        // Use field.choices instead of field.options
+                        const selectChoices = field.choices || field.options || [];
+                        selectChoices.forEach(choice => {
+                            const optionElement = document.createElement('option');
+                            if (typeof choice === 'object' && choice.value && choice.label) {
+                                optionElement.value = choice.value;
+                                optionElement.textContent = choice.label;
+                            } else {
+                                optionElement.value = choice;
+                                optionElement.textContent = choice;
+                            }
+                            inputElement.appendChild(optionElement);
+                        });
+                        break;
+                        
+                    case 'radio':
+                        const radioContainer = document.createElement('div');
+                        radioContainer.className = 'radio-group';
+                        const radioChoices = field.choices || field.options || [];
+                        radioChoices.forEach(choice => {
+                            const radioWrapper = document.createElement('div');
+                            
+                            const radioInput = document.createElement('input');
+                            radioInput.type = 'radio';
+                            radioInput.name = field.name;
+                            const choiceValue = typeof choice === 'object' ? choice.value : choice;
+                            const choiceLabel = typeof choice === 'object' ? choice.label : choice;
+                            radioInput.value = choiceValue;
+                            radioInput.id = field.name + '_' + choiceValue;
+                            if (field.required) radioInput.required = true;
+                            
+                            const radioLabel = document.createElement('label');
+                            radioLabel.htmlFor = radioInput.id;
+                            radioLabel.textContent = choiceLabel;
+                            radioLabel.style.cursor = 'pointer';
+                                
+                            radioWrapper.appendChild(radioInput);
+                            radioWrapper.appendChild(radioLabel);
+                            radioContainer.appendChild(radioWrapper);
+                        });
+                        inputElement = radioContainer;
+                        break;
+                        
+                    case 'checkbox':
+                        inputElement = document.createElement('div');
+                        inputElement.className = 'checkbox-wrapper';
+                        
+                        const checkboxInput = document.createElement('input');
+                        checkboxInput.type = 'checkbox';
+                        checkboxInput.name = field.name;
+                        checkboxInput.id = field.name;
+                        if (field.required) checkboxInput.required = true;
+                        
+                        const checkboxLabel = document.createElement('label');
+                        checkboxLabel.htmlFor = checkboxInput.id;
+                        checkboxLabel.textContent = field.label;
+                        checkboxLabel.style.cursor = 'pointer';
+                        
+                        inputElement.appendChild(checkboxInput);
+                        inputElement.appendChild(checkboxLabel);
+                        
+                        // Remove the main label since we have it in the checkbox
+                        fieldGroup.removeChild(label);
+                        break;
+                        
+                    case 'file':
+                        inputElement = document.createElement('input');
+                        inputElement.type = 'file';
+                        inputElement.name = field.name;
+                        inputElement.className = 'form-control';
+                        if (field.required) inputElement.required = true;
+                        
+                        // Handle multiple files if specified
+                        if (field.multiple) {
+                            inputElement.multiple = true;
+                        }
+                        
+                        // Add file validation
+                        if (field.accept) {
+                            inputElement.setAttribute('accept', field.accept);
+                        }
+                        
+                        // Add file size and count validation
+                        inputElement.addEventListener('change', function(event) {
+                            const files = event.target.files;
+                            
+                            // Check file count if multiple files are allowed
+                            if (field.multiple && field.maxFileCount && files.length > field.maxFileCount) {
+                                alert(`You can only upload a maximum of ${field.maxFileCount} files.`);
+                                inputElement.value = '';
+                                return;
+                            }
+                            
+                            // Check file sizes
+                            if (field.maxFileSizeMB && field.maxFileSizeMB > 0) {
+                                const maxSizeBytes = field.maxFileSizeMB * 1024 * 1024;
+                                for (let i = 0; i < files.length; i++) {
+                                    if (files[i].size > maxSizeBytes) {
+                                        alert(`File "${files[i].name}" is too large. Max size: ${field.maxFileSizeMB}MB.`);
+                                        inputElement.value = '';
+                                        return;
+                                    }
+                                }
+                            }
+                        });
+                        break;
+                        
+                    case 'date':
+                        inputElement = document.createElement('input');
+                        inputElement.type = 'date';
+                        inputElement.name = field.name;
+                        inputElement.className = 'form-control';
+                        if (field.required) inputElement.required = true;
+                        break;
+                        
+                    default:
+                        inputElement = document.createElement('input');
+                        inputElement.type = 'text';
+                        inputElement.name = field.name;
+                        inputElement.className = 'form-control';
+                        if (field.placeholder) inputElement.placeholder = field.placeholder;
+                        if (field.required) inputElement.required = true;
+                        break;
+                }
+                
+                fieldGroup.appendChild(inputElement);
+                formFieldsContainer.appendChild(fieldGroup);
+            });
+        }
+
+        function formatCurrency(e, symbol) {
+            let value = e.target.value.replace(/[^\d.]/g, '');
+            if (value) {
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                    value = parts[0] + '.' + parts.slice(1).join('');
+                }
+                
+                const numericValue = parseFloat(value);
+                if (!isNaN(numericValue)) {
+                    const formatted = numericValue.toLocaleString('en-US', {
+                        minimumFractionDigits: parts[1] ? Math.min(parts[1].length, 2) : 0,
+                        maximumFractionDigits: 2
+                    });
+                    e.target.value = symbol + formatted;
+                }
+            }
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+            
+            const form = document.getElementById('dynamicForm');
+            const submitButton = document.getElementById('submitButton');
+            const buttonText = submitButton.querySelector('.button-text');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            
+            // Show loading state
+            submitButton.disabled = true;
+            if (buttonText) buttonText.style.display = 'none';
+            if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
+            
+            const formData = new FormData(form);
+            
+            fetch(`/submit-form/{{ form_uuid }}/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success modal with custom message
+                    const successModalMessage = document.getElementById('successModalMessage');
+                    successModalMessage.textContent = data.message || "Thank you! Your form has been submitted successfully.";
+                    
+                    // Show the modal
+                    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                    successModal.show();
+                    
+                    // Reset form
+                    form.reset();
+                    
+                    // Handle redirect if enabled (check from JSON response)
+                    if (data.enable_redirect && data.redirect_url) {
+                        const redirectCountdown = document.getElementById('redirectCountdown');
+                        const countdownTimer = document.getElementById('countdownTimer');
+                        let countdown = 3;
+                        
+                        redirectCountdown.style.display = 'block';
+                        
+                        const interval = setInterval(() => {
+                            countdown--;
+                            countdownTimer.textContent = countdown;
+                            
+                            if (countdown <= 0) {
+                                clearInterval(interval);
+                                window.location.href = data.redirect_url;
+                            }
+                        }, 1000);
+                    }
+                } else {
+                    throw new Error(data.error || 'Network response was not ok');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('errorMessage').style.display = 'block';
+            })
+            .finally(() => {
+                // Hide loading state
+                submitButton.disabled = false;
+                if (buttonText) buttonText.style.display = 'inline';
+                if (loadingSpinner) loadingSpinner.style.display = 'none';
+            });
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

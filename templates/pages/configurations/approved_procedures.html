@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card mt-5">
+  <div class="card-header"><h3 class="card-title">Approved Procedures</h3><a href="{% url 'configurations' %}#database-connections" class="btn btn-sm btn-light">Back to Configurations</a></div>
+  <div class="card-body">
+    <p class="text-muted">Creating an approval is explicit and always starts disabled. Execution remains limited to enabled READ_EXPECTED approvals.</p>
+    <form id="approval-create-form" class="row g-3 mb-8">
+      {% csrf_token %}
+      <div class="col-md-3"><label class="form-label">Connection</label><select id="approval-connection" class="form-select" required><option value="">Select connection</option>{% for connection in connections %}<option value="{{ connection.id }}">{{ connection.name }} ({{ connection.connection_type }} / {{ connection.database_name }})</option>{% endfor %}</select></div>
+      <div class="col-md-3"><label class="form-label">Schema</label><input id="approval-schema" class="form-control" value="dbo" required></div>
+      <div class="col-md-3"><label class="form-label">Procedure name</label><input id="approval-name" class="form-control" required></div>
+      <div class="col-md-2"><label class="form-label">Signature (optional)</label><input id="approval-signature" class="form-control"></div>
+      <div class="col-md-1 d-flex align-items-end"><button class="btn btn-primary w-100">Create</button></div>
+    </form>
+    <div id="approval-error" class="alert alert-danger d-none"></div>
+    <table class="table table-row-bordered"><thead><tr><th>ID</th><th>Connection</th><th>Engine</th><th>Database</th><th>Procedure</th><th>Behavior</th><th>Enabled</th><th>Approved by</th><th></th></tr></thead><tbody>
+      {% for approval in approvals %}<tr><td>{{ approval.id }}</td><td>{{ approval.connection.name }}</td><td>{{ approval.engine }}</td><td>{{ approval.database_name }}</td><td>{{ approval.schema }}.{{ approval.procedure_name }}</td><td>{{ approval.behavior }}</td><td>{{ approval.enabled|yesno:"Enabled,Disabled" }}</td><td>{% if approval.approved_by %}{{ approval.approved_by.username }}{% else %}—{% endif %}</td><td><a class="btn btn-sm btn-light-primary" href="{% url 'approved_procedure_management_detail' approval.id %}">Inspect</a></td></tr>{% empty %}<tr><td colspan="9" class="text-center text-muted">No procedure approvals exist.</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+</div>
+<script>
+document.getElementById('approval-create-form').addEventListener('submit', async function(event) {
+  event.preventDefault();
+  const response = await fetch('{% url "approved_procedure_collection" %}', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value}, body: JSON.stringify({connection_id: Number(document.getElementById('approval-connection').value), schema: document.getElementById('approval-schema').value, procedure_name: document.getElementById('approval-name').value, signature: document.getElementById('approval-signature').value})});
+  if (response.ok) { window.location.reload(); return; }
+  document.getElementById('approval-error').textContent = 'The approval could not be created. Review the selected connection and procedure metadata.';
+  document.getElementById('approval-error').classList.remove('d-none');
+});
+</script>
+{% endblock %}

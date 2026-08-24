@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .integration-loading {
+    border: 2px solid #00ffea; /* Light blue border color */
+    box-shadow: 0 0 8px 2px #00ffea; /* Glowing effect */
+    border-radius: 10px; /* Rounded corners */
+    transition: box-shadow 0.3s ease-in-out, border 0.3s ease-in-out;
+}
+
+</style>
+
+
+
+
+
+<div class="card mb-5 mb-xl-10 mt-5">
+    <!-- Card Header -->
+    <div class="card-header border-0 cursor-pointer">
+        <div class="card-title m-0">
+            <h3 class="fw-bold m-0">Integrations</h3>
+        </div>
+        <a href="{% url 'home' %}" class="btn btn-sm btn-light align-self-center" id="editProfileBtn">Back</a>
+    </div>
+<!-- Notifications -->
+
+    <!-- Card Body -->
+    <div class="card-body border-top p-9">
+
+
+    {% for integration in integrations %}
+    <div class="d-flex justify-content-between align-items-center px-3 py-3 border-bottom" 
+    data-integration-id="{{ integration.id }}">
+   <div class="d-flex align-items-center">
+       {% if integration.icon %}
+       <img src="{{ integration.icon.url }}" class="me-3" width="30" alt="{{ integration.name }}">
+       {% endif %}
+       <div>
+           <a href="#" class="fw-bold fs-5 text-gray-800 open-modal" data-id="{{ integration.id }}">
+               {{ integration.name }}
+           </a>
+           <p class="text-gray-500 mb-0">{{ integration.description }}</p>
+       </div>
+   </div>
+   <div>
+       <div class="form-check form-switch">
+           <input class="form-check-input toggle-switch" type="checkbox" data-id="{{ integration.id }}"
+               id="toggleSwitch_{{ integration.id }}" 
+               {% if integration.credential and integration.credential.enabled %}checked{% endif %} 
+               {% if not integration.credential or not integration.credential.credentials %}disabled{% endif %}>
+       </div>
+   </div>
+</div>
+    {% endfor %}
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="integrationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Configure Integration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="integrationForm">
+                    <div id="dynamicFields"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    let currentIntegrationId = null;
+    let modalInstance = null;
+
+    const escapeHtml = (value) => {
+        const element = document.createElement('div');
+        element.textContent = value == null ? '' : String(value);
+        return element.innerHTML;
+    };
+
+    // Function to highlight the integration container
+    const highlightIntegration = (id, highlight = true) => {
+        const container = document.querySelector(`[data-integration-id="${id}"]`);
+        if (container) {
+            if (highlight) {
+                container.classList.add('integration-loading');
+            } else {
+                container.classList.remove('integration-loading');
+            }
+        }
+    };
+
+    // Open Modal and Highlight Border
+    document.querySelectorAll('.open-modal').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentIntegrationId = btn.getAttribute('data-id');
+            highlightIntegration(currentIntegrationId, true);
+
+            fetch(`/integrations/${currentIntegrationId}/fields/`)
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to fetch integration fields.');
+                    return res.json();
+                })
+                .then(data => {
+                    const dynamicFields = document.getElementById('dynamicFields');
+                    dynamicFields.innerHTML = ''; // Clear previous fields
+
+                    for (const [key, definition] of Object.entries(data.fields || {})) {
+                        const isSecret = definition.secret === true;
+                        const savedValue = data.saved_credentials ? data.saved_credentials[key] || '' : '';
+                        const configured = data.secret_fields && data.secret_fields[key] && data.secret_fields[key].configured;
+                        const secretHint = configured ? '<div class="form-text">A value is configured. Leave blank to keep it unchanged.</div>' : '';
+                        dynamicFields.innerHTML += `
+                            <div class="mb-3">
+                                <label class="form-label">${escapeHtml(definition.label || key)}</label>
+                                <input type="${isSecret ? 'password' : 'text'}" class="form-control" name="${escapeHtml(key)}" value="${isSecret ? '' : escapeHtml(savedValue)}" ${isSecret ? '' : 'required'}>
+                                ${isSecret ? secretHint : ''}
+                            </div>`;
+                    }
+
+                    modalInstance = new bootstrap.Modal(document.getElementById('integrationModal'));
+                    modalInstance.show();
+                })
+                .catch(error => {
+                    console.error('Error loading fields:', error);
+                    showErrorPopup(error.message || "Failed to load fields for integration.");
+                })
+                .finally(() => {
+                    highlightIntegration(currentIntegrationId, false); // Remove highlight
+                });
+        });
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+        const formData = new FormData(document.getElementById('integrationForm'));
+        const credentials = {};
+        formData.forEach((value, key) => credentials[key] = value.trim());
+
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.innerHTML = 'Saving...';
+        saveBtn.disabled = true;
+
+        highlightIntegration(currentIntegrationId, true); // Add highlight
+
+        fetch('/integrations/save/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                integration_id: currentIntegrationId,
+                credentials: credentials,
+                enabled: true
+            })
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to save credentials.');
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    showSuccessPopup("Credentials saved successfully!");
+                    const toggleSwitch = document.getElementById(`toggleSwitch_${currentIntegrationId}`);
+                    toggleSwitch.disabled = false;
+                    toggleSwitch.checked = true;
+                    modalInstance.hide(); // Close the modal here
+                } else {
+                    showErrorPopup(`Error: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error saving credentials:', error);
+                showErrorPopup(error.message || "Failed to save credentials.");
+            })
+            .finally(() => {
+                saveBtn.innerHTML = 'Save Changes';
+                saveBtn.disabled = false;
+                highlightIntegration(currentIntegrationId, false); // Remove highlight
+            });
+    });
+
+    document.querySelectorAll('.toggle-switch').forEach(input => {
+    input.addEventListener('change', () => {
+        const originalChecked = input.checked;
+        const integrationId = input.getAttribute('data-id');
+        input.disabled = true; // Disable the input right away
+        highlightIntegration(integrationId, true);
+
+        fetch('/integrations/toggle/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                integration_id: integrationId,
+                enabled: originalChecked
+            })
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to update toggle.');
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                  console.log('Toggle updated:', data.message);
+                } else {
+                    showErrorPopup(`Error: ${data.message}`);
+                     input.checked = !originalChecked; // Revert only on error from server
+                }
+            })
+            .catch(error => {
+                console.error('Error toggling integration:', error);
+                showErrorPopup(error.message || "An error occurred while updating the toggle.");
+                input.checked = !originalChecked; // Revert on failure
+            })
+            .finally(() => {
+                input.disabled = false; // Enable the input
+                highlightIntegration(integrationId, false);
+            });
+    });
+});
+
+
+
+    // Remove highlight on modal close
+    document.getElementById('integrationModal').addEventListener('hidden.bs.modal', () => {
+        if (currentIntegrationId) {
+            highlightIntegration(currentIntegrationId, false);
+            currentIntegrationId = null;
+        }
+    });
+});
+</script>
+{% endblock %}

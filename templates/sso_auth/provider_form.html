@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.protocol-section {
+    display: none;
+}
+.protocol-section.active {
+    display: block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-column-fluid">
+    <!--begin::Toolbar-->
+    <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+        <div id="kt_app_toolbar_container" class="app-container container-xxl d-flex flex-stack">
+            <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+                <h1 class="page-heading d-flex text-dark fw-bold fs-3 flex-column justify-content-center my-0">
+                    {{ title }}
+                </h1>
+                <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
+                    <li class="breadcrumb-item text-muted">
+                        <a href="{% url 'home' %}" class="text-muted text-hover-primary">Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <span class="bullet bg-gray-400 w-5px h-2px"></span>
+                    </li>
+                    <li class="breadcrumb-item text-muted">
+                        <a href="{% url 'sso:management' %}" class="text-muted text-hover-primary">SSO Configuration</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <span class="bullet bg-gray-400 w-5px h-2px"></span>
+                    </li>
+                    <li class="breadcrumb-item text-muted">{{ action }} Provider</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!--end::Toolbar-->
+
+    <!--begin::Content-->
+    <div id="kt_app_content" class="app-content flex-column-fluid">
+        <div id="kt_app_content_container" class="app-container container-xxl">
+            
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" class="form">
+                {% csrf_token %}
+                
+                <!--begin::Card-->
+                <div class="card">
+                    <!--begin::Card header-->
+                    <div class="card-header">
+                        <div class="card-title fs-3 fw-bold">Provider Configuration</div>
+                        <div class="card-toolbar">
+                            <button type="button" class="btn btn-sm btn-light me-3" onclick="history.back()">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-primary">{{ action }} Provider</button>
+                        </div>
+                    </div>
+                    <!--end::Card header-->
+
+                    <!--begin::Card body-->
+                    <div class="card-body pt-0">
+
+                        <!-- Form-level validation errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger d-flex flex-column flex-sm-row p-5 mb-10">
+                                <div class="d-flex flex-column">
+                                    <h4 class="mb-3 text-dark">Validation Errors</h4>
+                                    {% for error in form.non_field_errors %}
+                                        <p class="mb-1">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Basic Information -->
+                        <div class="mb-10">
+                            <h4 class="fw-bold text-dark mb-7">Basic Information</h4>
+                            <div class="row g-9 mb-8">
+                                <div class="col-md-6 fv-row">
+                                    <label class="required fs-6 fw-semibold mb-2">Provider Name</label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="fv-plugins-message-container">
+                                            <div class="fv-help-block">{{ form.name.errors.0 }}</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 fv-row">
+                                    <label class="required fs-6 fw-semibold mb-2">Protocol</label>
+                                    {{ form.protocol }}
+                                    {% if form.protocol.errors %}
+                                        <div class="fv-plugins-message-container">
+                                            <div class="fv-help-block">{{ form.protocol.errors.0 }}</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row g-9 mb-8">
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">Status</label>
+                                    {{ form.status }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.status %}
+                                </div>
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">Description</label>
+                                    {{ form.description }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.description %}
+                                </div>
+                            </div>
+                            <div class="row g-9 mb-8">
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch form-check-custom form-check-solid">
+                                        {{ form.enabled }}
+                                        <label class="form-check-label fs-6 fw-semibold" for="{{ form.enabled.id_for_label }}">
+                                            Enable Provider
+                                        </label>
+                                    </div>
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.enabled %}
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch form-check-custom form-check-solid">
+                                        {{ form.allow_registration }}
+                                        <label class="form-check-label fs-6 fw-semibold" for="{{ form.allow_registration.id_for_label }}">
+                                            Allow Registration
+                                        </label>
+                                    </div>
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.allow_registration %}
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch form-check-custom form-check-solid">
+                                        {{ form.debug_mode }}
+                                        <label class="form-check-label fs-6 fw-semibold" for="{{ form.debug_mode.id_for_label }}">
+                                            Debug Mode
+                                        </label>
+                                    </div>
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.debug_mode %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SAML Configuration -->
+                        <div class="protocol-section mb-10" id="saml-section">
+                            <h4 class="fw-bold text-dark mb-7">SAML Configuration</h4>
+
+                            <!-- IdP Metadata & Endpoints -->
+                            <div class="mb-8">
+                                <h5 class="fw-semibold text-gray-800 mb-5">IdP Metadata &amp; Endpoints</h5>
+                                <div class="row g-9 mb-6">
+                                    <div class="col-md-12 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">{{ form.metadata_xml.label }}</label>
+                                        {{ form.metadata_xml }}
+                                        <div class="form-text">{{ form.metadata_xml.help_text }}</div>
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.metadata_xml %}
+                                        <button type="submit" name="parse_metadata" value="1" class="btn btn-sm btn-light-primary mt-3">
+                                            Parse Metadata
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="row g-9 mb-6">
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">IdP Entity ID</label>
+                                        {{ form.saml_idp_entity_id }}
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_idp_entity_id %}
+                                    </div>
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">IdP SSO URL</label>
+                                        {{ form.saml_idp_sso_url }}
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_idp_sso_url %}
+                                    </div>
+                                </div>
+                                <div class="row g-9 mb-6">
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">SSO Binding</label>
+                                        {{ form.saml_idp_sso_binding }}
+                                        <div class="form-text">Must match the SSO URL above. Both endpoints are shown after parsing metadata if the IdP advertises both.</div>
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_idp_sso_binding %}
+                                    </div>
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">IdP SLO URL</label>
+                                        {{ form.saml_idp_slo_url }}
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_idp_slo_url %}
+                                    </div>
+                                </div>
+                                <div class="row g-9 mb-6">
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">IdP Certificate</label>
+                                        {{ form.saml_idp_x509cert }}
+                                        <div class="form-text">Paste the IdP's primary X.509 signing certificate here</div>
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_idp_x509cert %}
+                                    </div>
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">Additional IdP Certificates (rollover)</label>
+                                        {{ form.saml_idp_x509cert_additional }}
+                                        <div class="form-text">Optional. One or more additional signing certificates accepted during a certificate rollover.</div>
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_idp_x509cert_additional %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SP Settings -->
+                            <div class="mb-8">
+                                <h5 class="fw-semibold text-gray-800 mb-5">Service Provider (SP) Settings</h5>
+                                <div class="row g-9 mb-6">
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">SP Entity ID</label>
+                                        {{ form.saml_sp_entity_id }}
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_sp_entity_id %}
+                                    </div>
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">SP ACS URL</label>
+                                        {{ form.saml_sp_acs_url }}
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_sp_acs_url %}
+                                    </div>
+                                </div>
+                                <div class="row g-9 mb-6">
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">SP SLO URL</label>
+                                        {{ form.saml_sp_slo_url }}
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_sp_slo_url %}
+                                    </div>
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">NameID Format</label>
+                                        {{ form.saml_name_id_format }}
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_name_id_format %}
+                                    </div>
+                                </div>
+                                <div class="row g-9 mb-6">
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">SP Certificate</label>
+                                        {{ form.saml_sp_x509cert }}
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_sp_x509cert %}
+                                    </div>
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">SP Private Key</label>
+                                        {{ form.saml_sp_private_key }}
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_sp_private_key %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Identity Trust -->
+                            <div class="mb-8">
+                                <h5 class="fw-semibold text-gray-800 mb-5">Identity Trust</h5>
+                                <div class="row g-9 mb-6">
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">SAML Identity Policy</label>
+                                        {{ form.saml_identity_policy }}
+                                        <div class="form-text">Controls which received SAML identity may be trusted. Use <em>Persistent NameID</em> for SAMLTest.dev.</div>
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_identity_policy %}
+                                    </div>
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">Immutable Attribute Name</label>
+                                        {{ form.saml_immutable_attribute_name }}
+                                        <div class="form-text">Required only for the "Configured immutable attribute" policy. Never use email, username, or display name.</div>
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_immutable_attribute_name %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SAML Security Settings -->
+                            <div class="mb-8">
+                                <h5 class="fw-semibold text-gray-800 mb-5">Security Settings</h5>
+                                <div class="row g-9 mb-6">
+                                    <div class="col-md-4">
+                                        <div class="form-check form-switch form-check-custom form-check-solid">
+                                            {{ form.saml_want_messages_signed }}
+                                            <label class="form-check-label fs-6 fw-semibold" for="{{ form.saml_want_messages_signed.id_for_label }}">
+                                                Want Messages Signed
+                                            </label>
+                                        </div>
+                                        <div class="form-text">Require the outer SAML Response to be signed. Some IdPs sign only assertions.</div>
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_want_messages_signed %}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check form-switch form-check-custom form-check-solid">
+                                            {{ form.saml_want_assertions_signed }}
+                                            <label class="form-check-label fs-6 fw-semibold" for="{{ form.saml_want_assertions_signed.id_for_label }}">
+                                                Want Assertions Signed
+                                            </label>
+                                        </div>
+                                        <div class="form-text">Required for active SAML providers.</div>
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_want_assertions_signed %}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check form-switch form-check-custom form-check-solid">
+                                            {{ form.saml_authn_requests_signed }}
+                                            <label class="form-check-label fs-6 fw-semibold" for="{{ form.saml_authn_requests_signed.id_for_label }}">
+                                                Sign AuthN Requests
+                                            </label>
+                                        </div>
+                                        <div class="form-text">Supported for both Redirect and POST bindings; requires an SP certificate and private key.</div>
+                                    </div>
+                                </div>
+                                <div class="row g-9 mb-6">
+                                    <div class="col-md-4">
+                                        <div class="form-check form-switch form-check-custom form-check-solid">
+                                            {{ form.saml_logout_requests_signed }}
+                                            <label class="form-check-label fs-6 fw-semibold" for="{{ form.saml_logout_requests_signed.id_for_label }}">
+                                                Sign Logout Requests
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check form-switch form-check-custom form-check-solid">
+                                            {{ form.saml_logout_responses_signed }}
+                                            <label class="form-check-label fs-6 fw-semibold" for="{{ form.saml_logout_responses_signed.id_for_label }}">
+                                                Sign Logout Responses
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check form-switch form-check-custom form-check-solid">
+                                            {{ form.saml_strict_mode }}
+                                            <label class="form-check-label fs-6 fw-semibold" for="{{ form.saml_strict_mode.id_for_label }}">
+                                                Strict Mode
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-9 mb-6">
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">Signature Algorithm</label>
+                                        {{ form.saml_signature_algorithm }}
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_signature_algorithm %}
+                                    </div>
+                                    <div class="col-md-6 fv-row">
+                                        <label class="fs-6 fw-semibold mb-2">Digest Algorithm</label>
+                                        {{ form.saml_digest_algorithm }}
+                                        {% include "sso_auth/includes/field_errors.html" with field=form.saml_digest_algorithm %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- OIDC Configuration -->
+                        <div class="protocol-section mb-10" id="oidc-section">
+                            <h4 class="fw-bold text-dark mb-7">OpenID Connect Configuration</h4>
+                            
+                            <div class="row g-9 mb-6">
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">Client ID</label>
+                                    {{ form.oidc_client_id }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.oidc_client_id %}
+                                </div>
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">Client Secret</label>
+                                    {{ form.oidc_client_secret }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.oidc_client_secret %}
+                                </div>
+                            </div>
+                            <div class="row g-9 mb-6">
+                                <div class="col-md-12 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">Discovery URL</label>
+                                    {{ form.oidc_discovery_url }}
+                                    <div class="form-text">If provided, endpoints will be auto-discovered. Otherwise, configure manually below.</div>
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.oidc_discovery_url %}
+                                </div>
+                            </div>
+                            <div class="row g-9 mb-6">
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">Authorization Endpoint</label>
+                                    {{ form.oidc_authorization_endpoint }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.oidc_authorization_endpoint %}
+                                </div>
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">Token Endpoint</label>
+                                    {{ form.oidc_token_endpoint }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.oidc_token_endpoint %}
+                                </div>
+                            </div>
+                            <div class="row g-9 mb-6">
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">UserInfo Endpoint</label>
+                                    {{ form.oidc_userinfo_endpoint }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.oidc_userinfo_endpoint %}
+                                </div>
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">JWKS URI</label>
+                                    {{ form.oidc_jwks_uri }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.oidc_jwks_uri %}
+                                </div>
+                            </div>
+                            <div class="row g-9 mb-6">
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">Issuer</label>
+                                    {{ form.oidc_issuer }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.oidc_issuer %}
+                                </div>
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">Scopes</label>
+                                    {{ form.oidc_scopes }}
+                                    <div class="form-text">Space-separated list of scopes</div>
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.oidc_scopes %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attribute Mapping -->
+                        <div class="mb-10">
+                            <h4 class="fw-bold text-dark mb-7">Attribute Mapping</h4>
+                            <div class="row g-9 mb-6">
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">Email Attribute</label>
+                                    {{ form.attr_email }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.attr_email %}
+                                </div>
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">Username Attribute</label>
+                                    {{ form.attr_username }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.attr_username %}
+                                </div>
+                            </div>
+                            <div class="row g-9 mb-6">
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">First Name Attribute</label>
+                                    {{ form.attr_first_name }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.attr_first_name %}
+                                </div>
+                                <div class="col-md-6 fv-row">
+                                    <label class="fs-6 fw-semibold mb-2">Last Name Attribute</label>
+                                    {{ form.attr_last_name }}
+                                    {% include "sso_auth/includes/field_errors.html" with field=form.attr_last_name %}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--end::Card body-->
+                </div>
+                <!--end::Card-->
+                
+            </form>
+        </div>
+    </div>
+    <!--end::Content-->
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    function toggleProtocolSections() {
+        var protocol = $('#id_protocol').val();
+        $('.protocol-section').removeClass('active');
+        if (protocol === 'saml') {
+            $('#saml-section').addClass('active');
+        } else if (protocol === 'oidc') {
+            $('#oidc-section').addClass('active');
+        }
+    }
+    
+    // Initialize on page load
+    toggleProtocolSections();
+    
+    // Handle protocol change
+    $('#id_protocol').change(function() {
+        toggleProtocolSections();
+    });
+});
+</script>
+{% endblock extra_scripts %}

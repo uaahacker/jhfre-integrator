@@ -1,0 +1,220 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% block head %}
+    <title>{{ dynamic_form.formname }} Submissions</title>
+    <meta charset="utf-8" />
+    <link rel="canonical" href="http://preview.keenthemes.comindex.html" />
+    <link rel="shortcut icon" href="{% static 'assets/media/logos/favicon.ico' %}" />
+    <!--begin::Fonts(mandatory for all pages)-->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
+    <!--end::Fonts-->
+    <!--begin::Vendor Stylesheets(used for this page only)-->
+    <link href="{% static 'assets/plugins/custom/fullcalendar/fullcalendar.bundle.css' %}" rel="stylesheet"
+        type="text/css" />
+    <link href="{% static 'assets/plugins/custom/datatables/datatables.bundle.css' %}" rel="stylesheet"
+        type="text/css" />
+    <!--end::Vendor Stylesheets-->
+    <!--begin::Global Stylesheets Bundle(mandatory for all pages)-->
+    <link href="{% static 'assets/plugins/global/plugins.bundle.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'assets/css/style.bundle.css' %}" rel="stylesheet" type="text/css" />
+    <!--end::Global Stylesheets Bundle-->
+
+    {% endblock %}
+</head>
+
+<body >
+    {% if request.user.is_staff or request.user.is_superuser %}
+    {% include 'dashboard/layout/partials/header.html' %}
+    {% endif %}
+
+
+        
+        <!-- <div class="text-center mb-4">
+            <h1 class="fw-bold">  </h1>
+        </div> -->
+        <!--begin::Row-->
+        <div id="kt_app_content" class="app-content flex-column-fluid">
+            <!--begin::Content container-->
+            <div id="kt_app_content_container" class="app-container container-xxl">
+        <div class="row g-5 g-xl-8">
+            <div class="col-xl-4">
+                <!--begin::Statistics Widget 1-->
+                <div class="card bgi-no-repeat bgi-position-y-top bgi-position-x-end statistics-widget-1 card-xl-stretch mb-xl-8">
+                    <!--begin::Body-->
+                    <div class="card-body">
+                        <a href="#" class="card-title fw-bold text-muted text-hover-primary fs-4">Meeting Schedule</a>
+                        <div class="fw-bold text-primary my-6">3:30PM - 4:20PM</div>
+                        <p class="text-gray-900-75 fw-semibold fs-5 m-0">Create a headline that is informative
+                        <br />and will capture readers</p>
+                    </div>
+                    <!--end::Body-->
+                </div>
+                <!--end::Statistics Widget 1-->
+            </div>
+            <div class="col-xl-4">
+                <!--begin::Statistics Widget 1-->
+                <div class="card bgi-no-repeat bgi-position-y-top bgi-position-x-end statistics-widget-1 card-xl-stretch mb-xl-8">
+                    <!--begin::Body-->
+                    <div class="card-body">
+                        <a href="#" class="card-title fw-bold text-muted text-hover-primary fs-4">Meeting Schedule</a>
+                        <div class="fw-bold text-primary my-6">03 May 2020</div>
+                        <p class="text-gray-900-75 fw-semibold fs-5 m-0">Great blog posts don’t just happen Even the best bloggers need it</p>
+                    </div>
+                    <!--end::Body-->
+                </div>
+                <!--end::Statistics Widget 1-->
+            </div>
+            <div class="col-xl-4">
+                <!--begin::Statistics Widget 1-->
+                <div class="card bgi-no-repeat bgi-position-y-top bgi-position-x-end statistics-widget-1 card-xl-stretch mb-5 mb-xl-8">
+                    <!--begin::Body-->
+                    <div class="card-body">
+                        <a href="#" class="card-title fw-bold text-muted text-hover-primary fs-4">UI Conference</a>
+                        <div class="fw-bold text-primary my-6">10AM Jan, 2021</div>
+                        <p class="text-gray-900-75 fw-semibold fs-5 m-0">AirWays - A Front-end solution for airlines build with ReactJS</p>
+                    </div>
+                    <!--end::Body-->
+                </div>
+                <!--end::Statistics Widget 1-->
+            </div>
+        </div>
+        <!--end::Row-->
+
+        </div>
+        </div>
+
+        <!-- Centered Form -->
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+               
+                
+                <div class="card">
+                    <!-- Card Header -->
+                    <!-- <div class="card-header border-0 pt-5">
+                        <h3 class="card-title">
+                            <span class="card-label fw-bold fs-3 mb-1">Submissions for Form: {{ form.frontname }}</span>
+                        </h3>
+                    </div> -->
+                
+                    <div class="card-body py-3">
+
+
+                        <div class="table-responsive">
+                            <table class="table table-row-dashed align-middle gs-0 gy-3 my-0">
+                                <thead>
+                                    <tr class="fw-bold text-muted">
+                              
+                                        <th class="min-w-150px">Submitted At</th>
+                                        <!-- <th class="min-w-150px">Response</th> -->
+                                        <th class="p-0 pb-3 w-80px text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if submissions %}
+                                        <tr>
+                                       
+                                            <td>{{ submissions.submitted_at }}</td>
+                                            <td  class="text-end pe-0">
+                                                
+                                                <button class="btn btn-sm btn-light-primary fw-bold mt-2" data-bs-toggle="modal" data-bs-target="#viewSubmissionModal{{ forloop.counter }}">
+                                                    View
+                                                </button>
+                                            </td>
+                                        </tr>
+                
+                                      
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+
+
+                       
+                        <!-- <button class="btn btn-sm btn-light-primary fw-bold mt-2" data-bs-toggle="modal" data-bs-target="#viewSubmissionModal{{ forloop.counter }}">
+                            View
+                        </button> -->
+                    </div>
+                </div>
+                
+                <!-- Modal for Viewing Submission Details -->
+                <div class="modal fade" id="viewSubmissionModal{{ forloop.counter }}" tabindex="-1" aria-labelledby="viewSubmissionModalLabel{{ forloop.counter }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="viewSubmissionModalLabel{{ forloop.counter }}">Submission Details</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <ul class="list-group">
+                                    {% for key, value in submissions.submission_data.items %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <strong>{{ key|title }}:</strong>
+                                            <span>{{ value }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+         
+   </div>
+
+   
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-4">
+            <p>&copy; JHFRE Dashborad</p>
+        </footer>
+    </div>
+
+  
+    
+
+
+
+    <!--begin::Javascript-->
+    <script>var hostUrl = "assets/";</script>
+    <!--begin::Global Javascript Bundle(mandatory for all pages)-->
+    <script src="{% static 'assets/plugins/global/plugins.bundle.js' %}"></script>
+    <script src="{% static 'assets/js/scripts.bundle.js' %}"></script>
+    <!--end::Global Javascript Bundle-->
+    <!--begin::Vendors Javascript(used for this page only)-->
+    <script src="{% static 'assets/plugins/custom/fullcalendar/fullcalendar.bundle.js' %}"></script>
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/radar.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/worldLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/continentsLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/usaLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/worldTimeZonesLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/worldTimeZoneAreasLow.js"></script>
+    <script src="{% static 'assets/plugins/custom/datatables/datatables.bundle.js' %}"></script>
+    <!--end::Vendors Javascript-->
+    <!--begin::Custom Javascript(used for this page only)-->
+    <script src="{% static 'assets/js/widgets.bundle.js' %}"></script>
+    <script src="{% static 'assets/js/custom/widgets.js' %}"></script>
+    <script src="{% static 'assets/js/custom/apps/chat/chat.js' %}"></script>
+    <script src="{% static 'assets/js/custom/utilities/modals/upgrade-plan.js' %}"></script>
+    <script src="{% static 'assets/js/custom/utilities/modals/create-app.js' %}"></script>
+    <script src="{% static 'assets/js/custom/utilities/modals/new-target.js' %}"></script>
+    <script src="{% static 'assets/js/custom/utilities/modals/users-search.js' %}"></script>
+    <!--end::Custom Javascript-->
+    <!--end::Javascript-->
+</body>
+
+</html>
+
+
+
+ 

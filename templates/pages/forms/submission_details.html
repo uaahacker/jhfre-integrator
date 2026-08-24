@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<!-- Toolbar Section -->
+<div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+    <div id="kt_app_toolbar_container" class="app-container container-fluid d-flex flex-stack">
+        <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+            <h1 class="page-heading d-flex text-gray-900 fw-bold fs-3 flex-column justify-content-center my-0">
+                Submissions for Form: {{ submission.form.formname }}
+            </h1>
+            <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
+                <li class="breadcrumb-item text-muted">
+                    <a href="{% url 'manage_forms' %}" class="text-muted text-hover-primary">Manage Forms</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <span class="bullet bg-gray-500 w-5px h-2px"></span>
+                </li>
+                <li class="breadcrumb-item text-muted">Submissions</li>
+            </ul>
+        </div>
+        <div class="d-flex align-items-center gap-2 gap-lg-3">
+            <a href="{% url 'open_form_submissions' form_uuid %}" class="btn btn-sm btn-light-primary">Back</a>
+        </div>
+    </div>
+</div>
+
+
+<div class="card">
+    <div class="card-body py-3">
+
+        <div class="table-responsive">
+            <table class="table table-row-dashed align-middle gs-0 gy-3 my-0">
+                <thead>
+                    <tr class="fw-bold text-muted">
+                        <th class="min-w-150px">Submitted At</th>
+                        <th class="p-0 pb-3 w-80px text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if submission %}
+                        <tr>
+                            <td>{{ submission.submitted_at }}</td>
+                            <td class="text-end pe-0">
+                                <button class="btn btn-sm btn-light-primary fw-bold mt-2" data-bs-toggle="modal" data-bs-target="#viewSubmissionModal">
+                                    View
+                                </button>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal for Viewing Submission Details -->
+<div class="modal fade" id="viewSubmissionModal" tabindex="-1" aria-labelledby="viewSubmissionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewSubmissionModalLabel">Submission Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="list-group mb-3">
+                    {% for key, value in submission.submission_data.items %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{{ key|title }}:</strong>
+                            <span>
+                                {% for file in files %}
+                                    {% if file.field_name == key %}
+                                        <a href="{% url 'download_submission_file' file.id %}">{{ file.filename }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if not forloop.parentloop %}
+                                    {{ value }}
+                                {% endif %}
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                {% if files %}
+                    <h5>Uploaded Files:</h5>
+                    <ul class="list-group">
+                        {% for file in files %}
+                            <li class="list-group-item">
+                                <strong>{{ file.field_name|title }}:</strong>
+                                <a href="{% url 'download_submission_file' file.id %}">{{ file.filename }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% block head %}
+    <title>{{ dynamic_form.formname }} Submissions</title>
+    <meta charset="utf-8" />
+    <link rel="canonical" href="http://preview.keenthemes.comindex.html" />
+    <link rel="shortcut icon" href="{% static 'assets/media/logos/favicon.ico' %}" />
+    <!--begin::Fonts(mandatory for all pages)-->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
+    <!--end::Fonts-->
+    <!--begin::Vendor Stylesheets(used for this page only)-->
+    <link href="{% static 'assets/plugins/custom/fullcalendar/fullcalendar.bundle.css' %}" rel="stylesheet"
+        type="text/css" />
+    <link href="{% static 'assets/plugins/custom/datatables/datatables.bundle.css' %}" rel="stylesheet"
+        type="text/css" />
+    <!--end::Vendor Stylesheets-->
+    <!--begin::Global Stylesheets Bundle(mandatory for all pages)-->
+    <link href="{% static 'assets/plugins/global/plugins.bundle.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'assets/css/style.bundle.css' %}" rel="stylesheet" type="text/css" />
+    <!--end::Global Stylesheets Bundle-->
+
+    {% endblock %}
+</head>
+
+<body >
+    {% if request.user.is_staff or request.user.is_superuser %}
+    {% include 'dashboard/layout/partials/header.html' %}
+    {% endif %}
+
+
+
+
+        <!-- Centered Form -->
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+               
+                
+<div class="card">
+    <!-- Card Header -->
+    <!-- <div class="card-header border-0 pt-5">
+        <h3 class="card-title">
+            <span class="card-label fw-bold fs-3 mb-1">Submissions for Form: {{ form.frontname }}</span>
+        </h3>
+    </div> -->
+
+    <!-- Card Body -->
+    <div class="card-body py-3">
+        {% if submissions %}
+            <!-- Table Container -->
+            <div class="table-responsive">
+                <table class="table table-row-bordered table-row-gray-300 align-middle gs-0 gy-4">
+                    <thead>
+                        <tr class="fw-bold text-muted">
+                     
+                            <th class="min-w-150px">Submitted At</th>
+                            <th class="min-w-150px">Delivery</th>
+                            <th class="min-w-100px text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for submission in submissions %}
+                            <tr>
+             
+                                <td>{{ submission.submitted_at }}</td>
+                                <td>
+                                    {{ submission.delivery_metadata.status|default:"Not recorded" }}
+                                    {% if submission.delivery_metadata.status_code %}
+                                        (HTTP {{ submission.delivery_metadata.status_code }})
+                                    {% endif %}
+                                    {% if submission.delivery_metadata.truncated %}
+                                        (response truncated)
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    
+                                    <a href="{% url 'user_submission_details' submission.submissionID %}" target="_blank" class="btn btn-sm btn-light-primary fw-bold">details</a>
+                                </td>
+                            </tr>
+
+                          
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-center text-muted">No submissions yet.</p>
+        {% endif %}
+    </div>
+         
+   </div>
+
+   
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-4">
+            <p>&copy; JHFRE Dashborad</p>
+        </footer>
+    </div>
+
+  
+    
+
+
+
+    <!--begin::Javascript-->
+    <script>var hostUrl = "assets/";</script>
+    <!--begin::Global Javascript Bundle(mandatory for all pages)-->
+    <script src="{% static 'assets/plugins/global/plugins.bundle.js' %}"></script>
+    <script src="{% static 'assets/js/scripts.bundle.js' %}"></script>
+    <!--end::Global Javascript Bundle-->
+    <!--begin::Vendors Javascript(used for this page only)-->
+    <script src="{% static 'assets/plugins/custom/fullcalendar/fullcalendar.bundle.js' %}"></script>
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/radar.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/worldLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/continentsLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/usaLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/worldTimeZonesLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/worldTimeZoneAreasLow.js"></script>
+    <script src="{% static 'assets/plugins/custom/datatables/datatables.bundle.js' %}"></script>
+    <!--end::Vendors Javascript-->
+    <!--begin::Custom Javascript(used for this page only)-->
+    <script src="{% static 'assets/js/widgets.bundle.js' %}"></script>
+    <script src="{% static 'assets/js/custom/widgets.js' %}"></script>
+    <script src="{% static 'assets/js/custom/apps/chat/chat.js' %}"></script>
+    <script src="{% static 'assets/js/custom/utilities/modals/upgrade-plan.js' %}"></script>
+    <script src="{% static 'assets/js/custom/utilities/modals/create-app.js' %}"></script>
+    <script src="{% static 'assets/js/custom/utilities/modals/new-target.js' %}"></script>
+    <script src="{% static 'assets/js/custom/utilities/modals/users-search.js' %}"></script>
+    <!--end::Custom Javascript-->
+    <!--end::Javascript-->
+</body>
+
+</html>
+
+
+ 

@@ -1,0 +1,609 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% block head %}
+    <title>{% if formname %} {{ formname }}  {% else %} Form {% endif %}</title>
+    <meta charset="utf-8" />
+    <link rel="canonical" href="http://preview.keenthemes.comindex.html" />
+    <link rel="shortcut icon" href="{% static 'assets/media/logos/favicon.ico' %}" />
+    <!--begin::Fonts(mandatory for all pages)-->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
+    <!--end::Fonts-->
+    <!--begin::Vendor Stylesheets(used for this page only)-->
+    <link href="{% static 'assets/plugins/custom/fullcalendar/fullcalendar.bundle.css' %}" rel="stylesheet"
+        type="text/css" />
+    <link href="{% static 'assets/plugins/custom/datatables/datatables.bundle.css' %}" rel="stylesheet"
+        type="text/css" />
+    <!--end::Vendor Stylesheets-->
+    <!--begin::Global Stylesheets Bundle(mandatory for all pages)-->
+    <link href="{% static 'assets/plugins/global/plugins.bundle.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'assets/css/style.bundle.css' %}" rel="stylesheet" type="text/css" />
+    <!--end::Global Stylesheets Bundle-->
+
+    {% endblock %}
+    <style>
+        /* Floating Toggle Button */
+        .sidebar-toggle-btn {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+    
+        /* Sliding Sidebar */
+        .sliding-sidebar {
+            position: fixed;
+            right: -300px;
+            top: 0;
+            width: 300px;
+            height: 100%;
+            background: #1e1e2d;
+            transition: right 0.3s ease;
+            z-index: 999;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+        }
+    
+        .sliding-sidebar.open {
+            right: 0;
+        }
+    
+        .sidebar-header {
+            padding: 20px;
+            background: #1b1b28;
+            border-bottom: 1px solid #2b2b40;
+        }
+    
+        .sidebar-content {
+            padding: 20px;
+        }
+    
+        .sidebar-link {
+            display: block;
+            padding: 12px 15px;
+            color: #9899ac;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-radius: 6px;
+        }
+    
+        .sidebar-link:hover {
+            color: #ffffff;
+            background: #2b2b40;
+        }
+    </style>
+</head>
+
+<body >
+    {% if request.user.is_staff or request.user.is_superuser %}
+     <!-- include 'dashboard/layout/partials/header.html'  -->
+    {% endif %}
+
+    <div class="container mt-5">
+        
+        <!-- <div class="text-center mb-4">
+            <h1 class="fw-bold">  </h1>
+        </div> -->
+
+        <!-- Centered Form -->
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <form id="dynamicForm" class="card p-4 shadow-sm mt-4" enctype="multipart/form-data" onsubmit="submitForm(event)" >
+                    <h2 class="text-center py-5">{% if formname %} {{ formname }}  {% else %} Form {% endif %} </h2>
+                    <div id="formFields"></div> <!-- Form fields will be generated here by JavaScript -->
+                    <button type="submit" id="submitButton" class="btn btn-sm btn-light-primary fw-bold mt-2">
+                        <span class="button-text">Submit</span>
+                        <span class="spinner-border spinner-border-sm ms-2" id="loadingSpinner" style="display: none;"></span>
+                    </button>
+                </form>
+                <div id="successMessage" class="text-center mt-3 text-success" style="display: none;">
+                    Form submitted successfully!
+                </div>
+                <div id="errorMessage" class="text-center mt-3 text-danger" style="display: none;">
+                    Failed to submit form. Something went wrong!
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-4">
+            <p>Johns Hopkins Facilities and Real Estate</p>
+        </footer>
+    </div>
+    <button id="sidebarToggle" class="btn btn-primary sidebar-toggle-btn">
+        <i class="ki-duotone ki- double-left">
+ <span class="path1"></span>
+ <span class="path2"></span>
+</i>
+    </button>
+
+    <!-- Sliding Navigation Sidebar -->
+<div id="slidingSidebar" class="sliding-sidebar">
+    <div class="sidebar-header">
+        <h4 class="text-white mb-0">Navigation</h4>
+    </div>
+    <div class="sidebar-content">
+        <ul class="list-unstyled">
+            <li><a href="#" class="sidebar-link">Dashboard</a></li>
+            <li><a href="#" class="sidebar-link">Forms</a></li>
+            <li><a href="#" class="sidebar-link">Reports</a></li>
+            <li><a href="#" class="sidebar-link">Settings</a></li>
+            <!-- Add more navigation items as needed -->
+        </ul>
+    </div>
+</div>
+<script>
+    // Sidebar Toggle Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const slidingSidebar = document.getElementById('slidingSidebar');
+        let isOpen = false;
+
+        sidebarToggle.addEventListener('click', function() {
+            isOpen = !isOpen;
+            if (isOpen) {
+                slidingSidebar.classList.add('open');
+                sidebarToggle.style.right = '320px'; // Move button with sidebar
+            } else {
+                slidingSidebar.classList.remove('open');
+                sidebarToggle.style.right = '20px'; // Reset button position
+            }
+        });
+
+        // Close sidebar when clicking outside
+        document.addEventListener('click', function(event) {
+            if (isOpen && 
+                !slidingSidebar.contains(event.target) && 
+                !sidebarToggle.contains(event.target)) {
+                isOpen = false;
+                slidingSidebar.classList.remove('open');
+                sidebarToggle.style.right = '20px';
+            }
+        });
+    });
+</script>
+
+    <script>
+        // Get form configuration from template context
+        const formConfig = {{ form_config|safe }};
+        const formUUID = "{{ form_uuid|escapejs }}";  // Escape the form UUID
+        const csrfToken = "{{ csrf_token }}";
+    
+        // Function to sanitize field names for use as HTML id and name attributes
+        function sanitizeName(name) {
+            return name.replace(/\s+/g, '_');  // Replace spaces with underscores
+        }
+
+        // Helper function to display field-specific errors
+        function displayFieldError(fieldElement, message) {
+            let errorElement = fieldElement.parentElement.querySelector(".field-error-message");
+            if (!errorElement) {
+                errorElement = document.createElement("div");
+                errorElement.classList.add("field-error-message", "text-danger", "mt-1", "small");
+                fieldElement.parentElement.appendChild(errorElement);
+            }
+            errorElement.textContent = message;
+        }
+
+        function clearFieldError(fieldElement) {
+            let errorElement = fieldElement.parentElement.querySelector(".field-error-message");
+            if (errorElement) {
+                errorElement.textContent = "";
+            }
+        }
+
+        // Currency formatting functions
+        function formatCurrency(event, symbol = '$') {
+            const input = event.target || event; // Support both event and direct input
+            const currencySymbol = symbol || input.dataset.currencySymbol || '$';
+            let value = input.value.replace(/[^\d.-]/g, ''); // Remove all non-numeric characters except decimal and minus
+            
+            // Handle negative values
+            let isNegative = value.startsWith('-');
+            if (isNegative) {
+                value = value.substring(1);
+            }
+            
+            // Ensure only one decimal point
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            // Limit to 2 decimal places
+            if (parts[1] && parts[1].length > 2) {
+                value = parts[0] + '.' + parts[1].substring(0, 2);
+            }
+            
+            // Add commas for thousands
+            if (value) {
+                const [integerPart, decimalPart] = value.split('.');
+                const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                value = decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+            }
+            
+            // Add currency symbol and negative sign
+            const formattedValue = value ? `${currencySymbol}${isNegative ? '-' : ''}${value}` : '';
+            input.value = formattedValue;
+            
+            return formattedValue;
+        }
+
+        function getCurrencyValue(input) {
+            // Extract numeric value from formatted currency for form submission
+            return input.value.replace(/[^\d.-]/g, '');
+        }
+    
+        function formatDateToMMDDYYYY(dateString) {
+            const date = new Date(dateString);
+            // Adjust for timezone offset to keep the original date
+            const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+            const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+
+            const month = String(adjustedDate.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(adjustedDate.getUTCDate()).padStart(2, '0');
+            const year = adjustedDate.getUTCFullYear();
+            return `${month}-${day}-${year}`;
+        }
+        // Function to generate form fields
+        function generateFormFields() {
+            const formFieldsContainer = document.getElementById("formFields");
+    
+            // Debug the entire form configuration
+            console.log('Complete form configuration:', formConfig);
+            console.log('Number of fields:', formConfig.length);
+    
+            formConfig.forEach(field => {
+                const fieldWrapper = document.createElement("div");
+                fieldWrapper.classList.add("mb-3");
+    
+                const label = document.createElement("label");
+            
+                label.classList.add("form-label", "fw-bold");
+                label.innerText = field.label || field.name;
+    
+                const sanitizedFieldName = sanitizeName(field.name);
+                let input;
+    
+                switch (field.type) {
+                    case "text":
+                    case "number":
+                    case "email":
+                    case "tel":
+                    case "date":
+                    case "currency":
+                    case "file":
+                        input = document.createElement("input");
+                        input.type = field.type;
+                        input.id = sanitizedFieldName;
+                        input.name = sanitizedFieldName;
+                        label.htmlFor = input.id;
+                        input.classList.add("form-control");
+                        if (field.required) input.required = true;
+                        // Handle multiple files if specified
+                        if (field.type === "file" && field.multiple) {
+                            input.multiple = true;
+                        }
+
+                        // Add file size and count validation for file inputs
+                        if (field.type === "file") {
+                            input.setAttribute('accept', field.accept || ''); // Set accept attribute if provided
+                            
+                            input.addEventListener('change', function(event) {
+                                clearFieldError(input); // Clear previous errors
+                                const files = event.target.files;
+                                
+                                // Check file count if multiple files are allowed
+                                if (field.multiple && field.maxFileCount && files.length > field.maxFileCount) {
+                                    displayFieldError(input, `You can only upload a maximum of ${field.maxFileCount} files.`);
+                                    input.value = ''; // Clear the input
+                                    return;
+                                }
+                                
+                                // Check file sizes
+                                if (field.maxFileSizeMB && field.maxFileSizeMB > 0) {
+                                    const maxSizeBytes = field.maxFileSizeMB * 1024 * 1024;
+                                    let oversizedFiles = false;
+                                    for (let i = 0; i < files.length; i++) {
+                                        if (files[i].size > maxSizeBytes) {
+                                            oversizedFiles = true;
+                                            displayFieldError(input, `File "${files[i].name}" is too large. Max size: ${field.maxFileSizeMB}MB.`);
+                                            break; 
+                                        }
+                                    }
+                                    if (oversizedFiles) {
+                                        input.value = ''; // Clear the input if any file is oversized
+                                    }
+                                }
+                            });
+                        }
+                        break;
+
+                    case "textarea":
+                        input = document.createElement(field.type === "textarea" ? "textarea" : "input");
+                        if (field.type !== "textarea") {
+                            input.type = field.type;
+                        }
+                        input.id = sanitizedFieldName;  // Set the id
+                        input.name = sanitizedFieldName;  // Set the name
+                        label.htmlFor = input.id;  // Associate label with input
+                        input.classList.add("form-control");
+                        input.rows = 4; 
+                        break;
+    
+                    case "select":
+                        input = document.createElement("select");
+                        input.id = sanitizedFieldName;  // Set the id
+                        input.name = sanitizedFieldName;  // Set the name
+                        label.htmlFor = input.id;  // Associate label with input
+                        input.classList.add("form-select");
+                        if (field.required) input.required = true;
+    
+                        // Add an empty option if field is not required
+                        if (!field.required) {
+                            const emptyOption = document.createElement("option");
+                            emptyOption.value = "";
+                            emptyOption.textContent = "-- Select an option --";
+                            input.appendChild(emptyOption);
+                        }
+    
+                        // Add debugging
+                        console.log('Processing select field:', field.name);
+                        console.log('Field choices:', field.choices);
+                        console.log('Choices type:', typeof field.choices);
+                        console.log('Choices length:', field.choices ? field.choices.length : 'choices is null/undefined');
+    
+                        // Check if choices exist and is an array
+                        if (field.choices && Array.isArray(field.choices)) {
+                            field.choices.forEach(choice => {
+                                console.log('Processing choice:', choice);
+                                const option = document.createElement("option");
+                                if (typeof choice === 'object') {
+                                    option.value = choice.value;  // Set the option value
+                                    option.textContent = choice.label;  // Set the displayed text
+                                } else {
+                                    option.value = choice;  // Set the option value
+                                    option.textContent = choice;  // Set the displayed text
+                                }
+                                input.appendChild(option);
+                            });
+                        } else {
+                            console.error('No choices found for select field:', field.name);
+                        }
+                        break;
+    
+                    case "radio":
+                    case "checkbox":
+                        input = document.createElement("div");
+    
+                        field.choices.forEach((choice, index) => {
+                            const wrapper = document.createElement("div");
+                            wrapper.classList.add("form-check");
+    
+                            const inputElement = document.createElement("input");
+                            inputElement.type = field.type;
+                            inputElement.name = sanitizedFieldName;
+                            inputElement.classList.add("form-check-input");
+    
+                            // Generate a unique id for each input
+                            const inputId = `${sanitizedFieldName}_${index}`;
+                            inputElement.id = inputId;
+    
+                            const choiceLabel = document.createElement("label");
+                            choiceLabel.classList.add("form-check-label");
+                            choiceLabel.htmlFor = inputId;
+    
+                            if (typeof choice === 'object') {
+                                inputElement.value = choice.value;  // Set the value
+                                choiceLabel.innerText = choice.label;  // Display the label
+                            } else {
+                                inputElement.value = choice;  // Set the value
+                                choiceLabel.innerText = choice;  // Display the label
+                            }
+    
+                            wrapper.appendChild(inputElement);
+                            wrapper.appendChild(choiceLabel);
+                            input.appendChild(wrapper);
+                        });
+    
+                        // For required radio fields, add validation
+                        if (field.required && field.type === "radio") {
+                            const firstInput = input.querySelector('input');
+                            if (firstInput) firstInput.required = true;
+                        }
+                        break;
+
+                        case "country":
+                            // Treat "country" like a select (or a multi-step country/timezone form).
+                            // Basic approach: create a <select> with all the countries in field.choices
+                            input = document.createElement("select");
+                            input.id = sanitizedFieldName;
+                            input.name = sanitizedFieldName;
+                            label.htmlFor = input.id;
+                            input.classList.add("form-select");
+                            if (field.required) input.required = true;
+
+                            // If we have a list of {value, label, timezones}, you can show the label
+                            // in the dropdown. Or just the code; up to you.
+                            if (field.choices && Array.isArray(field.choices)) {
+                            field.choices.forEach(countryObj => {
+                                const opt = document.createElement("option");
+                                opt.value = countryObj.value;    // e.g. "US"
+                                opt.textContent = countryObj.label; // e.g. "United States"
+                                input.appendChild(opt);
+                            });
+                            } else {
+                            // fallback if no choices
+                            const placeholderOption = document.createElement("option");
+                            placeholderOption.value = "";
+                            placeholderOption.textContent = "-- Select a country --";
+                            input.appendChild(placeholderOption);
+                            }
+                            break;
+    
+                    default:
+                        input = document.createElement("input");
+                        input.type = "text";
+                        input.id = sanitizedFieldName;  // Set the id
+                        input.name = sanitizedFieldName;  // Set the name
+                        label.htmlFor = input.id;  // Associate label with input
+                        input.classList.add("form-control");
+                }
+    
+                                // If not radio, checkbox, select, or country, just mark required if applicable
+                        if (
+                        field.type !== "radio" &&
+                        field.type !== "checkbox" &&
+                        field.type !== "select" &&
+                        field.type !== "country" &&
+                        field.type !== "textarea"
+                        ) {
+                        if (field.required) input.required = true;
+                        }
+                        
+                        // Add currency formatting for currency fields
+                        if (field.type === "currency") {
+                            const currencySymbol = field.currency_symbol || '$';
+                            input.placeholder = currencySymbol + "0.00";
+                            
+                            // Add event listeners for real-time formatting
+                            input.addEventListener('input', function(e) {
+                                formatCurrency(e, currencySymbol);
+                            });
+                            
+                            // Format on focus out
+                            input.addEventListener('blur', function(e) {
+                                formatCurrency(e, currencySymbol);
+                            });
+                        }
+
+                        fieldWrapper.appendChild(label);
+                        fieldWrapper.appendChild(input);
+                        formFieldsContainer.appendChild(fieldWrapper);
+                    });
+                    }
+    
+        // Generate fields when the page loads
+        document.addEventListener("DOMContentLoaded", generateFormFields);
+    
+        // Function to handle form submission
+        async function submitForm(event) {
+            event.preventDefault();  // Prevent default form submission
+            // Show spinner and disable submit button
+            const submitButton = document.getElementById("submitButton");
+            const buttonText = submitButton.querySelector(".button-text");
+            const loadingSpinner = document.getElementById("loadingSpinner");
+    
+            buttonText.style.display = "none";  // Hide button text
+            loadingSpinner.style.display = "inline-block";  // Show spinner
+            submitButton.disabled = true;  // Disable the button to prevent multiple submissions
+    
+            const formElement = document.getElementById("dynamicForm");
+            const formData = new FormData(formElement);
+
+            // Before submitting, ensure no file inputs have pending errors (e.g., oversized files)
+            let hasFileErrors = false;
+            formConfig.forEach(field => {
+                if (field.type === "file" && field.maxFileSizeMB && field.maxFileSizeMB > 0) {
+                    const sanitizedFieldName = sanitizeName(field.name);
+                    const fileInput = document.getElementById(sanitizedFieldName);
+                    if (fileInput && fileInput.parentElement.querySelector(".field-error-message") && fileInput.parentElement.querySelector(".field-error-message").textContent) {
+                        hasFileErrors = true;
+                    }
+                }
+            });
+
+            if (hasFileErrors) {
+                // Restore button state
+                buttonText.style.display = "inline";
+                loadingSpinner.style.display = "none";
+                submitButton.disabled = false;
+                // Optionally, display a general message or scroll to the first error
+                document.getElementById("errorMessage").textContent = "Please fix the errors in the form before submitting.";
+                document.getElementById("errorMessage").style.display = "block";
+                return; // Stop submission
+            }
+
+            // Manually append date fields in MM-DD-YYYY format
+            formConfig.forEach(field => {
+                if (field.type === "date") {
+                    const sanitizedFieldName = sanitizeName(field.name);
+                    const dateInput = document.getElementById(sanitizedFieldName);
+                    const formattedDate = formatDateToMMDDYYYY(dateInput.value);
+                    formData.set(sanitizedFieldName, formattedDate);
+                }
+            });
+            try {
+                const response = await fetch(`/submit-form/${formUUID}/`, {
+                    method: "POST",
+                    headers: {
+                        // "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken  // Use the CSRF token variable
+                    },
+                    body: formData
+                });
+    
+                if (response.ok) {
+                    document.getElementById("dynamicForm").style.display = "none";
+                    document.getElementById("successMessage").style.display = "block";
+                } else {
+                    document.getElementById("errorMessage").style.display = "block";
+                }
+            } catch (error) {
+                console.log(error)
+                document.getElementById("errorMessage").style.display = "block";
+            } finally {
+                // Hide spinner, show button text, and re-enable submit button
+                buttonText.style.display = "inline";
+                loadingSpinner.style.display = "none";
+                submitButton.disabled = false;
+            }
+        }
+    </script>
+    
+
+
+
+    <!--begin::Javascript-->
+    <script>var hostUrl = "assets/";</script>
+    <!--begin::Global Javascript Bundle(mandatory for all pages)-->
+    <script src="{% static 'assets/plugins/global/plugins.bundle.js' %}"></script>
+    <script src="{% static 'assets/js/scripts.bundle.js' %}"></script>
+    <!--end::Global Javascript Bundle-->
+    <!--begin::Vendors Javascript(used for this page only)-->
+    <script src="{% static 'assets/plugins/custom/fullcalendar/fullcalendar.bundle.js' %}"></script>
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/radar.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/worldLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/continentsLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/usaLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/worldTimeZonesLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/worldTimeZoneAreasLow.js"></script>
+    <script src="{% static 'assets/plugins/custom/datatables/datatables.bundle.js' %}"></script>
+    <!--end::Vendors Javascript-->
+    <!--begin::Custom Javascript(used for this page only)-->
+    <script src="{% static 'assets/js/widgets.bundle.js' %}"></script>
+    <script src="{% static 'assets/js/custom/widgets.js' %}"></script>
+    <script src="{% static 'assets/js/custom/apps/chat/chat.js' %}"></script>
+    <script src="{% static 'assets/js/custom/utilities/modals/upgrade-plan.js' %}"></script>
+    <script src="{% static 'assets/js/custom/utilities/modals/create-app.js' %}"></script>
+    <script src="{% static 'assets/js/custom/utilities/modals/new-target.js' %}"></script>
+    <script src="{% static 'assets/js/custom/utilities/modals/users-search.js' %}"></script>
+    <!--end::Custom Javascript-->
+    <!--end::Javascript-->
+</body>
+
+</html>

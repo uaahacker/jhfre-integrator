@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<base href="/" />
+		<title>403 Access Denied</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		{% if request.company_data.company_favicon_url %}
+		<link rel="shortcut icon" href="{{ request.company_data.company_favicon_url }}" />
+		{% endif %}
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
+		<link href="{% static 'assets/plugins/global/plugins.bundle.css' %}" rel="stylesheet" type="text/css" />
+		<link href="{% static 'assets/css/style.bundle.css' %}" rel="stylesheet" type="text/css" />
+	</head>
+	<body id="kt_body" class="app-blank">
+		<div class="d-flex flex-column flex-center w-100 p-10">
+            <div class="text-center">
+                <h1 class="text-danger">Access Denied</h1>
+                <p class="fs-4">
+                    You do not have the necessary permissions to access this form. Please contact your administrator.
+                </p>
+                 <hr>
+            </div>
+        </div>
+		<script>var hostUrl = "{% static 'assets/' %}";</script>
+		<script src="{% static 'assets/plugins/global/plugins.bundle.js' %}"></script>
+		<script src="{% static 'assets/js/scripts.bundle.js' %}"></script>
+		<script src="{% static 'assets/js/custom/authentication/sign-in/general.js' %}"></script>
+	</body>
+</html>

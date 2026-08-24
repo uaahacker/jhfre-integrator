@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="card mb-5 mb-xl-10 mt-5">
+    <!-- Card Header -->
+    <div class="card-header border-0 cursor-pointer">
+        <div class="card-title m-0">
+            <h3 class="fw-bold m-0">Query Results: {{ query.name }}</h3>
+        </div>
+        <div>
+            <a href="{% url 'pmweb_configurations' %}#database-connections" class="btn btn-sm btn-light align-self-center me-2">Back to Configurations</a>
+            <button id="btn-export-results" class="btn btn-sm btn-primary align-self-center">Export Results</button>
+        </div>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body border-top p-9">
+        <div class="row mb-8">
+            <div class="col-xl-6">
+                <div class="fs-6 fw-semibold text-gray-600">Connection</div>
+                <div class="fs-5 fw-bold text-gray-800">{{ connection.name }} ({{ connection.get_connection_type_display }})</div>
+            </div>
+            <div class="col-xl-6">
+                <div class="fs-6 fw-semibold text-gray-600">Last Run</div>
+                <div class="fs-5 fw-bold text-gray-800">{{ query.last_run|date:"F j, Y, g:i a" }}</div>
+            </div>
+        </div>
+        
+        <div class="mb-8">
+            <div class="fs-6 fw-semibold text-gray-600 mb-3">SQL Query</div>
+            <div class="bg-light-primary p-5 rounded" style="font-family: monospace; white-space: pre-wrap;">{{ query.query_text }}</div>
+        </div>
+        
+        <div class="separator separator-dashed my-10"></div>
+        
+        <div class="mb-8">
+            <h4 class="fw-bold mb-3">Query Results</h4>
+            <div class="table-responsive">
+                <table id="query-results-table" class="table table-striped table-row-bordered gy-5 gs-7">
+                    {% if columns %}
+                    <thead>
+                        <tr class="fw-bold fs-6 text-gray-800 border-bottom border-gray-200">
+                            {% for column in columns %}
+                            <th>{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if results %}
+                            {% for row in results %}
+                            <tr>
+                                {% for column in columns %}
+                                <td>{{ row|get_dict_item:column|default:'' }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="{{ columns|length }}" class="text-center">Query executed successfully, but no results were returned.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                    {% else %}
+                    <tbody>
+                        <tr>
+                            <td class="text-center">No results available.</td>
+                        </tr>
+                    </tbody>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Export results button functionality
+    document.getElementById('btn-export-results').addEventListener('click', function() {
+        // Get table data
+        const table = document.getElementById('query-results-table');
+        let csv = [];
+        
+        // Get headers
+        const headers = [];
+        const headerCells = table.querySelectorAll('thead th');
+        headerCells.forEach(cell => {
+            headers.push('"' + cell.textContent.trim() + '"');
+        });
+        csv.push(headers.join(','));
+        
+        // Get rows
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            if (!row.querySelector('td[colspan]')) { // Skip "no results" row
+                const rowData = [];
+                row.querySelectorAll('td').forEach(cell => {
+                    rowData.push('"' + cell.textContent.trim() + '"');
+                });
+                csv.push(rowData.join(','));
+            }
+        });
+        
+        // Create and download CSV file
+        const csvContent = csv.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', '{{ query.name|slugify }}_results.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+});
+</script>
+{% endblock %} 

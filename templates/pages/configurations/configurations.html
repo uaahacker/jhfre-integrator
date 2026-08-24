@@ -1,0 +1,3132 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="card mb-5 mb-xl-10 mt-5">
+    <!-- Card Header -->
+    <div class="card-header border-0 cursor-pointer">
+        <div class="card-title m-0">
+            <h3 class="fw-bold m-0">Configurations</h3>
+        </div>
+        <a href="{% url 'home' %}" class="btn btn-sm btn-light align-self-center">Back</a>
+    </div>
+
+    <!-- Top Menu -->
+    <div class="card-header ribbon ribbon-top ribbon-vertical">
+        <div class="card-toolbar">
+            <ul class="nav nav-tabs nav-line-tabs nav-stretch fs-6 border-0">
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#security">Security</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#integrations">Integrations</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#settings">Settings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#permissions">Permissions</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#users">Users</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#database-connections">Database Connections</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body border-top p-9">
+        <div class="tab-content" id="myTabContent">
+            <!-- Security Tab -->
+            <div class="tab-pane fade" id="security" role="tabpanel">
+                <div class="py-5">
+                    <h2 class="fw-bolder mb-4">Security Configuration</h2>
+                    <p class="fs-6 text-gray-600">Manage security settings for your PMWeb instance.</p>
+                    
+                    <div class="row mt-5">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h3 class="card-title">Authentication Settings</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Configure authentication methods and security policies.</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-primary">Configure</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h3 class="card-title">Password Policies</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Set password requirements and expiration policies.</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-primary">Configure</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Integrations Tab -->
+            <div class="tab-pane fade" id="integrations" role="tabpanel">
+                <div class="py-5">
+                    <h2 class="fw-bolder mb-4">Integrations</h2>
+                    <p class="fs-6 text-gray-600">Connect PMWeb to external systems and services.</p>
+                    
+                    <div class="row mt-5">
+                        <div class="col-md-4 mb-5">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h3 class="card-title">API Connections</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Configure API integrations with external systems.</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-primary">Configure</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-5">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h3 class="card-title">SSO Configuration</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Set up Single Sign-On with identity providers (SAML & OIDC).</p>
+                                    <div class="d-flex justify-content-end">
+                                        <a href="{% url 'sso:management' %}" class="btn btn-primary">Configure</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-5">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h3 class="card-title">Data Exchange</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Configure data import/export settings.</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-primary">Configure</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Tab -->
+            <div class="tab-pane fade" id="settings" role="tabpanel">
+                <div class="py-5">
+                    <h2 class="fw-bolder mb-4">System Settings</h2>
+                    <p class="fs-6 text-gray-600">Configure general PMWeb settings and preferences.</p>
+                    
+                    <div class="row mt-5">
+                        <div class="col-md-6 mb-5">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h3 class="card-title">General Settings</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Configure application-wide settings.</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-primary">Configure</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-5">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h3 class="card-title">Notification Settings</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Configure email and notification preferences.</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-primary">Configure</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Permissions Tab -->
+            <div class="tab-pane fade" id="permissions" role="tabpanel">
+                <div class="py-5">
+                    <h2 class="fw-bolder mb-4">Permission Management</h2>
+                    <p class="fs-6 text-gray-600">Manage roles and permissions within PMWeb.</p>
+                    
+                    <div class="row mt-5">
+                        <div class="col-md-6 mb-5">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h3 class="card-title">Role Management</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Create and manage user roles.</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-primary">Configure</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-5">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h3 class="card-title">Permission Assignment</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Assign permissions to roles and users.</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-primary">Configure</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Users Tab -->
+            <div class="tab-pane fade" id="users" role="tabpanel">
+                <div class="py-5">
+                    <h2 class="fw-bolder mb-4">User Management</h2>
+                    <p class="fs-6 text-gray-600">Manage users, groups, and access controls.</p>
+                    
+                    <div class="row mt-5">
+                        <div class="col-md-4 mb-5">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h3 class="card-title">User Accounts</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Manage user accounts and profiles.</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-primary">Configure</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-5">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h3 class="card-title">User Groups</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Create and manage user groups.</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-primary">Configure</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-5">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h3 class="card-title">Access Control</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Manage access control settings.</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-primary">Configure</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Database Connections Tab -->
+            <div class="tab-pane fade" id="database-connections" role="tabpanel">
+                <div class="py-5">
+                    <h2 class="fw-bolder mb-4">Database Connections</h2>
+                    <p class="fs-6 text-gray-600">Manage database connections and saved queries for your forms and integrations.</p>
+                    
+                    <div class="d-flex justify-content-between mb-5">
+                        <button id="btn-new-connection" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-database-connection">
+                            <i class="ki-duotone ki-plus fs-2"></i> Add New Connection
+                        </button>
+                        
+                        <div class="d-flex">
+                            <select id="connection-type-filter" class="form-select form-select-sm me-3" style="width: 150px;">
+                                <option value="">All Connection Types</option>
+                                <option value="mssql">MSSQL</option>
+                                <option value="mysql">MySQL</option>
+                                <option value="postgresql">PostgreSQL</option>
+                                <option value="oracle">Oracle</option>
+                            </select>
+                            <input type="text" id="connection-search" class="form-control form-control-sm" placeholder="Search connections..." style="width: 200px;">
+                        </div>
+                    </div>
+                    
+                    <!-- Database Connections Table -->
+                    <div class="card shadow-sm mb-5">
+                        <div class="card-header">
+                            <h3 class="card-title">Your Database Connections</h3>
+                        </div>
+                        <div class="card-body">
+                            <table id="connections-table" class="table table-striped table-row-bordered gy-5 gs-7">
+                                <thead>
+                                    <tr class="fw-bold fs-6 text-gray-800 border-bottom border-gray-200">
+                                        <th>Connection Name</th>
+                                        <th>Type</th>
+                                        <th>Server</th>
+                                        <th>Database</th>
+                                        <th>Status</th>
+                                        <th>Last Used</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Connections will be loaded here via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Saved Queries Section -->
+                    <h3 class="fw-bolder mb-4 mt-8">Saved Queries</h3>
+                    <p class="fs-6 text-gray-600 mb-5">Access and manage your saved database queries.</p>
+                    
+                    <div class="card shadow-sm">
+                        <div class="card-header border-0 py-5">
+                            <h3 class="card-title align-items-start flex-column">
+                                <span class="card-label fw-bold text-dark">Your Saved Queries</span>
+                                <span class="text-muted mt-1 fw-semibold fs-7">Queries that can be used in forms and integrations</span>
+                            </h3>
+                            <div class="card-toolbar">
+                                <button type="button" id="btn-new-query" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modal-query-builder">
+                                    <i class="ki-duotone ki-plus fs-2"></i> Create New Query
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <table id="saved-queries-table" class="table table-striped table-row-bordered gy-5 gs-7">
+                                <thead>
+                                    <tr class="fw-bold fs-6 text-gray-800 border-bottom border-gray-200">
+                                        <th>Query Name</th>
+                                        <th>Connection</th>
+                                        <th>Description</th>
+                                        <th>Created Date</th>
+                                        <th>Last Run</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Saved queries will be loaded here via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Stored Procedures Section -->
+                    <h3 class="fw-bolder mb-4 mt-8">Stored Procedures</h3>
+                    <p class="fs-6 text-gray-600 mb-5">Browse discovered procedures for review. Only explicitly approved procedures can execute.</p>
+                    
+                    <div class="card shadow-sm">
+                        <div class="card-header border-0 py-5">
+                            <h3 class="card-title align-items-start flex-column">
+                                <span class="card-label fw-bold text-dark">Database Procedures</span>
+                                <span class="text-muted mt-1 fw-semibold fs-7">Procedures that can be used in forms and integrations</span>
+                            </h3>
+                            <div class="card-toolbar">
+                                <a href="{% url 'approved_procedures' %}" class="btn btn-sm btn-light-primary me-2">Manage Approved Procedures</a>
+                                <button type="button" id="btn-refresh-procedures" class="btn btn-sm btn-primary">
+                                    <i class="ki-duotone ki-arrows-circle fs-2"></i> Refresh Procedures
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-5 row">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Select Connection</label>
+                                    <select id="procedure-connection-selector" class="form-select">
+                                        <option value="">-- Select Database Connection --</option>
+                                        <!-- Connections will be populated via JavaScript -->
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Search Procedures</label>
+                                    <input type="text" id="procedure-search" class="form-control" placeholder="Search procedure name...">
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end mb-3">
+                                <div class="d-flex align-items-center">
+                                    <label class="form-label fw-semibold me-2 mb-0">Items per page:</label>
+                                    <select id="procedures-per-page" class="form-select form-select-sm" style="width: 70px">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <table id="procedures-table" class="table table-striped table-row-bordered gy-5 gs-7">
+                                <thead>
+                                    <tr class="fw-bold fs-6 text-gray-800 border-bottom border-gray-200">
+                                        <th>Procedure Name</th>
+                                        <th>Schema</th>
+                                        <th>Parameters</th>
+                                        <th>Return Type</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Procedures will be loaded here via JavaScript -->
+                                    <tr>
+                                        <td colspan="5" class="text-center">Select a database connection to view procedures</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <div id="procedures-pagination" class="d-flex align-items-center justify-content-between mt-4">
+                                <div class="d-flex flex-wrap py-2 me-3">
+                                    <span class="text-muted" id="procedures-showing"></span>
+                                </div>
+                                <ul class="pagination pagination-outline"></ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Saved Procedure Executions Section -->
+                    <h3 class="fw-bolder mb-4 mt-8">Saved Procedure Executions</h3>
+                    <p class="fs-6 text-gray-600 mb-5">Re-execute your saved procedure configurations.</p>
+                    
+                    <div class="card shadow-sm">
+                        <div class="card-header border-0 py-5">
+                            <h3 class="card-title align-items-start flex-column">
+                                <span class="card-label fw-bold text-dark">Your Saved Procedure Executions</span>
+                                <span class="text-muted mt-1 fw-semibold fs-7">Saved configurations for frequently used procedures</span>
+                            </h3>
+                            <div class="card-toolbar">
+                                <button type="button" id="btn-refresh-saved-executions" class="btn btn-sm btn-primary">
+                                    <i class="ki-duotone ki-arrows-circle fs-2"></i> Refresh List
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-5">
+                                <input type="text" id="saved-execution-search" class="form-control" placeholder="Search saved executions...">
+                            </div>
+                            
+                            <table id="saved-executions-table" class="table table-striped table-row-bordered gy-5 gs-7">
+                                <thead>
+                                    <tr class="fw-bold fs-6 text-gray-800 border-bottom border-gray-200">
+                                        <th>Name</th>
+                                        <th>Procedure</th>
+                                        <th>Connection</th>
+                                        <th>Created</th>
+                                        <th>Last Run</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Saved executions will be loaded here via JavaScript -->
+                                    <tr>
+                                        <td colspan="6" class="text-center">Loading saved procedure executions...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to activate tab based on hash
+        function activateTabFromHash() {
+            // Get hash from URL
+            let hash = window.location.hash;
+            
+            // Default to security tab if no hash or invalid hash
+            if (!hash) {
+                hash = '#security';
+            }
+            
+            // Try to find the tab
+            const tabElement = document.querySelector(`a[href="${hash}"]`);
+            
+            if (tabElement) {
+                // Create a new Bootstrap tab instance and show it
+                const tab = new bootstrap.Tab(tabElement);
+                tab.show();
+            } else {
+                // Fallback to security tab if hash is invalid
+                const defaultTab = document.querySelector('a[href="#security"]');
+                if (defaultTab) {
+                    const tab = new bootstrap.Tab(defaultTab);
+                    tab.show();
+                }
+            }
+        }
+        
+        // Activate tab on page load
+        activateTabFromHash();
+        
+        // Listen for hash changes
+        window.addEventListener('hashchange', activateTabFromHash);
+        
+        // Update menu item links to include hash
+        // This part is for dynamically generated menus
+        document.querySelectorAll('a[data-menu-title]').forEach(link => {
+            const menuTitle = link.getAttribute('data-menu-title').toLowerCase();
+            if (['security', 'integrations', 'settings', 'permissions', 'users'].includes(menuTitle)) {
+                // If the link points to configurations page and matches a tab name
+                if (link.href.includes('/pmweb/configurations/')) {
+                    link.href = link.href.split('#')[0] + '#' + menuTitle;
+                }
+            }
+        });
+        
+        // Database Connections functionality
+        initializeDatabaseConnectionsTab();
+    });
+    
+    // Function to initialize Database Connections tab
+    function initializeDatabaseConnectionsTab() {
+        // Set default port based on database type
+        document.getElementById('connection-type').addEventListener('change', function() {
+            const portInput = document.getElementById('connection-port');
+            switch(this.value) {
+                case 'mssql':
+                    portInput.value = '1433';
+                    break;
+                case 'mysql':
+                    portInput.value = '3306';
+                    break;
+                case 'postgresql':
+                    portInput.value = '5432';
+                    break;
+                case 'oracle':
+                    portInput.value = '1521';
+                    break;
+                default:
+                    portInput.value = '';
+            }
+        });
+        
+        // Load existing connections
+        loadDatabaseConnections();
+        
+        // Load saved queries
+        loadSavedQueries();
+        
+        // Setup event listeners
+        document.getElementById('btn-test-connection').addEventListener('click', testDatabaseConnection);
+        document.getElementById('btn-save-connection').addEventListener('click', saveDatabaseConnection);
+        document.getElementById('btn-run-query').addEventListener('click', runQuery);
+        document.getElementById('btn-save-query').addEventListener('click', saveQuery);
+        
+        // Setup filter functionality
+        document.getElementById('connection-search').addEventListener('keyup', filterConnections);
+        document.getElementById('connection-type-filter').addEventListener('change', filterConnections);
+        
+        // Reset form when modal is closed
+        $('#modal-database-connection').on('hidden.bs.modal', function () {
+            document.getElementById('form-database-connection').reset();
+            document.getElementById('connection-id').value = '';
+            document.getElementById('connection-modal-title').textContent = 'New Database Connection';
+        });
+        
+        $('#modal-query-builder').on('hidden.bs.modal', function () {
+            document.getElementById('form-query-builder').reset();
+            document.getElementById('query-id').value = '';
+            document.getElementById('query-modal-title').textContent = 'Query Builder';
+            document.getElementById('query-results-container').classList.add('d-none');
+            document.getElementById('query-results-table').innerHTML = '';
+        });
+    }
+    
+    // Function to load existing database connections
+    function loadDatabaseConnections() {
+        fetch('/configurations/database-connections/')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.querySelector('#connections-table tbody');
+                tableBody.innerHTML = '';
+                
+                if (data.connections && data.connections.length > 0) {
+                    data.connections.forEach(conn => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${conn.name}</td>
+                            <td>${conn.type.toUpperCase()}</td>
+                            <td>${conn.server}</td>
+                            <td>${conn.database}</td>
+                            <td><span class="badge badge-light-${conn.status === 'active' ? 'success' : 'warning'}">${conn.status}</span></td>
+                            <td>${conn.last_used || 'Never'}</td>
+                            <td>
+                                <button class="btn btn-icon btn-sm btn-light-primary me-1" onclick="editConnection(${conn.id})">
+                                    <i class="ki-duotone ki-pencil fs-2x"></i>
+                                </button>
+                                <button class="btn btn-icon btn-sm btn-light-danger" onclick="deleteConnection(${conn.id})">
+                                    <i class="ki-duotone ki-trash fs-2x"></i>
+                                </button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // Also populate the dropdown in the query builder
+                    const connectionSelect = document.getElementById('query-connection');
+                    connectionSelect.innerHTML = '<option value="">Select a connection</option>';
+                    data.connections.forEach(conn => {
+                        const option = document.createElement('option');
+                        option.value = conn.id;
+                        option.textContent = conn.name;
+                        connectionSelect.appendChild(option);
+                    });
+                } else {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colspan="7" class="text-center">No database connections found. Create one to get started.</td>';
+                    tableBody.appendChild(row);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading database connections:', error);
+                const tableBody = document.querySelector('#connections-table tbody');
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading connections. Please try again.</td></tr>';
+            });
+    }
+    
+    // Function to load saved queries
+    function loadSavedQueries() {
+        fetch('/configurations/saved-queries/')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.querySelector('#saved-queries-table tbody');
+                tableBody.innerHTML = '';
+                
+                if (data.queries && data.queries.length > 0) {
+                    data.queries.forEach(query => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${query.name}</td>
+                            <td>${query.connection_name}</td>
+                            <td>${query.description || 'No description'}</td>
+                            <td>${query.created_at}</td>
+                            <td>${query.last_run || 'Never'}</td>
+                            <td>
+                                <button class="btn btn-icon btn-sm btn-light-success me-1" onclick="runSavedQuery(${query.id})">
+                                    <i class="ki-duotone ki-play fs-2x"></i>
+                                </button>
+                                <button class="btn btn-icon btn-sm btn-light-primary me-1" onclick="editQuery(${query.id})">
+                                    <i class="ki-duotone ki-pencil fs-2x"></i>
+                                </button>
+                                <button class="btn btn-icon btn-sm btn-light-danger" onclick="deleteQuery(${query.id})">
+                                    <i class="ki-duotone ki-trash fs-2x"></i>
+                                </button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colspan="6" class="text-center">No saved queries found. Create one to get started.</td>';
+                    tableBody.appendChild(row);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading saved queries:', error);
+                const tableBody = document.querySelector('#saved-queries-table tbody');
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading queries. Please try again.</td></tr>';
+            });
+    }
+    
+    // Function to test a database connection
+    function testDatabaseConnection() {
+        const connectionData = {
+            type: document.getElementById('connection-type').value,
+            server: document.getElementById('connection-server').value,
+            port: document.getElementById('connection-port').value,
+            database: document.getElementById('connection-database').value,
+            username: document.getElementById('connection-username').value,
+            password: document.getElementById('connection-password').value
+        };
+        
+        // Validate form
+        if (!connectionData.type || !connectionData.server || !connectionData.port || 
+            !connectionData.database || !connectionData.username || !connectionData.password) {
+            alert('Please fill out all required fields');
+            return;
+        }
+        
+        // Show loading state
+        const testBtn = document.getElementById('btn-test-connection');
+        const originalText = testBtn.innerHTML;
+        testBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Testing...';
+        testBtn.disabled = true;
+        
+        fetch('/configurations/test-database-connection/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(connectionData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Connection successful!');
+            } else {
+                alert('Connection failed: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error testing connection:', error);
+            alert('Error testing connection. Please try again.');
+        })
+        .finally(() => {
+            // Restore button state
+            testBtn.innerHTML = originalText;
+            testBtn.disabled = false;
+        });
+    }
+    
+    // Function to save a database connection
+    function saveDatabaseConnection() {
+        const connectionId = document.getElementById('connection-id').value;
+        const connectionData = {
+            id: connectionId || null,
+            name: document.getElementById('connection-name').value,
+            type: document.getElementById('connection-type').value,
+            server: document.getElementById('connection-server').value,
+            port: document.getElementById('connection-port').value,
+            database: document.getElementById('connection-database').value,
+            username: document.getElementById('connection-username').value,
+            password: document.getElementById('connection-password').value,
+            is_default: document.getElementById('connection-is-default').checked
+        };
+        
+        // Validate form
+        if (!connectionData.name || !connectionData.type || !connectionData.server || 
+            !connectionData.port || !connectionData.database || !connectionData.username || 
+            !connectionData.password) {
+            alert('Please fill out all required fields');
+            return;
+        }
+        
+        // Show loading state
+        const saveBtn = document.getElementById('btn-save-connection');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+        saveBtn.disabled = true;
+        
+        fetch('/configurations/save-database-connection/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(connectionData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal and reload connections
+                $('#modal-database-connection').modal('hide');
+                loadDatabaseConnections();
+                alert('Connection saved successfully!');
+            } else {
+                alert('Error saving connection: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving connection:', error);
+            alert('Error saving connection. Please try again.');
+        })
+        .finally(() => {
+            // Restore button state
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+    }
+    
+    // Function to run a query
+    function runQuery() {
+        const connectionId = document.getElementById('query-connection').value;
+        const sqlQuery = document.getElementById('query-editor').value;
+        
+        if (!connectionId || !sqlQuery) {
+            alert('Please select a connection and enter a SQL query');
+            return;
+        }
+        
+        // Show loading state
+        const runBtn = document.getElementById('btn-run-query');
+        const originalText = runBtn.innerHTML;
+        runBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Running...';
+        runBtn.disabled = true;
+        
+        fetch('/configurations/run-query/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                connection_id: connectionId,
+                query: sqlQuery
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Populate results table
+                const resultsTable = document.getElementById('query-results-table');
+                resultsTable.innerHTML = '';
+                
+                // Create header
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                headerRow.className = 'fw-bold fs-6 text-gray-800 border-bottom border-gray-200';
+                
+                if (data.columns && data.columns.length > 0) {
+                    data.columns.forEach(column => {
+                        const th = document.createElement('th');
+                        th.textContent = column;
+                        headerRow.appendChild(th);
+                    });
+                    thead.appendChild(headerRow);
+                    resultsTable.appendChild(thead);
+                    
+                    // Create body
+                    const tbody = document.createElement('tbody');
+                    if (data.results && data.results.length > 0) {
+                        data.results.forEach(row => {
+                            const tr = document.createElement('tr');
+                            data.columns.forEach(column => {
+                                const td = document.createElement('td');
+                                td.textContent = row[column] !== null ? row[column] : '';
+                                tr.appendChild(td);
+                            });
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        const tr = document.createElement('tr');
+                        const td = document.createElement('td');
+                        td.colSpan = data.columns.length;
+                        td.textContent = 'Query executed successfully, but no results were returned.';
+                        td.className = 'text-center';
+                        tr.appendChild(td);
+                        tbody.appendChild(tr);
+                    }
+                    resultsTable.appendChild(tbody);
+                    
+                    // Show results container
+                    document.getElementById('query-results-container').classList.remove('d-none');
+                } else {
+                    alert('Query executed successfully, but no results were returned.');
+                }
+            } else {
+                alert('Error running query: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error running query:', error);
+            alert('Error running query. Please try again.');
+        })
+        .finally(() => {
+            // Restore button state
+            runBtn.innerHTML = originalText;
+            runBtn.disabled = false;
+        });
+    }
+    
+    // Function to save a query
+    function saveQuery() {
+        const queryId = document.getElementById('query-id').value;
+        const queryData = {
+            id: queryId || null,
+            name: document.getElementById('query-name').value,
+            connection_id: document.getElementById('query-connection').value,
+            description: document.getElementById('query-description').value,
+            query: document.getElementById('query-editor').value
+        };
+        
+        // Validate form
+        if (!queryData.name || !queryData.connection_id || !queryData.query) {
+            alert('Please fill out all required fields');
+            return;
+        }
+        
+        // Show loading state
+        const saveBtn = document.getElementById('btn-save-query');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+        saveBtn.disabled = true;
+        
+        fetch('/configurations/save-query/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(queryData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal and reload queries
+                $('#modal-query-builder').modal('hide');
+                loadSavedQueries();
+                alert('Query saved successfully!');
+            } else {
+                alert('Error saving query: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving query:', error);
+            alert('Error saving query. Please try again.');
+        })
+        .finally(() => {
+            // Restore button state
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+    }
+    
+    // Function to edit an existing connection
+    function editConnection(id) {
+        fetch(`/configurations/database-connection/${id}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.connection) {
+                    const conn = data.connection;
+                    document.getElementById('connection-id').value = conn.id;
+                    document.getElementById('connection-name').value = conn.name;
+                    document.getElementById('connection-type').value = conn.type;
+                    document.getElementById('connection-server').value = conn.server;
+                    document.getElementById('connection-port').value = conn.port;
+                    document.getElementById('connection-database').value = conn.database;
+                    document.getElementById('connection-username').value = conn.username;
+                    document.getElementById('connection-password').value = ''; // Password is not returned for security
+                    document.getElementById('connection-is-default').checked = conn.is_default;
+                    
+                    document.getElementById('connection-modal-title').textContent = 'Edit Database Connection';
+                    $('#modal-database-connection').modal('show');
+                } else {
+                    alert('Error loading connection: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error getting connection:', error);
+                alert('Error loading connection. Please try again.');
+            });
+    }
+    
+    // Function to delete a connection
+    function deleteConnection(id) {
+        if (confirm('Are you sure you want to delete this connection? This cannot be undone.')) {
+            fetch(`/configurations/database-connection/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadDatabaseConnections();
+                    alert('Connection deleted successfully');
+                } else {
+                    alert('Error deleting connection: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting connection:', error);
+                alert('Error deleting connection. Please try again.');
+            });
+        }
+    }
+    
+    // Function to edit an existing query
+    function editQuery(id) {
+        fetch(`/configurations/saved-query/${id}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.query) {
+                    const query = data.query;
+                    document.getElementById('query-id').value = query.id;
+                    document.getElementById('query-name').value = query.name;
+                    document.getElementById('query-connection').value = query.connection_id;
+                    document.getElementById('query-description').value = query.description || '';
+                    document.getElementById('query-editor').value = query.query;
+                    
+                    document.getElementById('query-modal-title').textContent = 'Edit Query';
+                    $('#modal-query-builder').modal('show');
+                } else {
+                    alert('Error loading query: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error getting query:', error);
+                alert('Error loading query. Please try again.');
+            });
+    }
+    
+    // Function to delete a query
+    function deleteQuery(id) {
+        if (confirm('Are you sure you want to delete this query? This cannot be undone.')) {
+            fetch(`/configurations/saved-query/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadSavedQueries();
+                    alert('Query deleted successfully');
+                } else {
+                    alert('Error deleting query: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting query:', error);
+                alert('Error deleting query. Please try again.');
+            });
+        }
+    }
+    
+    // Function to run a saved query directly from the list
+    function runSavedQuery(id) {
+        window.location.href = `/configurations/run-saved-query/${id}/`;
+    }
+    
+    // Function to filter connections by search and type
+    function filterConnections() {
+        const searchTerm = document.getElementById('connection-search').value.toLowerCase();
+        const typeFilter = document.getElementById('connection-type-filter').value.toLowerCase();
+        
+        const rows = document.querySelectorAll('#connections-table tbody tr');
+        
+        rows.forEach(row => {
+            const name = row.cells[0].textContent.toLowerCase();
+            const type = row.cells[1].textContent.toLowerCase();
+            
+            const matchesSearch = name.includes(searchTerm);
+            const matchesType = !typeFilter || type.includes(typeFilter);
+            
+            row.style.display = matchesSearch && matchesType ? '' : 'none';
+        });
+    }
+    
+    // Stored Procedures Functionality
+
+    function initializeStoredProceduresSection() {
+        // Populate the connections dropdown for procedures
+        document.getElementById('btn-refresh-procedures').addEventListener('click', function() {
+            const connectionId = document.getElementById('procedure-connection-selector').value;
+            if (connectionId) {
+                loadStoredProcedures(connectionId);
+            } else {
+                alert('Please select a database connection first');
+            }
+        });
+
+        // Handle connection selection changes
+        document.getElementById('procedure-connection-selector').addEventListener('change', function() {
+            const connectionId = this.value;
+            if (connectionId) {
+                loadStoredProcedures(connectionId);
+            } else {
+                const tableBody = document.querySelector('#procedures-table tbody');
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Select a database connection to view procedures</td></tr>';
+                document.getElementById('procedures-pagination').style.display = 'none';
+            }
+        });
+
+        // Handle procedure search
+        document.getElementById('procedure-search').addEventListener('keyup', filterProcedures);
+        
+        // Handle items per page change
+        document.getElementById('procedures-per-page').addEventListener('change', function() {
+            if (window.allProcedures) {
+                renderProceduresPagination(1);
+            }
+        });
+
+        // Setup execute procedure button
+        document.getElementById('btn-execute-procedure').addEventListener('click', executeProcedure);
+        document.getElementById('btn-save-procedure-execution').addEventListener('click', saveProcedureExecution);
+        
+        // Setup saved executions section
+        document.getElementById('btn-refresh-saved-executions').addEventListener('click', loadSavedProcedureExecutions);
+        document.getElementById('saved-execution-search').addEventListener('keyup', filterSavedExecutions);
+        
+        // Initialize parameter configuration
+        initializeParameterConfig();
+        
+        // Load saved procedure executions
+        loadSavedProcedureExecutions();
+    }
+
+    // Function to load stored procedures for a connection
+    function loadStoredProcedures(connectionId) {
+        const tableBody = document.querySelector('#procedures-table tbody');
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Loading procedures...</td></tr>';
+
+        fetch(`/configurations/stored-procedures/${connectionId}/`)
+            .then(response => response.json())
+            .then(data => {
+                tableBody.innerHTML = '';
+
+                if (data.success && data.procedures && data.procedures.length > 0) {
+                    // Store all procedures in global variables for pagination
+                    window.allProcedures = data.procedures;
+                    window.displayProcedures = data.procedures;
+                    
+                    // Setup pagination
+                    renderProceduresPagination();
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No stored procedures found for this connection</td></tr>';
+                    document.getElementById('procedures-pagination').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading stored procedures:', error);
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading stored procedures. Please try again.</td></tr>';
+                document.getElementById('procedures-pagination').style.display = 'none';
+            });
+    }
+    
+    // Function to render procedures with pagination
+    function renderProceduresPagination(page = 1) {
+        if (!window.allProcedures) return;
+        
+        // Make sure we have the display procedures set
+        if (!window.displayProcedures) {
+            window.displayProcedures = window.allProcedures;
+        }
+        
+        const tableBody = document.querySelector('#procedures-table tbody');
+        const itemsPerPage = parseInt(document.getElementById('procedures-per-page').value);
+        const connectionId = document.getElementById('procedure-connection-selector').value;
+        const totalItems = window.displayProcedures.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        
+        // Ensure current page is valid
+        page = Math.max(1, Math.min(page, totalPages));
+        
+        // Calculate start and end indices
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+        
+        // Clear the table
+        tableBody.innerHTML = '';
+        
+        // Add the visible procedures
+        for (let i = startIndex; i < endIndex; i++) {
+            const proc = window.displayProcedures[i];
+            const row = document.createElement('tr');
+            
+            // Format parameters for display
+            let paramDisplay = 'None';
+            if (proc.parameters && proc.parameters.length > 0) {
+                paramDisplay = proc.parameters.map(p => 
+                    `${p.name} (${p.data_type}${p.direction ? ', ' + p.direction : ''})`
+                ).join(', ');
+            }
+            
+            row.innerHTML = `
+                <td>${proc.name}</td>
+                <td>${proc.schema || 'default'}</td>
+                <td title="${paramDisplay}">${proc.parameters ? proc.parameters.length : 0} parameters</td>
+                <td>${proc.return_type || 'None'}</td>
+                <td>
+                    <a class="btn btn-sm btn-light-primary" href="/configurations/approved-procedures/">Review for approval</a>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        }
+        
+        // Show message if no procedures match the search
+        if (totalItems === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No procedures match your search criteria</td></tr>';
+        }
+        
+        // Update the showing text
+        const showingText = totalItems > 0 ? 
+            `Showing ${startIndex + 1} to ${endIndex} of ${totalItems} procedures` : 
+            'No procedures found';
+        document.getElementById('procedures-showing').textContent = showingText;
+        
+        // Render pagination controls
+        renderPaginationControls(page, totalPages);
+        
+        // Show pagination container
+        document.getElementById('procedures-pagination').style.display = 'flex';
+    }
+    
+    // Function to render pagination controls
+    function renderPaginationControls(currentPage, totalPages) {
+        const paginationContainer = document.querySelector('#procedures-pagination .pagination');
+        paginationContainer.innerHTML = '';
+        
+        // Previous button
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item previous ${currentPage === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a href="#" class="page-link"><i class="previous"></i></a>`;
+        if (currentPage > 1) {
+            prevLi.querySelector('a').addEventListener('click', (e) => {
+                e.preventDefault();
+                renderProceduresPagination(currentPage - 1);
+            });
+        }
+        paginationContainer.appendChild(prevLi);
+        
+        // Calculate which page numbers to show
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        
+        // Adjust if we're near the end
+        if (endPage - startPage < 4 && startPage > 1) {
+            startPage = Math.max(1, endPage - 4);
+        }
+        
+        // Page numbers
+        for (let i = startPage; i <= endPage; i++) {
+            const pageLi = document.createElement('li');
+            pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            pageLi.innerHTML = `<a href="#" class="page-link">${i}</a>`;
+            if (i !== currentPage) {
+                pageLi.querySelector('a').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    renderProceduresPagination(i);
+                });
+            }
+            paginationContainer.appendChild(pageLi);
+        }
+        
+        // Next button
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item next ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a href="#" class="page-link"><i class="next"></i></a>`;
+        if (currentPage < totalPages) {
+            nextLi.querySelector('a').addEventListener('click', (e) => {
+                e.preventDefault();
+                renderProceduresPagination(currentPage + 1);
+            });
+        }
+        paginationContainer.appendChild(nextLi);
+    }
+
+    // Function to filter procedures by search term
+    function filterProcedures() {
+        const searchTerm = document.getElementById('procedure-search').value.toLowerCase();
+        
+        if (window.allProcedures) {
+            // Filter the global procedures array
+            const filteredProcedures = window.allProcedures.filter(proc => {
+                const name = proc.name.toLowerCase();
+                const schema = (proc.schema || '').toLowerCase();
+                return name.includes(searchTerm) || schema.includes(searchTerm);
+            });
+            
+            // Use filtered or all procedures based on search
+            window.displayProcedures = searchTerm ? filteredProcedures : window.allProcedures;
+            
+            // Re-render with filtered results
+            renderProceduresPagination(1);
+        } else {
+            // Fallback to old method if for some reason we don't have the global array
+            const rows = document.querySelectorAll('#procedures-table tbody tr');
+            
+            rows.forEach(row => {
+                if (row.cells.length > 1) { // Skip message rows with colspan
+                    const name = row.cells[0].textContent.toLowerCase();
+                    const schema = row.cells[1].textContent.toLowerCase();
+                    
+                    row.style.display = (name.includes(searchTerm) || schema.includes(searchTerm)) ? '' : 'none';
+                }
+            });
+        }
+    }
+
+    // Function to open the procedure executor
+    function openProcedureExecutor(procedureId, connectionId, procedureName, schemaName) {
+        // Set hidden fields
+        document.getElementById('procedure-id').value = procedureId;
+        document.getElementById('procedure-connection-id').value = connectionId;
+        document.getElementById('procedure-name').value = procedureName;
+        document.getElementById('procedure-schema').value = schemaName;
+        
+        // Update display texts
+        document.getElementById('procedure-full-name').textContent = schemaName ? `${schemaName}.${procedureName}` : procedureName;
+        
+        // Find connection name
+        const connectionSelect = document.getElementById('procedure-connection-selector');
+        const connectionName = connectionSelect.options[connectionSelect.selectedIndex].text;
+        document.getElementById('procedure-connection-name').textContent = connectionName;
+        
+        // Reset results
+        document.getElementById('procedure-results-container').classList.add('d-none');
+        
+        // Show loading for parameters
+        document.getElementById('procedure-params-container').innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading procedure parameters...</p>
+            </div>
+        `;
+        
+        // Load procedure parameters
+        loadProcedureParameters(procedureId, connectionId);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('modal-procedure-executor'));
+        modal.show();
+    }
+
+    // Function to load procedure parameters
+    function loadProcedureParameters(procedureId, connectionId) {
+        fetch(`/configurations/procedure-parameters/${connectionId}/${procedureId}/`)
+            .then(response => response.json())
+            .then(data => {
+                const paramsContainer = document.getElementById('procedure-params-container');
+                
+                if (data.success && data.parameters) {
+                    if (data.parameters.length > 0) {
+                        // Store parameters globally for reference
+                        window.currentProcedureParameters = data.parameters;
+                        // Initialize parameter configurations if not already set
+                        if (!window.parameterConfigurations) {
+                            window.parameterConfigurations = {};
+                        }
+                        
+                        let paramsHtml = '<div class="row">';
+                        
+                        data.parameters.forEach((param, index) => {
+                            // Create form controls based on parameter type and direction
+                            const isOutput = param.direction && (param.direction.toLowerCase() === 'output' || param.direction.toLowerCase() === 'out' || param.direction.toLowerCase() === 'return');
+                            const isInputOutput = param.direction && param.direction.toLowerCase() === 'inout';
+                            
+                            // Check if we have a configuration for this parameter
+                            const paramKey = `${procedureId}_${param.name}`;
+                            const paramConfig = window.parameterConfigurations[paramKey] || { displayType: 'text' };
+                            
+                            let inputField = '';
+                            
+                            if (isOutput) {
+                                // Output parameters are always read-only text fields
+                                inputField = `<input type="text" class="form-control form-control-solid" name="param_value_${index}" readonly disabled placeholder="Output parameter">`;
+                            } else {
+                                // Generate the appropriate input field based on configuration
+                                switch (paramConfig.displayType) {
+                                    case 'dropdown':
+                                        inputField = `<select class="form-select form-select-solid" name="param_value_${index}" ${isInputOutput ? 'data-inout="true"' : ''}>`;
+                                        inputField += `<option value="">Select a value</option>`;
+                                        
+                                        // Add options if available
+                                        if (paramConfig.options && paramConfig.options.length > 0) {
+                                            paramConfig.options.forEach(option => {
+                                                inputField += `<option value="${option.value}">${option.label || option.value}</option>`;
+                                            });
+                                        }
+                                        
+                                        inputField += `</select>`;
+                                        break;
+                                    
+                                    case 'checkbox':
+                                        inputField = `<div class="form-check form-switch form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" name="param_value_${index}" ${isInputOutput ? 'data-inout="true"' : ''}>
+                                        </div>`;
+                                        break;
+                                        
+                                    case 'date':
+                                        inputField = `<input type="date" class="form-control form-control-solid" name="param_value_${index}" ${isInputOutput ? 'data-inout="true"' : ''}>`;
+                                        break;
+                                        
+                                    case 'datetime':
+                                        inputField = `<input type="datetime-local" class="form-control form-control-solid" name="param_value_${index}" ${isInputOutput ? 'data-inout="true"' : ''}>`;
+                                        break;
+                                        
+                                    case 'text':
+                                    default:
+                                        inputField = `<input type="text" class="form-control form-control-solid" name="param_value_${index}" placeholder="Enter value" ${isInputOutput ? 'data-inout="true"' : ''}>`;
+                                        break;
+                                }
+                            }
+                            
+                            // Only add configuration button for input parameters (not output)
+                            const configButton = !isOutput ? 
+                                `<button type="button" class="btn btn-sm btn-icon btn-light configure-parameter" data-index="${index}" title="Configure parameter">
+                                    <i class="ki-duotone ki-setting-2 fs-2"></i>
+                                </button>` : '';
+                            
+                            paramsHtml += `
+                                <div class="col-md-6 mb-5">
+                                    <div class="fv-row">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="fw-semibold fs-6">
+                                                ${param.name} 
+                                                <span class="text-muted fs-7">(${param.data_type}${param.direction ? ', ' + param.direction : ''})</span>
+                                            </label>
+                                            ${configButton}
+                                        </div>
+                                        <input type="hidden" name="param_name_${index}" value="${param.name}">
+                                        <input type="hidden" name="param_type_${index}" value="${param.data_type}">
+                                        <input type="hidden" name="param_direction_${index}" value="${param.direction || 'IN'}">
+                                        
+                                        ${inputField}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        paramsHtml += '</div>';
+                        paramsContainer.innerHTML = paramsHtml;
+                        
+                        // Add event listeners to configuration buttons
+                        document.querySelectorAll('.configure-parameter').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                const paramIndex = this.getAttribute('data-index');
+                                openParameterConfigModal(paramIndex);
+                            });
+                        });
+                    } else {
+                        paramsContainer.innerHTML = '<p class="text-center">This procedure has no parameters</p>';
+                    }
+                } else {
+                    paramsContainer.innerHTML = '<p class="text-center text-danger">Failed to load parameters: ' + (data.error || 'Unknown error') + '</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading procedure parameters:', error);
+                document.getElementById('procedure-params-container').innerHTML = 
+                    '<p class="text-center text-danger">Error loading parameters. Please try again.</p>';
+            });
+    }
+
+    // Function to execute a stored procedure
+    function executeProcedure() {
+        const approvedProcedureId = document.getElementById('approved-procedure-id').value;
+        if (!approvedProcedureId) {
+            alert('This discovered procedure is not approved for execution.');
+            return;
+        }
+        
+        // Collect parameter values
+        const params = {};
+        const paramInputs = document.querySelectorAll('#procedure-params-container input[name^="param_value_"]');
+        
+        paramInputs.forEach((input, index) => {
+            const nameInput = document.querySelector(`#procedure-params-container input[name="param_name_${index}"]`);
+            params[nameInput.value] = input.value;
+        });
+        
+        // Show loading state
+        const executeBtn = document.getElementById('btn-execute-procedure');
+        const originalText = executeBtn.innerHTML;
+        executeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Executing...';
+        executeBtn.disabled = true;
+        
+        // Reset results sections
+        document.getElementById('procedure-results-container').classList.add('d-none');
+        document.getElementById('output-params-container').innerHTML = '<p class="text-center text-muted">No output parameters returned</p>';
+        document.getElementById('result-sets-container').innerHTML = '<p class="text-center text-muted">No result sets returned</p>';
+        
+        // Execute procedure
+        fetch('/configurations/execute-procedure/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                approved_procedure_id: Number(approvedProcedureId),
+                parameters: params
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show results container
+                document.getElementById('procedure-results-container').classList.remove('d-none');
+                
+                // Update output parameters
+                if (data.output_parameters && data.output_parameters.length > 0) {
+                    let outputHtml = '<table class="table table-bordered table-striped">';
+                    outputHtml += '<thead><tr><th>Parameter</th><th>Value</th><th>Type</th></tr></thead><tbody>';
+                    
+                    data.output_parameters.forEach(param => {
+                        outputHtml += `
+                            <tr>
+                                <td>${param.name}</td>
+                                <td>${param.value !== null ? param.value : '<em>NULL</em>'}</td>
+                                <td>${param.data_type}</td>
+                            </tr>
+                        `;
+                        
+                    });
+                    
+                    outputHtml += '</tbody></table>';
+                    document.getElementById('output-params-container').innerHTML = outputHtml;
+                }
+                
+                // Update result sets
+                if (data.result_sets && data.result_sets.length > 0) {
+                    let resultSetsHtml = '';
+                    
+                    data.result_sets.forEach((resultSet, index) => {
+                        resultSetsHtml += `<h5 class="fw-bold mb-3">Result Set ${index + 1}</h5>`;
+                        
+                        if (resultSet.columns && resultSet.columns.length > 0 && resultSet.rows) {
+                            resultSetsHtml += '<div class="table-responsive mb-5">';
+                            resultSetsHtml += '<table class="table table-bordered table-striped">';
+                            
+                            // Table headers
+                            resultSetsHtml += '<thead><tr>';
+                            resultSet.columns.forEach(column => {
+                                resultSetsHtml += `<th>${column}</th>`;
+                            });
+                            resultSetsHtml += '</tr></thead>';
+                            
+                            // Table body
+                            resultSetsHtml += '<tbody>';
+                            if (resultSet.rows.length > 0) {
+                                resultSet.rows.forEach(row => {
+                                    resultSetsHtml += '<tr>';
+                                    resultSet.columns.forEach(column => {
+                                        const value = row[column];
+                                        resultSetsHtml += `<td>${value !== null ? value : '<em>NULL</em>'}</td>`;
+                                    });
+                                    resultSetsHtml += '</tr>';
+                                });
+                            } else {
+                                resultSetsHtml += `<tr><td colspan="${resultSet.columns.length}" class="text-center">No rows returned</td></tr>`;
+                            }
+                            resultSetsHtml += '</tbody></table></div>';
+                        } else {
+                            resultSetsHtml += '<p class="text-center text-muted">Empty result set</p>';
+                        }
+                    });
+                    
+                    document.getElementById('result-sets-container').innerHTML = resultSetsHtml;
+                }
+            } else {
+                alert('Error executing procedure: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error executing procedure:', error);
+            alert('Error executing procedure. Please try again.');
+        })
+        .finally(() => {
+            // Restore button state
+            executeBtn.innerHTML = originalText;
+            executeBtn.disabled = false;
+        });
+    }
+
+    // Function to save a procedure execution for later use
+    function saveProcedureExecution() {
+        const procedureId = document.getElementById('procedure-id').value;
+        const connectionId = document.getElementById('procedure-connection-id').value;
+        const procedureName = document.getElementById('procedure-name').value;
+        const schemaName = document.getElementById('procedure-schema').value;
+        
+        console.log("Saving procedure execution with ID:", procedureId);
+        
+        // Collect parameter values
+        const params = [];
+        const paramInputs = document.querySelectorAll('#procedure-params-container input[name^="param_value_"], #procedure-params-container select[name^="param_value_"]');
+        
+        paramInputs.forEach((input, index) => {
+            const nameInput = document.querySelector(`#procedure-params-container input[name="param_name_${index}"]`);
+            const typeInput = document.querySelector(`#procedure-params-container input[name="param_type_${index}"]`);
+            const directionInput = document.querySelector(`#procedure-params-container input[name="param_direction_${index}"]`);
+            
+            // Only include input and inout parameters
+            const direction = directionInput.value.toLowerCase();
+            if (direction === 'in' || direction === 'inout') {
+                // Get the value based on input type
+                let value = input.value;
+                if (input.type === 'checkbox') {
+                    value = input.checked ? 'true' : 'false';
+                }
+                
+                // Get parameter configuration if available
+                const paramName = nameInput.value;
+                const paramKey = `${procedureId}_${paramName}`;
+                const paramConfig = window.parameterConfigurations[paramKey];
+                
+                params.push({
+                    name: paramName,
+                    value: value,
+                    data_type: typeInput.value,
+                    direction: direction,
+                    config: paramConfig || { displayType: 'text' }
+                });
+            }
+        });
+        
+        // Use procedure name for execution name without prompting
+        const executionName = `${procedureName} execution`;
+        
+        // Show loading state
+        const saveBtn = document.getElementById('btn-save-procedure-execution');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+        saveBtn.disabled = true;
+        
+        // Save execution
+        fetch('/configurations/save-procedure-execution/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                name: executionName,
+                connection_id: connectionId,
+                procedure_id: procedureId,
+                schema: schemaName,
+                procedure_name: procedureName,
+                parameters: params
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Procedure execution saved successfully!');
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('modal-procedure-executor')).hide();
+                // Refresh saved executions list
+                loadSavedProcedureExecutions();
+            } else {
+                alert('Error saving procedure execution: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error saving procedure execution:', error);
+            alert('Error saving procedure execution. Please try again.');
+        })
+        .finally(() => {
+            // Restore button state
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+    }
+
+    // Function to load saved procedure executions
+    function loadSavedProcedureExecutions() {
+        const tableBody = document.querySelector('#saved-executions-table tbody');
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Loading saved executions...</td></tr>';
+
+        fetch('/configurations/saved-procedure-executions/')
+            .then(response => response.json())
+            .then(data => {
+                tableBody.innerHTML = '';
+
+                if (data.success && data.executions && data.executions.length > 0) {
+                    data.executions.forEach(execution => {
+                        const row = document.createElement('tr');
+                        
+                        // Format procedure name with schema if available
+                        const fullProcName = execution.procedure_schema ? 
+                            `${execution.procedure_schema}.${execution.procedure_name}` : 
+                            execution.procedure_name;
+                        
+                        row.innerHTML = `
+                            <td>${execution.name}</td>
+                            <td>${fullProcName}</td>
+                            <td>${execution.connection_name}</td>
+                            <td>${execution.created_at}</td>
+                            <td>${execution.last_run || 'Never'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-light run-saved-execution me-2" 
+                                    data-id="${execution.id}" 
+                                    title="Run this saved execution">
+                                    <i class="ki-duotone ki-play fs-1 me-1"></i> Run
+                                </button>
+                                <button class="btn btn-sm btn-light delete-saved-execution" 
+                                    data-id="${execution.id}" 
+                                    title="Delete this saved execution">
+                                    <i class="ki-duotone ki-trash fs-1 me-1"></i> Delete
+                                </button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // Add event listeners to buttons
+                    document.querySelectorAll('.run-saved-execution').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            runSavedProcedureExecution(this.getAttribute('data-id'));
+                        });
+                    });
+                    
+                    document.querySelectorAll('.delete-saved-execution').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            deleteSavedProcedureExecution(this.getAttribute('data-id'));
+                        });
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No saved procedure executions found. Save a procedure execution to see it here.</td></tr>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading saved procedure executions:', error);
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading saved executions. Please try again.</td></tr>';
+            });
+    }
+    
+    // Function to run a saved procedure execution
+    function runSavedProcedureExecution(id) {
+        if (!id) return;
+        
+        // Get all execution data from the table row
+        const row = document.querySelector(`.run-saved-execution[data-id="${id}"]`).closest('tr');
+        if (!row) return;
+        
+        const executionName = row.cells[0].textContent;
+        const procedureFullName = row.cells[1].textContent;
+        const connectionName = row.cells[2].textContent;
+        
+        console.log("Running saved execution:", executionName, procedureFullName);
+        
+        // Show loading spinner in place
+        const btn = document.querySelector(`.run-saved-execution[data-id="${id}"]`);
+        if (btn) {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+            btn.disabled = true;
+            
+            // Get detailed execution data using the saved executions API
+            fetch('/configurations/saved-procedure-executions/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.executions) {
+                        // Find the execution with the matching ID
+                        const execution = data.executions.find(exec => exec.id == id);
+                        
+                        if (execution) {
+                            console.log("Found saved execution:", execution);
+                            // We have the execution data, now open the modal and populate it
+                            openProcedureExecutorWithSavedExecution(execution);
+                        } else {
+                            alert('Could not find the saved execution details.');
+                        }
+                    } else {
+                        alert('Error loading saved executions: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading saved execution data:', error);
+                    alert('Error running saved procedure execution. Please try again.');
+                })
+                .finally(() => {
+                    // Restore button
+                    if (btn) {
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }
+                });
+        }
+    }
+    
+    // Function to open procedure executor with saved execution data
+    function openProcedureExecutorWithSavedExecution(execution) {
+        console.log("Opening procedure executor with saved execution:", execution);
+        
+        // Get procedure ID - it might be in one of several places
+        let procedureId = execution.procedure_id;
+        
+        // If no procedure ID, we need to find the procedure from connection and name
+        if (!procedureId) {
+            console.log("No direct procedure_id, attempting to find it");
+            
+            if (window.allProcedures) {
+                // Try to find the procedure in the loaded procedures list
+                const matchingProc = window.allProcedures.find(proc => 
+                    proc.name === execution.procedure_name && 
+                    (proc.schema || '') === (execution.procedure_schema || '')
+                );
+                
+                if (matchingProc) {
+                    procedureId = matchingProc.id;
+                    console.log("Found procedure ID from loaded procedures:", procedureId);
+                }
+            }
+            
+            if (!procedureId) {
+                // We need to load procedures for this connection first
+                console.log("Loading procedures for connection:", execution.connection_id);
+                
+                // Show a message in the modal that we're searching for the procedure
+                const modal = new bootstrap.Modal(document.getElementById('modal-procedure-executor'));
+                modal.show();
+                
+                document.getElementById('procedure-full-name').textContent = execution.procedure_schema ? 
+                    `${execution.procedure_schema}.${execution.procedure_name}` : 
+                    execution.procedure_name;
+                
+                document.getElementById('procedure-connection-name').textContent = execution.connection_name;
+                
+                document.getElementById('procedure-params-container').innerHTML = `
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Finding procedure details...</p>
+                    </div>
+                `;
+                
+                // Load all procedures for this connection
+                fetch(`/configurations/stored-procedures/${execution.connection_id}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.procedures && data.procedures.length > 0) {
+                            // Find the matching procedure
+                            const matchingProc = data.procedures.find(proc => 
+                                proc.name === execution.procedure_name && 
+                                (proc.schema || '') === (execution.procedure_schema || '')
+                            );
+                            
+                            if (matchingProc) {
+                                procedureId = matchingProc.id;
+                                console.log("Found procedure ID from API:", procedureId);
+                                
+                                // Now that we have the procedure ID, set it up and load parameters
+                                document.getElementById('procedure-id').value = procedureId;
+                                document.getElementById('procedure-connection-id').value = execution.connection_id;
+                                document.getElementById('procedure-name').value = execution.procedure_name;
+                                document.getElementById('procedure-schema').value = execution.procedure_schema || '';
+                                
+                                // Load parameters with the found procedure ID
+                                loadParametersWithSavedValues(procedureId, execution.connection_id, execution.parameters);
+                            } else {
+                                document.getElementById('procedure-params-container').innerHTML = 
+                                    '<p class="text-center text-danger">Could not find the procedure. It may have been renamed or deleted.</p>';
+                            }
+                        } else {
+                            document.getElementById('procedure-params-container').innerHTML = 
+                                '<p class="text-center text-danger">Failed to load procedures list.</p>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error finding procedure:', error);
+                        document.getElementById('procedure-params-container').innerHTML = 
+                            '<p class="text-center text-danger">Error finding procedure. Please try again.</p>';
+                    });
+                
+                // Exit early since we're handling the parameter loading in the callback
+                return;
+            }
+        }
+        
+        // Set hidden fields
+        document.getElementById('procedure-id').value = procedureId;
+        document.getElementById('procedure-connection-id').value = execution.connection_id;
+        document.getElementById('procedure-name').value = execution.procedure_name;
+        document.getElementById('procedure-schema').value = execution.procedure_schema || '';
+        
+        // Update display texts
+        document.getElementById('procedure-full-name').textContent = execution.procedure_schema ? 
+            `${execution.procedure_schema}.${execution.procedure_name}` : 
+            execution.procedure_name;
+        
+        document.getElementById('procedure-connection-name').textContent = execution.connection_name;
+        
+        // Reset results
+        document.getElementById('procedure-results-container').classList.add('d-none');
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('modal-procedure-executor'));
+        modal.show();
+        
+        // Load parameters with saved values
+        loadParametersWithSavedValues(procedureId, execution.connection_id, execution.parameters);
+    }
+    
+    // Function to load parameters with saved values and configuration
+    function loadParametersWithSavedValues(procedureId, connectionId, savedParameters) {
+        console.log("Loading parameters for procedure:", procedureId, "with saved values:", savedParameters);
+        
+        // Show loading for parameters
+        document.getElementById('procedure-params-container').innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading procedure parameters...</p>
+            </div>
+        `;
+        
+        // Load procedure parameters and then set saved values
+        fetch(`/configurations/procedure-parameters/${connectionId}/${procedureId}/`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("Parameters API response:", data);
+                const paramsContainer = document.getElementById('procedure-params-container');
+                
+                if (data.success && data.parameters) {
+                    if (data.parameters.length > 0) {
+                        // Store parameters globally for reference
+                        window.currentProcedureParameters = data.parameters;
+                        // Initialize parameter configurations if not already set
+                        if (!window.parameterConfigurations) {
+                            window.parameterConfigurations = {};
+                        }
+                        
+                        let paramsHtml = '<div class="row">';
+                        
+                        data.parameters.forEach((param, index) => {
+                            // Create form controls based on parameter type and direction
+                            const isOutput = param.direction && (param.direction.toLowerCase() === 'output' || param.direction.toLowerCase() === 'out' || param.direction.toLowerCase() === 'return');
+                            const isInputOutput = param.direction && param.direction.toLowerCase() === 'inout';
+                            
+                            // Find the saved value and configuration for this parameter
+                            let savedValue = '';
+                            let paramConfig = { displayType: 'text' };
+                            
+                            if (savedParameters && savedParameters.length > 0) {
+                                const savedParam = savedParameters.find(p => p.name === param.name);
+                                if (savedParam) {
+                                    savedValue = savedParam.value || '';
+                                    if (savedParam.config) {
+                                        paramConfig = savedParam.config;
+                                        // Store the configuration for future use
+                                        const paramKey = `${procedureId}_${param.name}`;
+                                        window.parameterConfigurations[paramKey] = paramConfig;
+                                    }
+                                }
+                            }
+                            
+                            let inputField = '';
+                            
+                            if (isOutput) {
+                                // Output parameters are always read-only text fields
+                                inputField = `<input type="text" class="form-control form-control-solid" name="param_value_${index}" readonly disabled placeholder="Output parameter">`;
+                            } else {
+                                // Generate the appropriate input field based on configuration
+                                switch (paramConfig.displayType) {
+                                    case 'dropdown':
+                                        inputField = `<select class="form-select form-select-solid" name="param_value_${index}" ${isInputOutput ? 'data-inout="true"' : ''}>`;
+                                        inputField += `<option value="">Select a value</option>`;
+                                        
+                                        // Add options if available for manual dropdown
+                                        if (paramConfig.dataSource === 'manual' && paramConfig.options && paramConfig.options.length > 0) {
+                                            paramConfig.options.forEach(option => {
+                                                const isSelected = option.value === savedValue ? 'selected' : '';
+                                                inputField += `<option value="${option.value}" ${isSelected}>${option.label || option.value}</option>`;
+                                            });
+                                        } else if (paramConfig.dataSource === 'query') {
+                                            // For query-based dropdowns, add a loading indicator
+                                            inputField += `<option value="" disabled>Loading options...</option>`;
+                                            // If there's a saved value, add it as an option temporarily
+                                            if (savedValue) {
+                                                inputField += `<option value="${savedValue}" selected>${savedValue}</option>`;
+                                            }
+                                        }
+                                        
+                                        inputField += `</select>`;
+                                        
+                                        // Add a hidden field to store the dropdown data source for later use
+                                        inputField += `<input type="hidden" name="param_config_source_${index}" value="${paramConfig.dataSource || 'manual'}">`;
+                                        if (paramConfig.dataSource === 'query') {
+                                            inputField += `<input type="hidden" name="param_query_connection_${index}" value="${paramConfig.connectionId || ''}">`;
+                                            inputField += `<input type="hidden" name="param_query_${index}" value="${(paramConfig.query || '').replace(/"/g, '&quot;')}">`;
+                                        }
+                                        break;
+                                    
+                                    case 'checkbox':
+                                        const isChecked = savedValue === 'true' ? 'checked' : '';
+                                        inputField = `<div class="form-check form-switch form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" name="param_value_${index}" ${isChecked} ${isInputOutput ? 'data-inout="true"' : ''}>
+                                        </div>`;
+                                        break;
+                                        
+                                    case 'date':
+                                        inputField = `<input type="date" class="form-control form-control-solid" name="param_value_${index}" value="${savedValue}" ${isInputOutput ? 'data-inout="true"' : ''}>`;
+                                        break;
+                                        
+                                    case 'datetime':
+                                        inputField = `<input type="datetime-local" class="form-control form-control-solid" name="param_value_${index}" value="${savedValue}" ${isInputOutput ? 'data-inout="true"' : ''}>`;
+                                        break;
+                                        
+                                    case 'text':
+                                    default:
+                                        inputField = `<input type="text" class="form-control form-control-solid" name="param_value_${index}" value="${savedValue}" placeholder="Enter value" ${isInputOutput ? 'data-inout="true"' : ''}>`;
+                                        break;
+                                }
+                            }
+                            
+                            // Only add configuration button for input parameters (not output)
+                            const configButton = !isOutput ? 
+                                `<button type="button" class="btn btn-sm btn-icon btn-light configure-parameter" data-index="${index}" title="Configure parameter">
+                                    <i class="ki-duotone ki-setting-2 fs-2"></i>
+                                </button>` : '';
+                            
+                            paramsHtml += `
+                                <div class="col-md-6 mb-5">
+                                    <div class="fv-row">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="fw-semibold fs-6">
+                                                ${param.name} 
+                                                <span class="text-muted fs-7">(${param.data_type}${param.direction ? ', ' + param.direction : ''})</span>
+                                            </label>
+                                            ${configButton}
+                                        </div>
+                                        <input type="hidden" name="param_name_${index}" value="${param.name}">
+                                        <input type="hidden" name="param_type_${index}" value="${param.data_type}">
+                                        <input type="hidden" name="param_direction_${index}" value="${param.direction || 'IN'}">
+                                        
+                                        ${inputField}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        paramsHtml += '</div>';
+                        paramsContainer.innerHTML = paramsHtml;
+                        
+                        // Add event listeners to configuration buttons
+                        document.querySelectorAll('.configure-parameter').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                const paramIndex = this.getAttribute('data-index');
+                                openParameterConfigModal(paramIndex);
+                            });
+                        });
+                        
+                        console.log("About to load query-based dropdowns with saved parameters:", savedParameters);
+                        
+                        // Load data for query-based dropdowns with a short delay to ensure DOM is ready
+                        setTimeout(() => loadQueryBasedDropdowns(savedParameters), 100);
+                    } else {
+                        paramsContainer.innerHTML = '<p class="text-center">This procedure has no parameters</p>';
+                    }
+                } else {
+                    paramsContainer.innerHTML = '<p class="text-center text-danger">Failed to load parameters: ' + (data.error || 'Unknown error') + '</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading procedure parameters:', error);
+                document.getElementById('procedure-params-container').innerHTML = 
+                    '<p class="text-center text-danger">Error loading parameters. Please try again.</p>';
+            });
+    }
+    
+    // Function to delete a saved procedure execution
+    function deleteSavedProcedureExecution(id) {
+        if (confirm('Are you sure you want to delete this saved procedure execution? This cannot be undone.')) {
+            fetch(`/configurations/saved-procedure-executions/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadSavedProcedureExecutions();
+                    alert('Saved procedure execution deleted successfully');
+                } else {
+                    alert('Error deleting saved execution: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting saved procedure execution:', error);
+                alert('Error deleting saved procedure execution. Please try again.');
+            });
+        }
+    }
+    
+    // Function to filter saved executions by search term
+    function filterSavedExecutions() {
+        const searchTerm = document.getElementById('saved-execution-search').value.toLowerCase();
+        const rows = document.querySelectorAll('#saved-executions-table tbody tr');
+        
+        rows.forEach(row => {
+            if (row.cells.length > 1) { // Skip message rows with colspan
+                const name = row.cells[0].textContent.toLowerCase();
+                const procedure = row.cells[1].textContent.toLowerCase();
+                const connection = row.cells[2].textContent.toLowerCase();
+                
+                row.style.display = (name.includes(searchTerm) || 
+                                    procedure.includes(searchTerm) || 
+                                    connection.includes(searchTerm)) ? '' : 'none';
+            }
+        });
+    }
+    
+    // Initialize stored procedures section
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeStoredProceduresSection();
+        
+        // Also populate the procedure connections dropdown
+        fetch('/configurations/database-connections/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.connections && data.connections.length > 0) {
+                    const procedureConnectionSelector = document.getElementById('procedure-connection-selector');
+                    procedureConnectionSelector.innerHTML = '<option value="">-- Select Database Connection --</option>';
+                    
+                    data.connections.forEach(conn => {
+                        const option = document.createElement('option');
+                        option.value = conn.id;
+                        option.textContent = conn.name;
+                        procedureConnectionSelector.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading connections for procedures:', error);
+            });
+    });
+
+    // Function to open parameter configuration modal
+    function openParameterConfigModal(paramIndex) {
+        const param = window.currentProcedureParameters[paramIndex];
+        const procedureId = document.getElementById('procedure-id').value;
+        const paramKey = `${procedureId}_${param.name}`;
+        
+        // Get existing configuration or set defaults
+        const paramConfig = window.parameterConfigurations[paramKey] || { 
+            displayType: 'text',
+            dataSource: 'manual',
+            options: [],
+            query: '',
+            connectionId: ''
+        };
+        
+        // Set up the modal with parameter information
+        document.getElementById('param-config-index').value = paramIndex;
+        document.getElementById('param-config-name').value = param.name;
+        document.getElementById('param-config-display-name').textContent = param.name;
+        document.getElementById('param-config-type').textContent = `${param.data_type}${param.direction ? ', ' + param.direction : ''}`;
+        
+        // Set the current configuration
+        document.getElementById('param-config-display-type').value = paramConfig.displayType || 'text';
+        
+        // Show/hide dropdown options based on display type
+        const isDropdown = paramConfig.displayType === 'dropdown';
+        document.getElementById('param-config-dropdown-options').classList.toggle('d-none', !isDropdown);
+        
+        // If it's a dropdown, set the data source and options
+        if (isDropdown) {
+            document.getElementById('param-config-data-source').value = paramConfig.dataSource || 'manual';
+            
+            const isManualSource = (paramConfig.dataSource || 'manual') === 'manual';
+            document.getElementById('param-config-manual-entries').classList.toggle('d-none', !isManualSource);
+            document.getElementById('param-config-query-section').classList.toggle('d-none', isManualSource);
+            
+            // Set manual options if available
+            if (paramConfig.options && paramConfig.options.length > 0) {
+                const optionsText = paramConfig.options.map(opt => 
+                    `${opt.value}|${opt.label || opt.value}`
+                ).join('\n');
+                document.getElementById('param-config-options').value = optionsText;
+            } else {
+                document.getElementById('param-config-options').value = '';
+            }
+            
+            // Set query options if available
+            if (paramConfig.connectionId) {
+                document.getElementById('param-config-connection').value = paramConfig.connectionId;
+            }
+            if (paramConfig.query) {
+                document.getElementById('param-config-query').value = paramConfig.query;
+            } else {
+                document.getElementById('param-config-query').value = '';
+            }
+            
+            // Hide query results section initially
+            document.getElementById('param-config-query-results').classList.add('d-none');
+        }
+        
+        // Populate connections dropdown
+        const connectionSelect = document.getElementById('param-config-connection');
+        connectionSelect.innerHTML = '<option value="">Select connection</option>';
+        
+        fetch('/configurations/database-connections/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.connections && data.connections.length > 0) {
+                    data.connections.forEach(conn => {
+                        const option = document.createElement('option');
+                        option.value = conn.id;
+                        option.textContent = conn.name;
+                        connectionSelect.appendChild(option);
+                    });
+                    
+                    // Set selected connection if available
+                    if (paramConfig.connectionId) {
+                        connectionSelect.value = paramConfig.connectionId;
+                    }
+                }
+            })
+            .catch(error => console.error('Error loading connections:', error));
+        
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('modal-parameter-config'));
+        modal.show();
+    }
+
+    // Function to initialize parameter configuration handlers
+    function initializeParameterConfig() {
+        // Initialize window objects if not already set
+        window.parameterConfigurations = window.parameterConfigurations || {};
+        
+        // Handle display type change
+        document.getElementById('param-config-display-type').addEventListener('change', function() {
+            const isDropdown = this.value === 'dropdown';
+            document.getElementById('param-config-dropdown-options').classList.toggle('d-none', !isDropdown);
+        });
+        
+        // Handle data source change
+        document.getElementById('param-config-data-source').addEventListener('change', function() {
+            const isManualSource = this.value === 'manual';
+            document.getElementById('param-config-manual-entries').classList.toggle('d-none', !isManualSource);
+            document.getElementById('param-config-query-section').classList.toggle('d-none', isManualSource);
+        });
+        
+        // Handle test query click
+        document.getElementById('btn-test-param-query').addEventListener('click', function() {
+            const connectionId = document.getElementById('param-config-connection').value;
+            const query = document.getElementById('param-config-query').value;
+            
+            if (!connectionId || !query) {
+                alert('Please select a connection and enter a SQL query');
+                return;
+            }
+            
+            // Show loading state
+            const btn = document.getElementById('btn-test-param-query');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Testing...';
+            btn.disabled = true;
+            
+            // Clear previous results
+            document.getElementById('param-config-query-headers').innerHTML = '';
+            document.getElementById('param-config-query-rows').innerHTML = '';
+            
+            // Execute the query
+            fetch('/configurations/run-query/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    connection_id: connectionId,
+                    query: query
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const resultCount = data.results ? data.results.length : 0;
+                    document.getElementById('param-config-query-message').textContent = 
+                        `Query returned ${resultCount} results.`;
+                    
+                    // Display the results in a table
+                    if (resultCount > 0) {
+                        // Show column headers
+                        let headerHtml = '';
+                        data.columns.forEach(col => {
+                            headerHtml += `<th>${col}</th>`;
+                        });
+                        document.getElementById('param-config-query-headers').innerHTML = headerHtml;
+                        
+                        // Show up to 5 rows of data
+                        let rowsHtml = '';
+                        const rowsToShow = Math.min(5, data.results.length);
+                        for (let i = 0; i < rowsToShow; i++) {
+                            const row = data.results[i];
+                            let rowHtml = '<tr>';
+                            data.columns.forEach(col => {
+                                rowHtml += `<td>${row[col] || ''}</td>`;
+                            });
+                            rowHtml += '</tr>';
+                            rowsHtml += rowHtml;
+                        }
+                        document.getElementById('param-config-query-rows').innerHTML = rowsHtml;
+                        
+                        // Show validation for column names
+                        const hasValueColumn = data.columns.includes('value');
+                        const hasLabelColumn = data.columns.includes('label');
+                        
+                        if (!hasValueColumn || !hasLabelColumn) {
+                            document.getElementById('param-config-query-message').textContent += 
+                                ` Warning: Query should return 'value' and 'label' columns. Found columns: ${data.columns.join(', ')}`;
+                        }
+                    }
+                    
+                    // Show results section
+                    document.getElementById('param-config-query-results').classList.remove('d-none');
+                    document.getElementById('param-config-query-data').classList.toggle('d-none', resultCount === 0);
+                } else {
+                    document.getElementById('param-config-query-message').textContent = 
+                        `Error running query: ${data.error || 'Unknown error'}`;
+                    document.getElementById('param-config-query-results').classList.remove('d-none');
+                    document.getElementById('param-config-query-data').classList.add('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error testing query:', error);
+                document.getElementById('param-config-query-message').textContent = 
+                    `Error running query: ${error.message || 'Unknown error'}`;
+                document.getElementById('param-config-query-results').classList.remove('d-none');
+                document.getElementById('param-config-query-data').classList.add('d-none');
+            })
+            .finally(() => {
+                // Restore button state
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        });
+        
+        // Handle save parameter configuration
+        document.getElementById('btn-save-param-config').addEventListener('click', function() {
+            const paramIndex = document.getElementById('param-config-index').value;
+            const paramName = document.getElementById('param-config-name').value;
+            const procedureId = document.getElementById('procedure-id').value;
+            const paramKey = `${procedureId}_${paramName}`;
+            
+            // Get configuration values
+            const displayType = document.getElementById('param-config-display-type').value;
+            
+            // Create configuration object
+            const paramConfig = {
+                displayType: displayType,
+                dataSource: 'manual',
+                options: [],
+                query: '',
+                connectionId: ''
+            };
+            
+            // For dropdown type, get additional configuration
+            if (displayType === 'dropdown') {
+                paramConfig.dataSource = document.getElementById('param-config-data-source').value;
+                
+                if (paramConfig.dataSource === 'manual') {
+                    // Parse manual options
+                    const optionsText = document.getElementById('param-config-options').value;
+                    if (optionsText.trim()) {
+                        paramConfig.options = optionsText.split('\n')
+                            .filter(line => line.trim())
+                            .map(line => {
+                                const parts = line.split('|');
+                                return {
+                                    value: parts[0].trim(),
+                                    label: parts.length > 1 ? parts[1].trim() : parts[0].trim()
+                                };
+                            });
+                    }
+                } else {
+                    // Save query information
+                    paramConfig.connectionId = document.getElementById('param-config-connection').value;
+                    paramConfig.query = document.getElementById('param-config-query').value;
+                }
+            }
+            
+            // Save the configuration
+            window.parameterConfigurations[paramKey] = paramConfig;
+            
+            // Close the modal
+            bootstrap.Modal.getInstance(document.getElementById('modal-parameter-config')).hide();
+            
+            // If this is a query-based dropdown, execute the query immediately
+            if (displayType === 'dropdown' && paramConfig.dataSource === 'query' && 
+                paramConfig.connectionId && paramConfig.query) {
+                
+                console.log("Executing query for parameter immediately after configuration:", paramName);
+                
+                // Get the parameter
+                const param = window.currentProcedureParameters[paramIndex];
+                
+                // Create an alert that's hard to miss
+                alert(`About to load dropdown options for parameter: ${paramName}\nQuery: ${paramConfig.query}\nConnection ID: ${paramConfig.connectionId}`);
+                
+                // Create a special helper function for direct dropdown manipulation
+                function directlyPopulateDropdown(paramIndex, connectionId, query) {
+                    console.log(`Looking for parameter container at index: ${paramIndex}`);
+                    
+                    // Debug: Check if modal and container are available
+                    const modal = document.getElementById('modal-procedure-executor');
+                    const paramsContainer = document.getElementById('procedure-params-container');
+                    
+                    console.log(`Modal exists: ${modal ? 'Yes' : 'No'}`);
+                    console.log(`Parameters container exists: ${paramsContainer ? 'Yes' : 'No'}`);
+                    
+                    if (!paramsContainer) {
+                        alert("ERROR: Cannot find parameters container element");
+                        console.error("Parameters container not found");
+                        return;
+                    }
+                    
+                    // Debug: show HTML structure of the container
+                    console.log("Parameters container HTML:", paramsContainer.innerHTML);
+                    
+                    // Find the target parameter row - must find by paramIndex
+                    const paramRows = paramsContainer.querySelectorAll('.fv-row');
+                    console.log(`Found ${paramRows.length} parameter rows`);
+                    
+                    if (paramRows.length === 0) {
+                        alert("ERROR: No parameter rows found in the container");
+                        console.error("No parameter rows found");
+                        return;
+                    }
+                    
+                    // Target row will be the one with the matching param_name_X input
+                    let targetRow = null;
+                    let paramName = '';
+                    
+                    for (let i = 0; i < paramRows.length; i++) {
+                        const row = paramRows[i];
+                        const nameInput = row.querySelector(`input[name="param_name_${i}"]`);
+                        if (nameInput) {
+                            console.log(`Row ${i} has parameter: ${nameInput.value}`);
+                            if (i === paramIndex) {
+                                targetRow = row;
+                                paramName = nameInput.value;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!targetRow) {
+                        // Try again with more flexible approach
+                        for (let i = 0; i < paramRows.length; i++) {
+                            const row = paramRows[i];
+                            const nameInputs = row.querySelectorAll('input[type="hidden"]');
+                            for (const input of nameInputs) {
+                                if (input.name && input.name.startsWith('param_name_')) {
+                                    console.log(`Found parameter input: ${input.name} = ${input.value}`);
+                                    targetRow = row;
+                                    paramName = input.value;
+                                    break;
+                                }
+                            }
+                            if (targetRow) break;
+                        }
+                    }
+                    
+                    if (!targetRow) {
+                        alert(`ERROR: Could not find target parameter row for index ${paramIndex}`);
+                        console.error(`Could not find target parameter row for index ${paramIndex}`);
+                        
+                        // Last resort - just use the first row if available
+                        if (paramRows.length > 0) {
+                            targetRow = paramRows[0];
+                            console.log("Using first parameter row as fallback");
+                        } else {
+                            return;
+                        }
+                    }
+                    
+                    // Find or create a select element in the target row
+                    let selectElement = targetRow.querySelector('select');
+                    
+                    if (!selectElement) {
+                        console.log("Select element not found, checking for other input");
+                        
+                        // Check if there's an input element - we might need to replace it
+                        const inputElement = targetRow.querySelector('input:not([type="hidden"])');
+                        
+                        if (inputElement) {
+                            console.log("Found input element, will replace with select");
+                            
+                            // Create a select element
+                            selectElement = document.createElement('select');
+                            selectElement.className = 'form-select form-select-solid';
+                            selectElement.name = inputElement.name;
+                            
+                            // Replace the input with our select
+                            inputElement.parentNode.replaceChild(selectElement, inputElement);
+                        } else {
+                            console.log("No input element found either, will create a new select element");
+                            
+                            // Create a select element
+                            selectElement = document.createElement('select');
+                            selectElement.className = 'form-select form-select-solid';
+                            selectElement.name = `param_value_${paramIndex}`;
+                            
+                            // Find a good place to insert it
+                            const insertPoint = targetRow.querySelector('.d-flex');
+                            if (insertPoint) {
+                                insertPoint.insertAdjacentElement('afterend', selectElement);
+                            } else {
+                                // Just append to the row
+                                targetRow.appendChild(selectElement);
+                            }
+                        }
+                    }
+                    
+                    // Now we should have a select element to work with
+                    console.log("Select element:", selectElement);
+                    
+                    // Show loading
+                    selectElement.innerHTML = '<option value="">Loading options...</option>';
+                    
+                    // Add a visible status element right after the dropdown
+                    const existingStatus = document.getElementById(`dropdown-status-${paramIndex}`);
+                    if (existingStatus) {
+                        existingStatus.parentNode.removeChild(existingStatus);
+                    }
+                    
+                    const statusDiv = document.createElement('div');
+                    statusDiv.className = 'alert alert-info mt-2';
+                    statusDiv.id = `dropdown-status-${paramIndex}`;
+                    statusDiv.textContent = 'Executing query...';
+                    
+                    // Insert after the select element
+                    selectElement.insertAdjacentElement('afterend', statusDiv);
+                    
+                    // Execute the query
+                    console.log(`Executing query: ${query} with connection ID: ${connectionId}`);
+                    fetch('/configurations/run-query/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: JSON.stringify({
+                            connection_id: connectionId,
+                            query: query
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(`Query response:`, data);
+                        
+                        // Update status
+                        if (data.success) {
+                            const resultCount = data.results ? data.results.length : 0;
+                            statusDiv.textContent = `Found ${resultCount} options`;
+                            
+                            if (resultCount > 0) {
+                                // Reset dropdown
+                                selectElement.innerHTML = '<option value="">Select a value</option>';
+                                
+                                // Find value and label columns
+                                const valueCol = data.columns.includes('value') ? 'value' : data.columns[0];
+                                const labelCol = data.columns.includes('label') ? 'label' : 
+                                                (data.columns.length > 1 ? data.columns[1] : valueCol);
+                                
+                                // Display sample
+                                statusDiv.innerHTML += `<br>Using columns: value=${valueCol}, label=${labelCol}<br>First row: ${JSON.stringify(data.results[0])}`;
+                                
+                                // Add options - directly to the DOM
+                                let optionsAdded = 0;
+                                
+                                // For debugging, add all column values as separate options first
+                                if (data.results.length > 0) {
+                                    const firstRow = data.results[0];
+                                    const debugOption = document.createElement('option');
+                                    debugOption.disabled = true;
+                                    debugOption.textContent = '--- DEBUG: Available columns ---';
+                                    selectElement.appendChild(debugOption);
+                                    
+                                    for (const col in firstRow) {
+                                        const colOption = document.createElement('option');
+                                        colOption.disabled = true;
+                                        colOption.textContent = `${col} = ${firstRow[col]}`;
+                                        selectElement.appendChild(colOption);
+                                    }
+                                    
+                                    const separatorOption = document.createElement('option');
+                                    separatorOption.disabled = true;
+                                    separatorOption.textContent = '--- Actual options below ---';
+                                    selectElement.appendChild(separatorOption);
+                                }
+                                
+                                // Add the actual options one by one
+                                data.results.forEach(row => {
+                                    try {
+                                        // Get the value and label
+                                        const value = row[valueCol];
+                                        const label = row[labelCol] || value;
+                                        
+                                        // Create option element
+                                        const option = document.createElement('option');
+                                        option.value = value;
+                                        option.textContent = label;
+                                        
+                                        // Add to select
+                                        selectElement.appendChild(option);
+                                        optionsAdded++;
+                                    } catch (err) {
+                                        console.error(`Error adding option:`, row, err);
+                                    }
+                                });
+                                
+                                statusDiv.innerHTML += `<br>Added ${optionsAdded} options to dropdown`;
+                                
+                                // Ensure the select is visible and enabled
+                                selectElement.disabled = false;
+                                selectElement.style.display = '';
+                            } else {
+                                selectElement.innerHTML = '<option value="">No options available</option>';
+                                statusDiv.textContent = 'Query returned no results';
+                            }
+                        } else {
+                            selectElement.innerHTML = '<option value="">Error loading options</option>';
+                            statusDiv.className = 'alert alert-danger mt-2';
+                            statusDiv.textContent = `Error: ${data.error || 'Unknown error'}`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error executing query:', error);
+                        selectElement.innerHTML = '<option value="">Error loading options</option>';
+                        statusDiv.className = 'alert alert-danger mt-2';
+                        statusDiv.textContent = `Error: ${error.message || 'Unknown error'}`;
+                    });
+                }
+                
+                // Call our special function
+                directlyPopulateDropdown(paramIndex, paramConfig.connectionId, paramConfig.query);
+            } else {
+                // For other types, just reload parameters
+                loadProcedureParameters(procedureId, document.getElementById('procedure-connection-id').value);
+            }
+        });
+    }
+
+    // Function to save a procedure execution with parameter configurations
+    function saveProcedureExecution() {
+        const procedureId = document.getElementById('procedure-id').value;
+        const connectionId = document.getElementById('procedure-connection-id').value;
+        const procedureName = document.getElementById('procedure-name').value;
+        const schemaName = document.getElementById('procedure-schema').value;
+        
+        console.log("Saving procedure execution with ID:", procedureId);
+        
+        // Collect parameter values
+        const params = [];
+        const paramInputs = document.querySelectorAll('#procedure-params-container input[name^="param_value_"], #procedure-params-container select[name^="param_value_"]');
+        
+        paramInputs.forEach((input, index) => {
+            const nameInput = document.querySelector(`#procedure-params-container input[name="param_name_${index}"]`);
+            const typeInput = document.querySelector(`#procedure-params-container input[name="param_type_${index}"]`);
+            const directionInput = document.querySelector(`#procedure-params-container input[name="param_direction_${index}"]`);
+            
+            // Only include input and inout parameters
+            const direction = directionInput.value.toLowerCase();
+            if (direction === 'in' || direction === 'inout') {
+                // Get the value based on input type
+                let value = input.value;
+                if (input.type === 'checkbox') {
+                    value = input.checked ? 'true' : 'false';
+                }
+                
+                // Get parameter configuration if available
+                const paramName = nameInput.value;
+                const paramKey = `${procedureId}_${paramName}`;
+                const paramConfig = window.parameterConfigurations[paramKey];
+                
+                params.push({
+                    name: paramName,
+                    value: value,
+                    data_type: typeInput.value,
+                    direction: direction,
+                    config: paramConfig || { displayType: 'text' }
+                });
+            }
+        });
+        
+        // Prompt for a name
+        const executionName = prompt('Enter a name for this saved procedure execution:', `${procedureName} execution`);
+        if (!executionName) return; // User cancelled
+        
+        // Show loading state
+        const saveBtn = document.getElementById('btn-save-procedure-execution');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+        saveBtn.disabled = true;
+        
+        // Save execution
+        fetch('/configurations/save-procedure-execution/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                name: executionName,
+                connection_id: connectionId,
+                procedure_id: procedureId,
+                schema: schemaName,
+                procedure_name: procedureName,
+                parameters: params
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Procedure execution saved successfully!');
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('modal-procedure-executor')).hide();
+                // Refresh saved executions list
+                loadSavedProcedureExecutions();
+            } else {
+                alert('Error saving procedure execution: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error saving procedure execution:', error);
+            alert('Error saving procedure execution. Please try again.');
+        })
+        .finally(() => {
+            // Restore button state
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+    }
+
+    // Function to load data for query-based dropdowns
+    function loadQueryBasedDropdowns(savedParameters) {
+        if (!savedParameters) {
+            console.log("No saved parameters provided to loadQueryBasedDropdowns");
+            return;
+        }
+        
+        console.log("Loading query-based dropdowns for parameters:", savedParameters);
+        
+        // Find all parameters that use query-based dropdowns
+        savedParameters.forEach((param, paramIndex) => {
+            if (param.config && 
+                param.config.displayType === 'dropdown' && 
+                param.config.dataSource === 'query' && 
+                param.config.connectionId && 
+                param.config.query) {
+                
+                console.log(`Processing query-based dropdown for parameter: ${param.name}`);
+                
+                // Find the corresponding select element
+                const selectElements = document.querySelectorAll(`select[name^="param_value_"]`);
+                let selectElement = null;
+                
+                // Find the right select element by matching hidden input param name
+                for (let i = 0; i < selectElements.length; i++) {
+                    const nameInput = document.querySelector(`input[name="param_name_${i}"]`);
+                    if (nameInput && nameInput.value === param.name) {
+                        selectElement = selectElements[i];
+                        break;
+                    }
+                }
+                
+                if (!selectElement) {
+                    console.error(`Could not find select element for parameter: ${param.name}`);
+                    return;
+                }
+                
+                console.log(`Found select element for parameter: ${param.name}`, selectElement);
+                
+                // Show loading in dropdown
+                selectElement.innerHTML = '<option value="">Loading options...</option>';
+                if (param.value) {
+                    selectElement.innerHTML += `<option value="${param.value}" selected>${param.value}</option>`;
+                }
+                
+                // Execute the query to get dropdown options
+                console.log(`Executing query for parameter: ${param.name}`, param.config.query);
+                
+                fetch('/configurations/run-query/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        connection_id: param.config.connectionId,
+                        query: param.config.query
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(`Query results for parameter ${param.name}:`, data);
+                    
+                    if (data.success && data.results && data.results.length > 0) {
+                        // Show a debug alert with the first row
+                        alert(`Query returned ${data.results.length} rows. First row: ${JSON.stringify(data.results[0])}`);
+                        
+                        // Reset dropdown
+                        selectElement.innerHTML = '<option value="">Select a value</option>';
+                        
+                        // Find value and label columns
+                        const valueCol = data.columns.includes('value') ? 'value' : data.columns[0];
+                        const labelCol = data.columns.includes('label') ? 'label' : 
+                                       (data.columns.length > 1 ? data.columns[1] : valueCol);
+                        
+                        console.log(`Using columns - value: ${valueCol}, label: ${labelCol}`);
+                        console.log(`First row sample:`, data.results[0]);
+                        
+                        // Add options
+                        data.results.forEach(row => {
+                            try {
+                                const value = row[valueCol];
+                                const label = row[labelCol];
+                                const isSelected = value == param.value ? 'selected' : '';
+                                
+                                const optionHtml = `<option value="${value}" ${isSelected}>${label || value}</option>`;
+                                selectElement.innerHTML += optionHtml;
+                                
+                                if (paramIndex === 0) {
+                                    console.log(`Added option: value=${value}, label=${label}, selected=${isSelected}`);
+                                }
+                            } catch (err) {
+                                console.error(`Error adding option for row:`, row, err);
+                            }
+                        });
+                        
+                        console.log(`Added ${data.results.length} options to dropdown for ${param.name}`);
+                        
+                        // Force a refresh of the select element
+                        const evt = document.createEvent("HTMLEvents");
+                        evt.initEvent("change", false, true);
+                        selectElement.dispatchEvent(evt);
+                    } else {
+                        selectElement.innerHTML = '<option value="">No options available</option>';
+                        if (param.value) {
+                            selectElement.innerHTML += `<option value="${param.value}" selected>${param.value}</option>`;
+                        }
+                        console.log(`No results for parameter ${param.name} dropdown`);
+                    }
+                })
+                .catch(error => {
+                    console.error(`Error loading dropdown options for parameter ${param.name}:`, error);
+                    selectElement.innerHTML = '<option value="">Error loading options</option>';
+                    if (param.value) {
+                        selectElement.innerHTML += `<option value="${param.value}" selected>${param.value}</option>`;
+                    }
+                });
+            }
+        });
+    }
+</script>
+
+<!-- Database Connection Modal -->
+<div class="modal fade" id="modal-database-connection" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered mw-650px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="connection-modal-title">New Database Connection</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-database-connection">
+                    <input type="hidden" id="connection-id">
+                    <div class="fv-row mb-7">
+                        <label class="required fw-semibold fs-6 mb-2">Connection Name</label>
+                        <input type="text" id="connection-name" class="form-control form-control-solid mb-3" placeholder="Enter a name for this connection" required>
+                    </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-semibold fs-6 mb-2">Connection Type</label>
+                        <select id="connection-type" class="form-select form-select-solid" required>
+                            <option value="">Select a database type</option>
+                            <option value="mssql">Microsoft SQL Server</option>
+                            <option value="mysql">MySQL</option>
+                            <option value="postgresql">PostgreSQL</option>
+                            <option value="oracle">Oracle</option>
+                        </select>
+                    </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-semibold fs-6 mb-2">Server / Host</label>
+                        <input type="text" id="connection-server" class="form-control form-control-solid mb-3" placeholder="Server name or IP address" required>
+                    </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-semibold fs-6 mb-2">Port</label>
+                        <input type="number" id="connection-port" class="form-control form-control-solid mb-3" required>
+                    </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-semibold fs-6 mb-2">Database Name</label>
+                        <input type="text" id="connection-database" class="form-control form-control-solid mb-3" placeholder="Database name" required>
+                    </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-semibold fs-6 mb-2">Username</label>
+                        <input type="text" id="connection-username" class="form-control form-control-solid mb-3" placeholder="Database username" required>
+                    </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-semibold fs-6 mb-2">Password</label>
+                        <input type="password" id="connection-password" class="form-control form-control-solid mb-3" placeholder="Database password" required>
+                    </div>
+                    <div class="form-check form-switch form-check-custom form-check-solid mb-7">
+                        <input class="form-check-input" type="checkbox" id="connection-is-default">
+                        <label class="form-check-label fw-semibold" for="connection-is-default">
+                            Set as default connection
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="btn-test-connection" class="btn btn-info">Test Connection</button>
+                <button type="button" id="btn-save-connection" class="btn btn-primary">Save Connection</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Query Builder Modal -->
+<div class="modal fade" id="modal-query-builder" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="query-modal-title">Query Builder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-query-builder">
+                    <input type="hidden" id="query-id">
+                    <div class="row mb-5">
+                        <div class="col-md-6">
+                            <div class="fv-row mb-7">
+                                <label class="required fw-semibold fs-6 mb-2">Query Name</label>
+                                <input type="text" id="query-name" class="form-control form-control-solid mb-3" placeholder="Enter a name for this query" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fv-row mb-7">
+                                <label class="required fw-semibold fs-6 mb-2">Database Connection</label>
+                                <select id="query-connection" class="form-select form-select-solid" required>
+                                    <option value="">Select a connection</option>
+                                    <!-- Connections will be loaded here -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="fv-row mb-7">
+                        <label class="fw-semibold fs-6 mb-2">Description</label>
+                        <textarea id="query-description" class="form-control form-control-solid mb-3" rows="2" placeholder="Optional description for this query"></textarea>
+                    </div>
+
+                    <div class="fv-row mb-7">
+                        <label class="required fw-semibold fs-6 mb-2">SQL Query</label>
+                        <div id="query-editor-container" style="height: 250px; border: 1px solid #ddd;">
+                            <textarea id="query-editor" class="form-control form-control-solid" style="height: 100%; font-family: monospace;" required></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="fv-row mb-7">
+                        <button type="button" id="btn-run-query" class="btn btn-sm btn-info">
+                            <i class="ki-duotone ki-play fs-2"></i> Run Query
+                        </button>
+                    </div>
+                    
+                    <div id="query-results-container" class="d-none">
+                        <div class="separator separator-dashed my-8"></div>
+                        <h4 class="fw-bold mb-3">Query Results</h4>
+                        <div class="table-responsive">
+                            <table id="query-results-table" class="table table-striped table-row-bordered gy-5 gs-7">
+                                <thead>
+                                    <!-- Results headers will be loaded here -->
+                                </thead>
+                                <tbody>
+                                    <!-- Results will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="btn-save-query" class="btn btn-primary">Save Query</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stored Procedure Modal -->
+<div class="modal fade" id="modal-procedure-executor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="procedure-modal-title">Execute Stored Procedure</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-procedure-executor">
+                    <input type="hidden" id="approved-procedure-id" value="">
+                    <input type="hidden" id="procedure-id">
+                    <input type="hidden" id="procedure-connection-id">
+                    <input type="hidden" id="procedure-name">
+                    <input type="hidden" id="procedure-schema">
+                    
+                    <div class="mb-4">
+                        <h4 class="fw-bold" id="procedure-full-name">Procedure Name</h4>
+                        <p class="text-muted" id="procedure-connection-name">Database Connection</p>
+                    </div>
+                    
+                    <div class="separator separator-dashed my-5"></div>
+                    
+                    <div id="procedure-params-container">
+                        <!-- Procedure parameters will be dynamically added here -->
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading procedure parameters...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="fv-row mb-7 mt-5">
+                        <button type="button" id="btn-execute-procedure" class="btn btn-sm btn-info">
+                            <i class="ki-duotone ki-play fs-2"></i> Execute Procedure
+                        </button>
+                    </div>
+                    
+                    <div id="procedure-results-container" class="d-none">
+                        <div class="separator separator-dashed my-8"></div>
+                        <h4 class="fw-bold mb-3">Procedure Results</h4>
+                        
+                        <ul class="nav nav-tabs nav-line-tabs mb-5 fs-6">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#procedure-output-params">Output Parameters</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#procedure-result-sets">Result Sets</a>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="procedureResultContent">
+                            <div class="tab-pane fade show active" id="procedure-output-params" role="tabpanel">
+                                <div id="output-params-container">
+                                    <!-- Output parameters will be displayed here -->
+                                    <p class="text-center text-muted">No output parameters returned</p>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="procedure-result-sets" role="tabpanel">
+                                <div id="result-sets-container">
+                                    <!-- Result sets will be displayed here -->
+                                    <p class="text-center text-muted">No result sets returned</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="btn-save-procedure-execution" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add the Parameter Configuration Modal after the Stored Procedure Modal -->
+<div class="modal fade" id="modal-parameter-config" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Configure Parameter</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-parameter-config">
+                    <input type="hidden" id="param-config-index">
+                    <input type="hidden" id="param-config-name">
+                    
+                    <div class="mb-4">
+                        <h4 class="fw-bold" id="param-config-display-name">Parameter Name</h4>
+                        <p class="text-muted" id="param-config-type">Data Type</p>
+                    </div>
+                    
+                    <div class="fv-row mb-5">
+                        <label class="form-label fw-semibold">Display Type</label>
+                        <select id="param-config-display-type" class="form-select">
+                            <option value="text">Text Field</option>
+                            <option value="dropdown">Dropdown</option>
+                            <option value="checkbox">Checkbox (Yes/No)</option>
+                            <option value="date">Date Picker</option>
+                            <option value="datetime">Date & Time Picker</option>
+                        </select>
+                    </div>
+                    
+                    <div id="param-config-dropdown-options" class="d-none">
+                        <div class="fv-row mb-5">
+                            <label class="form-label fw-semibold">Dropdown Data Source</label>
+                            <select id="param-config-data-source" class="form-select">
+                                <option value="manual">Manual Entry</option>
+                                <option value="query">SQL Query</option>
+                            </select>
+                        </div>
+                        
+                        <div id="param-config-manual-entries" class="fv-row mb-5">
+                            <label class="form-label fw-semibold">Dropdown Options</label>
+                            <p class="text-muted fs-7 mb-2">Enter one option per line, format: value|label (if no label is provided, value will be used)</p>
+                            <textarea id="param-config-options" class="form-control" rows="4" placeholder="option1|Option 1 Display&#10;option2|Option 2 Display"></textarea>
+                        </div>
+                        
+                        <div id="param-config-query-section" class="d-none">
+                            <div class="fv-row mb-5">
+                                <label class="form-label fw-semibold">Connection</label>
+                                <select id="param-config-connection" class="form-select">
+                                    <!-- Connections will be populated dynamically -->
+                                </select>
+                            </div>
+                            
+                            <div class="fv-row mb-5">
+                                <label class="form-label fw-semibold">SQL Query</label>
+                                <p class="text-muted fs-7 mb-2">Query should return at least two columns: 'value' and 'label'</p>
+                                <textarea id="param-config-query" class="form-control" rows="4" placeholder="SELECT id as value, name as label FROM table"></textarea>
+                            </div>
+                            
+                            <div class="fv-row mb-5">
+                                <button type="button" id="btn-test-param-query" class="btn btn-sm btn-info">
+                                    <i class="ki-duotone ki-play fs-2"></i> Test Query
+                                </button>
+                            </div>
+                            
+                            <div id="param-config-query-results" class="d-none">
+                                <div class="alert alert-info">
+                                    <span id="param-config-query-message">Query returned 0 results</span>
+                                </div>
+                                
+                                <!-- Add a visible query results table -->
+                                <div id="param-config-query-data" class="mt-3 border rounded">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr id="param-config-query-headers"></tr>
+                                        </thead>
+                                        <tbody id="param-config-query-rows">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="btn-save-param-config" class="btn btn-primary">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .notification {
+    position: relative;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    color: #fff;
+}
+
+.notification.success {
+    background-color: #28a745;
+}
+
+.notification.error {
+    background-color: #dc3545;
+}
+
+.notification .close {
+    margin-left: auto;
+    color: #fff;
+    cursor: pointer;
+}
+
+</style>
+
+
+
+
+<div class="card mb-5 mb-xl-10 mt-5">
+    <!-- Card Header -->
+    <div class="card-header border-0 cursor-pointer">
+        <div class="card-title m-0">
+            <h3 class="fw-bold m-0">Profile Details</h3>
+        </div>
+        <a href="{% url 'user_profile' %}" class="btn btn-sm btn-light align-self-center" id="editProfileBtn">Back</a>
+    </div>
+<!-- Notifications -->
+
+    <!-- Card Body -->
+    <div class="card-body border-top p-9">
+        <form id="userProfileForm" class="form">
+            <div id="notificationContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055;"></div>
+          
+            <!-- Avatar -->
+            <!--begin::Input group-->
+            <div class="row mb-6">
+                <!--begin::Label-->
+                <label class="col-lg-4 col-form-label fw-semibold fs-6">Avatar</label>
+                <!--end::Label-->
+                <!--begin::Col-->
+                <div class="col-lg-8">
+                    <!--begin::Image input-->
+                    <div class="image-input image-input-outline" data-kt-image-input="true" style="background-image: url('{% static 'assets/media/svg/avatars/blank.svg' %}')">
+                        <!--begin::Preview existing avatar-->
+                        <div class="image-input-wrapper w-125px h-125px" style="background-image: url('{{ user.profile.avatar_url  }}')"></div>
+                        <!--end::Preview existing avatar-->
+                        <!--begin::Label-->
+                        <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="change" data-bs-toggle="tooltip" title="Change avatar">
+                            <i class="ki-duotone ki-pencil fs-7">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <!--begin::Inputs-->
+                            <input type="file" name="avatar" accept=".png, .jpg, .jpeg" />
+                            <input type="hidden" name="avatar_remove" />
+                            <!--end::Inputs-->
+                        </label>
+                        <!--end::Label-->
+                        <!--begin::Cancel-->
+                        <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="cancel" data-bs-toggle="tooltip" title="Cancel avatar">
+                            <i class="ki-duotone ki-cross fs-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                        </span>
+                        <!--end::Cancel-->
+                        <!--begin::Remove-->
+                        <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="remove" data-bs-toggle="tooltip" title="Remove avatar">
+                            <i class="ki-duotone ki-cross fs-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                        </span>
+                        <!--end::Remove-->
+                    </div>
+                    <!--end::Image input-->
+                    <!--begin::Hint-->
+                    <div class="form-text">Allowed file types: png, jpg, jpeg.</div>
+                    <!--end::Hint-->
+                </div>
+                <!--end::Col-->
+            </div>
+            <!--end::Input group-->
+
+
+
+            <!-- Full Name -->
+            <div class="row mb-6">
+                <label class="col-lg-4 col-form-label required fw-semibold fs-6">Full Name</label>
+                <div class="col-lg-4">
+                    <input type="text" name="first_name" class="form-control" placeholder="First name" value="{{ user.first_name }}">
+                </div>
+                <div class="col-lg-4">
+                    <input type="text" name="last_name" class="form-control" placeholder="Last name" value="{{ user.last_name }}">
+                </div>
+            </div>
+
+            <!-- Address -->
+            <div class="row mb-6">
+                <label class="col-lg-4 col-form-label fw-semibold fs-6">Address</label>
+                <div class="col-lg-8">
+                    <input type="text" name="address" class="form-control" placeholder="Address" value="{{ user.profile.address }}">
+                </div>
+            </div>
+
+            <!-- Contact Phone -->
+            <div class="row mb-6">
+                <label class="col-lg-4 col-form-label fw-semibold fs-6">Contact Phone</label>
+                <div class="col-lg-8">
+                    <input type="tel" name="contact_phone" class="form-control" placeholder="Phone number" value="{{ user.profile.contact_phone }}">
+                </div>
+            </div>
+
+            <!-- Designation -->
+            <div class="row mb-6">
+                <label class="col-lg-4 col-form-label fw-semibold fs-6">Designation</label>
+                <div class="col-lg-8">
+                    <input type="text" name="designation" class="form-control" placeholder="Designation" value="{{ user.profile.designation }}">
+                </div>
+            </div>
+
+            <!-- Company -->
+            <div class="row mb-6">
+                <label class="col-lg-4 col-form-label fw-semibold fs-6">Company</label>
+                <div class="col-lg-8">
+                    <input type="text" name="company" class="form-control" placeholder="Company name" value="{{ user.profile.company }}">
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="card-footer d-flex justify-content-end py-6 px-9">
+                <!-- <button type="reset" class="btn btn-light me-2">Discard</button> -->
+                <button type="button" id="saveProfileBtn" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const saveProfileBtn = document.getElementById("saveProfileBtn");
+    const form = document.getElementById("userProfileForm");
+    const avatarInput = document.querySelector("input[name='avatar']");
+    const avatarPreview = document.querySelector(".image-input-wrapper");
+    const avatarRemoveButton = document.querySelector("[data-kt-image-input-action='remove']");
+    const blankAvatarUrl = "{% static 'assets/media/svg/avatars/blank.svg' %}";
+
+    // ✅ Show SweetAlert Notification
+    function showNotification(message, type) {
+        Swal.fire({
+            title: type === "success" ? "Success!" : "Error!",
+            text: message,
+            icon: type,
+            confirmButtonText: "Ok"
+        });
+    }
+
+    // ✅ Toggle Button Loader
+    function toggleLoader(button, showLoader) {
+        if (showLoader) {
+            button.disabled = true;
+            button.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Saving...
+            `;
+        } else {
+            button.disabled = false;
+            button.innerHTML = "Save Changes";
+        }
+    }
+
+    // ✅ Enable Save Button on Input Change
+    form.addEventListener("input", function () {
+        saveProfileBtn.disabled = false;
+    });
+
+    // ✅ Update Avatar Preview
+    avatarInput.addEventListener("change", function () {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                avatarPreview.style.backgroundImage = `url(${e.target.result})`;
+            };
+            reader.readAsDataURL(file);
+            saveProfileBtn.disabled = false;
+        }
+    });
+
+    // ✅ Handle Avatar Removal
+    avatarRemoveButton.addEventListener("click", function () {
+        avatarPreview.style.backgroundImage = `url(${blankAvatarUrl})`;
+        avatarInput.value = ""; // Clear file input
+
+        let avatarRemoveInput = document.querySelector("input[name='avatar_remove']");
+        if (!avatarRemoveInput) {
+            avatarRemoveInput = document.createElement("input");
+            avatarRemoveInput.type = "hidden";
+            avatarRemoveInput.name = "avatar_remove";
+            avatarRemoveInput.value = "true";
+            form.appendChild(avatarRemoveInput);
+        } else {
+            avatarRemoveInput.value = "true";
+        }
+
+        saveProfileBtn.disabled = false;
+    });
+
+    // ✅ Save Profile
+    saveProfileBtn.addEventListener("click", function () {
+        const formData = new FormData(form);
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'Do you want to save the changes?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, save it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                toggleLoader(saveProfileBtn, true);
+
+                fetch("{% url 'user_profile_update' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: formData
+                })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    if (data.status === "success") {
+                        Swal.fire('Saved!', 'Profile updated successfully!', 'success');
+                    } else {
+                        Swal.fire('Error!', data.message || 'An error occurred.', 'error');
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    Swal.fire('Error!', 'An error occurred while updating the profile.', 'error');
+                })
+                .finally(() => {
+                    toggleLoader(saveProfileBtn, false);
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
+
+
