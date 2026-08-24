@@ -9,8 +9,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
-        curl gnupg2 ca-certificates apt-transport-https lsb-release \
-        unixodbc unixodbc-dev && \
+        curl \
+        gnupg2 \
+        ca-certificates \
+        apt-transport-https \
+        lsb-release \
+        unixodbc \
+        unixodbc-dev \
+        libxml2-dev \
+        libxslt1-dev \
+        libxmlsec1-dev \
+        libxmlsec1-openssl \
+        pkg-config \
+        zlib1g-dev && \
     # MS ODBC repo (for pyodbc/MSSQL if you need it)
     curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl -fsSL https://packages.microsoft.com/config/debian/11/prod.list \
