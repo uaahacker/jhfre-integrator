@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- Toolbar Section -->
+<div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+    <div id="kt_app_toolbar_container" class="app-container container-fluid d-flex flex-stack">
+        <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+            <h1 class="page-heading d-flex text-gray-900 fw-bold fs-3 flex-column justify-content-center my-0">
+                Initiatives
+            </h1>
+        </div>
+        <div class="d-flex align-items-center gap-2 gap-lg-3">
+            <select id="tableSelector" class="form-select">
+                <option selected disabled>Select Table</option>
+                {% for table in tables %}
+                    <option value="{{ table }}">{{ table }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- DataTable Section -->
+<div class="card mt-5">
+    <div class="card-body">
+        <h3>Microsoft SQL Server Data</h3>
+        <div id="tableContainer">
+            <div class="table-responsive">
+            <table id="dataTable" class="table table-bordered table-striped">
+                <thead>
+                    <tr id="tableHeader">
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Country ID</th>
+                        <th>Home State ID</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% for row in data %}
+                        <tr>
+                            <td>{{ row.Name }}</td>
+                            <td>{{ row.Email }}</td>
+                            <td>{{ row.Phone }}</td>
+                            <td>{{ row.CountryId }}</td>
+                            <td>{{ row.HomeStateId }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tableSelector = document.getElementById('tableSelector');
+    const tableContainer = document.getElementById('tableContainer');
+    const tableBody = document.getElementById('tableBody');
+    const tableHeader = document.getElementById('tableHeader');
+
+    // Handle table selection change
+    tableSelector.addEventListener('change', function () {
+        const selectedTable = this.value;
+
+        fetch(`/fetch-table-data/?table=${selectedTable}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // Clear previous table data
+                tableHeader.innerHTML = '';
+                tableBody.innerHTML = '';
+
+                if (data.data.length > 0) {
+                    // Dynamically create table headers
+                    const headers = Object.keys(data.data[0]);
+                    headers.forEach(header => {
+                        const th = document.createElement('th');
+                        th.textContent = header;
+                        tableHeader.appendChild(th);
+                    });
+
+                    // Populate table body
+                    data.data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        headers.forEach(header => {
+                            const td = document.createElement('td');
+                            td.textContent = row[header];
+                            tr.appendChild(td);
+                        });
+                        tableBody.appendChild(tr);
+                    });
+                } else {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="100%">No data available in this table.</td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching table data:', error);
+                alert('Failed to fetch table data.');
+            });
+    });
+});
+</script>
+{% endblock %}

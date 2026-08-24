@@ -1,0 +1,884 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    /* Tab Styling */
+    .nav-tabs {
+        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 2rem;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 1rem 1.5rem;
+        transition: all 0.3s ease;
+        background: none;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: #495057;
+        border-bottom-color: #dee2e6;
+        background: rgba(0,0,0,0.02);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #495057;
+        font-weight: 600;
+        border-bottom-color: #007bff;
+        background: none;
+    }
+
+    .tab-content {
+        min-height: 500px;
+    }
+
+    .tab-pane {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Field Styling */
+    .field-item {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+        cursor: move;
+    }
+
+    .field-item:hover {
+        border-color: #007bff;
+        box-shadow: 0 4px 12px rgba(0,123,255,0.15);
+    }
+
+    .field-item.dragging {
+        opacity: 0.5;
+        border: 2px dashed #ccc;
+        transform: rotate(2deg);
+    }
+
+    .field-header {
+        background: #f8f9fa;
+        border-radius: 8px 8px 0 0;
+        border-bottom: 1px solid #e9ecef;
+        cursor: pointer;
+        padding: 1rem;
+    }
+
+    .field-content {
+        transition: all 0.3s ease;
+        overflow: hidden;
+        padding: 1rem;
+    }
+
+    .field-content.collapsed {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    .collapse-btn {
+        transition: transform 0.2s ease;
+    }
+
+    .collapse-btn.collapsed {
+        transform: rotate(-90deg);
+    }
+
+    .drag-handle {
+        cursor: grab;
+        padding: 8px;
+        color: #6c757d;
+    }
+
+    .drag-handle:active {
+        cursor: grabbing;
+    }
+
+    /* Save buttons styling */
+    .save-buttons {
+        position: sticky;
+        bottom: 20px;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid #e9ecef;
+        padding: 1rem;
+        margin: 2rem -2rem -2rem -2rem;
+        border-radius: 0 0 0.5rem 0.5rem;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+
+    .field-type-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .field-type-card:hover {
+        border-color: #007bff;
+        background: rgba(0,123,255,0.05);
+    }
+</style>
+
+<!-- Toolbar Section -->
+<div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+    <div id="kt_app_toolbar_container" class="app-container container-fluid d-flex flex-stack">
+        <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+            <h1 class="page-heading d-flex text-gray-900 fw-bold fs-3 flex-column justify-content-center my-0">
+                Edit Form: {{ form.formname }}
+            </h1>
+            <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
+                <li class="breadcrumb-item text-muted">
+                    <a href="{% url 'manage_forms' %}" class="text-muted text-hover-primary">Forms</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <span class="bullet bg-gray-500 w-5px h-2px"></span>
+                </li>
+                <li class="breadcrumb-item text-muted">Edit Form</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Area -->
+<div class="app-container container-xxl">
+    <!-- Page Header -->
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="page-heading d-flex text-gray-900 fw-bold fs-3 flex-column justify-content-center my-0">
+                Edit Form Configuration
+            </h1>
+            <p class="text-muted fs-6 mt-2">Configure all aspects of your dynamic form</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary" onclick="previewForm()">
+                <i class="ki-duotone ki-eye fs-6"></i> Preview
+            </button>
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('editForm').dispatchEvent(new Event('submit'))">
+                <i class="ki-duotone ki-check fs-6"></i> Save All Changes
+            </button>
+        </div>
+    </div>
+
+    <!-- Configuration Tabs -->
+    <div class="card">
+        <div class="card-body">
+            <form id="editForm" method="post">
+                {% csrf_token %}
+                
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs" id="configTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab">
+                            <i class="ki-duotone ki-information fs-6 me-2"></i>
+                            Basic Info
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="branding-tab" data-bs-toggle="tab" data-bs-target="#branding" type="button" role="tab">
+                            <i class="ki-duotone ki-color-swatch fs-6 me-2"></i>
+                            Template & Branding
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="fields-tab" data-bs-toggle="tab" data-bs-target="#fields" type="button" role="tab">
+                            <i class="ki-duotone ki-questionnaire-tablet fs-6 me-2"></i>
+                            Form Fields
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="access-tab" data-bs-toggle="tab" data-bs-target="#access" type="button" role="tab">
+                            <i class="ki-duotone ki-security-user fs-6 me-2"></i>
+                            Access & Security
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab">
+                            <i class="ki-duotone ki-setting-2 fs-6 me-2"></i>
+                            Advanced Settings
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="configTabsContent">
+                    
+                    <!-- Basic Info Tab -->
+                    <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                        <h4 class="mb-4">Basic Form Information</h4>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="formName" class="form-label fw-bold">Form Name *</label>
+                                    <input type="text" id="formName" name="formname" class="form-control" 
+                                           value="{{ form.formname }}" required>
+                                    <small class="form-text text-muted">Give your form a descriptive name</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="formUUID" class="form-label">Form UUID</label>
+                                    <input type="text" id="formUUID" name="formUUID" class="form-control"
+                                           value="{{ form.uuid }}" readonly>
+                                    <small class="form-text text-muted">Unique identifier for this form</small>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="formDescription" class="form-label">Form Description</label>
+                                    <textarea id="formDescription" name="description" class="form-control" rows="3" 
+                                              placeholder="Describe the purpose of this form...">{{ form.description|default:"" }}</textarea>
+                                    <small class="form-text text-muted">Optional description shown to users</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Template & Branding Tab -->
+                    <div class="tab-pane fade" id="branding" role="tabpanel">
+                        <h4 class="mb-4">Template & Branding</h4>
+                        
+                        <div class="row g-4">
+                            <!-- Template Selection -->
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Template Selection</h5>
+                                        <div class="form-group">
+                                            <label for="template" class="form-label">Choose Template</label>
+                                            <select id="template" name="template" class="form-select">
+                                                <option value="branded" {% if form.template == 'branded' %}selected{% endif %}>Branded Template</option>
+                                                <option value="clean" {% if form.template == 'clean' %}selected{% endif %}>Clean Template</option>
+                                                <option value="modern" {% if form.template == 'modern' %}selected{% endif %}>Modern Template</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Logo and Branding -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Logo & Images</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="logoUrl" class="form-label">Logo URL</label>
+                                            <input type="text" id="logoUrl" name="logo_url" class="form-control"
+                                                   value="{{ form.logo_url }}" placeholder="https://example.com/logo.png">
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="faviconUrl" class="form-label">Favicon URL</label>
+                                            <input type="text" id="faviconUrl" name="favicon_url" class="form-control"
+                                                   value="{{ form.favicon_url }}" placeholder="https://example.com/favicon.ico">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Colors -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Color Scheme</h5>
+                                        
+                                        <div class="row g-3">
+                                            <div class="col-6">
+                                                <div class="form-group">
+                                                    <label for="primaryColor" class="form-label">Primary Color</label>
+                                                    <input type="color" id="primaryColor" name="primary_color" 
+                                                           class="form-control form-control-color" value="#007bff">
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="form-group">
+                                                    <label for="secondaryColor" class="form-label">Secondary Color</label>
+                                                    <input type="color" id="secondaryColor" name="secondary_color" 
+                                                           class="form-control form-control-color" value="#6c757d">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Fields Tab -->
+                    <div class="tab-pane fade" id="fields" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="mb-0">Form Fields</h4>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="expandAllFields()">
+                                    <i class="ki-duotone ki-down fs-6"></i> Expand All
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="collapseAllFields()">
+                                    <i class="ki-duotone ki-up fs-6"></i> Collapse All
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary add-field-btn" onclick="addFormField()">
+                                    <i class="ki-duotone ki-plus fs-6"></i> Add Field
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="formFields">
+                            <!-- Form fields will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Access & Security Tab -->
+                    <div class="tab-pane fade" id="access" role="tabpanel">
+                        <h4 class="mb-4">Access & Security Settings</h4>
+                        
+                        <div class="row g-4">
+                            <!-- Authentication Settings -->
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Authentication Requirements</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <div class="form-check form-switch">
+                                                <input type="checkbox" id="loginRequired" name="loginRequired" 
+                                                       class="form-check-input" {% if form.login_required %}checked{% endif %}>
+                                                <label for="loginRequired" class="form-check-label fw-bold">Login Required</label>
+                                            </div>
+                                            <small class="form-text text-muted">When enabled, users must be logged in to access this form</small>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="accessLevel" class="form-label fw-bold">Access Level</label>
+                                            <select id="accessLevel" name="accessLevel" class="form-select">
+                                                <option value="public" {% if form.access_level == 'public' %}selected{% endif %}>Public - Anyone can access</option>
+                                                <option value="authenticated" {% if form.access_level == 'authenticated' %}selected{% endif %}>Authenticated Users Only</option>
+                                                <option value="selected_users" {% if form.access_level == 'selected_users' %}selected{% endif %}>Specific Users Only</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SSO Settings -->
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">SSO Integration</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <div class="form-check form-switch">
+                                                <input type="checkbox" id="enableSsoPrepopulate" name="enableSsoPrepopulate" 
+                                                       class="form-check-input" {% if form.enable_sso_prepopulate %}checked{% endif %}>
+                                                <label for="enableSsoPrepopulate" class="form-check-label fw-bold">Enable SSO Field Prepopulation</label>
+                                            </div>
+                                            <small class="form-text text-muted">Automatically populate form fields with SSO user data</small>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <div class="form-check form-switch">
+                                                <input type="checkbox" id="autoRedirectToSso" name="autoRedirectToSso" 
+                                                       class="form-check-input" {% if form.auto_redirect_to_sso %}checked{% endif %}>
+                                                <label for="autoRedirectToSso" class="form-check-label fw-bold">Auto-redirect to SSO Login</label>
+                                            </div>
+                                            <small class="form-text text-muted">When authentication is required, automatically redirect users to SSO login</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Settings Tab -->
+                    <div class="tab-pane fade" id="advanced" role="tabpanel">
+                        <h4 class="mb-4">Advanced Settings</h4>
+                        
+                        <div class="row g-4">
+                            <!-- Webhook Settings -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Webhook Integration</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="webhookUrl" class="form-label">Webhook URL</label>
+                                            <input type="text" id="webhookUrl" name="webhookUrl" class="form-control"
+                                                   placeholder="https://api.example.com/webhook" value="{{ form.webhook_url }}">
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="headers" class="form-label">Custom Headers (JSON)</label>
+                                            <textarea id="headers" name="headers" class="form-control" rows="4" 
+                                                      placeholder='{"Content-Type": "application/json"}'>{{ browser_headers_json|default:"{}" }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Post-submission Settings -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Post-Submission Behavior</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="successMessage" class="form-label">Success Message</label>
+                                            <textarea id="successMessage" name="successMessage" class="form-control" rows="3" 
+                                                      placeholder="Thank you! Your form has been submitted successfully.">{% if form.success_message %}{{ form.success_message }}{% endif %}</textarea>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="enableRedirect" 
+                                                       name="enable_redirect" {% if form.enable_redirect %}checked{% endif %}>
+                                                <label class="form-check-label fw-bold" for="enableRedirect">Redirect after submission</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" id="redirectUrlGroup" style="{% if not form.enable_redirect %}display: none;{% endif %}">
+                                            <label for="redirectUrl" class="form-label">Redirect URL</label>
+                                            <input type="url" id="redirectUrl" name="redirectUrl" class="form-control"
+                                                   placeholder="https://example.com/thank-you" value="{{ form.redirect_url }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Buttons (Sticky) -->
+                <div class="save-buttons text-center">
+                    <button type="submit" id="submitButton" class="btn btn-primary btn-lg me-3">
+                        <span class="indicator-label">
+                            <i class="ki-duotone ki-check fs-6"></i>
+                            Save All Changes
+                        </span>
+                        <span class="indicator-progress" style="display: none;">
+                            Please wait... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                        </span>
+                    </button>
+                    <button type="button" onclick="cancelForm(event)" class="btn btn-light-danger btn-lg">
+                        <i class="ki-duotone ki-cross fs-6"></i>
+                        Cancel
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Field Template -->
+<template id="fieldTemplate">
+    <div class="card mb-3 field-item" data-field-index="" draggable="true" data-field-id="">
+        <div class="card-body p-0">
+            <div class="field-header d-flex justify-content-between align-items-center" onclick="toggleFieldCollapse(this, event)">
+                <div class="d-flex align-items-center">
+                    <span class="drag-handle me-2" onclick="event.stopPropagation()">
+                        <i class="ki-duotone ki-menu fs-3"></i>
+                    </span>
+                    <h6 class="card-title field-label-display mb-0">New Field</h6>
+                    <span class="field-summary ms-3"></span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="collapse-btn me-2">
+                        <i class="ki-duotone ki-down fs-4"></i>
+                    </span>
+                    <button type="button" class="btn btn-sm btn-danger remove-field-btn" onclick="removeFormField(this)" title="Remove Field">
+                        <i class="ki-duotone ki-trash fs-6"></i>
+                        Remove
+                    </button>
+                </div>
+            </div>
+            <div class="field-content">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Label *</label>
+                        <input type="text" class="form-control field-label" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Name *</label>
+                        <input type="text" class="form-control field-name" required>
+                        <small class="text-muted">Unique identifier (no spaces)</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Type</label>
+                        <select class="form-select field-type">
+                            <option value="text">Text</option>
+                            <option value="email">Email</option>
+                            <option value="number">Number</option>
+                            <option value="textarea">Text Area</option>
+                            <option value="select">Dropdown</option>
+                            <option value="radio">Radio Buttons</option>
+                            <option value="checkbox">Checkboxes</option>
+                            <option value="date">Date</option>
+                            <option value="file">File Upload</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input field-required" type="checkbox">
+                            <label class="form-check-label">Required field</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Field Options Container -->
+                <div class="field-options mt-3" style="display: none;">
+                    <!-- Dynamic options will be inserted here based on field type -->
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    let fieldCounter = 0;
+    const formFieldsContainer = document.getElementById('formFields');
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize existing form fields if any
+        populateFormFields();
+        
+        // Handle redirect toggle
+        const enableRedirectCheckbox = document.getElementById('enableRedirect');
+        const redirectUrlGroup = document.getElementById('redirectUrlGroup');
+        
+        if (enableRedirectCheckbox) {
+            enableRedirectCheckbox.addEventListener('change', function() {
+                redirectUrlGroup.style.display = this.checked ? 'block' : 'none';
+            });
+        }
+
+        // Handle SSO prepopulate toggle
+        const enableSsoCheckbox = document.getElementById('enableSsoPrepopulate');
+        if (enableSsoCheckbox) {
+            enableSsoCheckbox.addEventListener('change', function() {
+                // Handle SSO settings visibility if needed
+            });
+        }
+
+        // Handle form submission
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitEditForm();
+        });
+    });
+
+    function addFormField() {
+        const template = document.getElementById('fieldTemplate');
+        const clone = template.content.cloneNode(true);
+        
+        // Update field index
+        const fieldItem = clone.querySelector('.field-item');
+        fieldItem.setAttribute('data-field-index', fieldCounter);
+        
+        // Update IDs and names
+        const inputs = clone.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.id) {
+                input.id = input.id.replace('{{ fieldIndex }}', fieldCounter);
+            }
+            if (input.name) {
+                input.name = input.name.replace('{{ fieldIndex }}', fieldCounter);
+            }
+        });
+        
+        const labels = clone.querySelectorAll('label[for]');
+        labels.forEach(label => {
+            if (label.getAttribute('for')) {
+                label.setAttribute('for', label.getAttribute('for').replace('{{ fieldIndex }}', fieldCounter));
+            }
+        });
+
+        // Add change event listener for field type
+        const fieldTypeSelect = clone.querySelector('.field-type');
+        fieldTypeSelect.addEventListener('change', function() {
+            updateFieldOptions(this);
+        });
+
+        // Add input event listeners for live updates
+        const fieldLabel = clone.querySelector('.field-label');
+        const fieldName = clone.querySelector('.field-name');
+        
+        fieldLabel.addEventListener('input', function() {
+            updateFieldDisplay(fieldItem);
+        });
+        
+        fieldName.addEventListener('input', function() {
+            updateFieldDisplay(fieldItem);
+        });
+
+        formFieldsContainer.appendChild(clone);
+        fieldCounter++;
+        
+        // Update display
+        updateFieldDisplay(fieldItem);
+    }
+
+    function removeFormField(button) {
+        const fieldItem = button.closest('.field-item');
+        if (fieldItem) {
+            fieldItem.remove();
+        }
+    }
+
+    function updateFieldDisplay(fieldItem) {
+        const labelDisplay = fieldItem.querySelector('.field-label-display');
+        const labelInput = fieldItem.querySelector('.field-label');
+        const nameInput = fieldItem.querySelector('.field-name');
+        const typeSelect = fieldItem.querySelector('.field-type');
+        const requiredCheckbox = fieldItem.querySelector('.field-required');
+        const summary = fieldItem.querySelector('.field-summary');
+
+        if (labelInput && labelDisplay) {
+            labelDisplay.textContent = labelInput.value || 'New Field';
+        }
+
+        if (summary && typeSelect) {
+            let summaryText = typeSelect.options[typeSelect.selectedIndex].text;
+            if (requiredCheckbox && requiredCheckbox.checked) {
+                summaryText += ' (Required)';
+            }
+            if (nameInput && nameInput.value) {
+                summaryText += ` - ${nameInput.value}`;
+            }
+            summary.textContent = summaryText;
+        }
+    }
+
+    function updateFieldOptions(typeSelect) {
+        const fieldItem = typeSelect.closest('.field-item');
+        const optionsContainer = fieldItem.querySelector('.field-options');
+        const fieldType = typeSelect.value;
+
+        // Clear existing options
+        optionsContainer.innerHTML = '';
+        optionsContainer.style.display = 'none';
+
+        // Add type-specific options
+        if (fieldType === 'select' || fieldType === 'radio' || fieldType === 'checkbox') {
+            optionsContainer.style.display = 'block';
+            optionsContainer.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">Options</label>
+                    <div class="options-list">
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control" placeholder="Option 1" name="option[]">
+                            <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">Remove</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addOption(this)">Add Option</button>
+                </div>
+            `;
+        } else if (fieldType === 'file') {
+            optionsContainer.style.display = 'block';
+            optionsContainer.innerHTML = `
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Max File Size (MB)</label>
+                        <input type="number" class="form-control max-file-size" placeholder="5">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Accepted File Types</label>
+                        <input type="text" class="form-control file-accept" placeholder=".pdf,.jpg,.png">
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input multiple-files-toggle" type="checkbox">
+                            <label class="form-check-label">Allow Multiple Files</label>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function addOption(button) {
+        const optionsList = button.previousElementSibling;
+        const optionCount = optionsList.children.length + 1;
+        const newOption = document.createElement('div');
+        newOption.className = 'input-group mb-2';
+        newOption.innerHTML = `
+            <input type="text" class="form-control" placeholder="Option ${optionCount}" name="option[]">
+            <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">Remove</button>
+        `;
+        optionsList.appendChild(newOption);
+    }
+
+    function toggleFieldCollapse(header, event) {
+        if (event.target.closest('.remove-field-btn') || event.target.closest('.drag-handle')) {
+            return;
+        }
+
+        const fieldItem = header.closest('.field-item');
+        const content = fieldItem.querySelector('.field-content');
+        const collapseBtn = header.querySelector('.collapse-btn');
+
+        content.classList.toggle('collapsed');
+        collapseBtn.classList.toggle('collapsed');
+    }
+
+    function expandAllFields() {
+        document.querySelectorAll('.field-content').forEach(content => {
+            content.classList.remove('collapsed');
+        });
+        document.querySelectorAll('.collapse-btn').forEach(btn => {
+            btn.classList.remove('collapsed');
+        });
+    }
+
+    function collapseAllFields() {
+        document.querySelectorAll('.field-content').forEach(content => {
+            content.classList.add('collapsed');
+        });
+        document.querySelectorAll('.collapse-btn').forEach(btn => {
+            btn.classList.add('collapsed');
+        });
+    }
+
+    function populateFormFields() {
+        try {
+            const formConfig = JSON.parse('{{ form.config|escapejs }}');
+            if (formConfig && Array.isArray(formConfig)) {
+                formConfig.forEach(fieldData => {
+                    addFormField();
+                    const newFieldItem = formFieldsContainer.lastElementChild;
+
+                    // Populate the fields
+                    newFieldItem.querySelector('.field-label').value = fieldData.label || '';
+                    newFieldItem.querySelector('.field-name').value = fieldData.name || '';
+                    newFieldItem.querySelector('.field-type').value = fieldData.type || 'text';
+                    newFieldItem.querySelector('.field-required').checked = fieldData.required || false;
+
+                    // Update field options and display
+                    updateFieldOptions(newFieldItem.querySelector('.field-type'));
+                    updateFieldDisplay(newFieldItem);
+                });
+            }
+        } catch (e) {
+            console.log('No existing form configuration found or invalid JSON');
+        }
+    }
+
+    function submitEditForm() {
+        const submitButton = document.getElementById('submitButton');
+        const indicator = submitButton.querySelector('.indicator-label');
+        const progress = submitButton.querySelector('.indicator-progress');
+        
+        // Show loading state
+        indicator.style.display = 'none';
+        progress.style.display = 'inline-block';
+        submitButton.disabled = true;
+
+        // Collect form data
+        const formData = new FormData();
+        
+        // Basic form data
+        formData.append('formname', document.getElementById('formName').value);
+        formData.append('description', document.getElementById('formDescription').value);
+        formData.append('template', document.getElementById('template').value);
+        formData.append('logo_url', document.getElementById('logoUrl').value);
+        formData.append('favicon_url', document.getElementById('faviconUrl').value);
+        formData.append('primary_color', document.getElementById('primaryColor').value);
+        formData.append('secondary_color', document.getElementById('secondaryColor').value);
+        formData.append('loginRequired', document.getElementById('loginRequired').checked);
+        formData.append('accessLevel', document.getElementById('accessLevel').value);
+        formData.append('enableSsoPrepopulate', document.getElementById('enableSsoPrepopulate').checked);
+        formData.append('autoRedirectToSso', document.getElementById('autoRedirectToSso').checked);
+        formData.append('webhookUrl', document.getElementById('webhookUrl').value);
+        formData.append('headers', document.getElementById('headers').value);
+        formData.append('successMessage', document.getElementById('successMessage').value);
+        formData.append('enable_redirect', document.getElementById('enableRedirect').checked);
+        formData.append('redirectUrl', document.getElementById('redirectUrl').value);
+
+        // Collect field configurations
+        const fieldsConfig = Array.from(formFieldsContainer.children).map(fieldItem => {
+            const config = {
+                label: fieldItem.querySelector('.field-label').value,
+                name: fieldItem.querySelector('.field-name').value,
+                type: fieldItem.querySelector('.field-type').value,
+                required: fieldItem.querySelector('.field-required').checked
+            };
+
+            // Add type-specific configurations
+            const optionsContainer = fieldItem.querySelector('.field-options');
+            if (config.type === 'select' || config.type === 'radio' || config.type === 'checkbox') {
+                const optionInputs = optionsContainer.querySelectorAll('input[name="option[]"]');
+                config.options = Array.from(optionInputs).map(input => input.value).filter(val => val.trim());
+            } else if (config.type === 'file') {
+                const maxSizeInput = optionsContainer.querySelector('.max-file-size');
+                const acceptInput = optionsContainer.querySelector('.file-accept');
+                const multipleToggle = optionsContainer.querySelector('.multiple-files-toggle');
+                
+                if (maxSizeInput && maxSizeInput.value) {
+                    config.maxFileSizeMB = parseInt(maxSizeInput.value);
+                }
+                if (acceptInput && acceptInput.value) {
+                    config.accept = acceptInput.value;
+                }
+                if (multipleToggle) {
+                    config.multiple = multipleToggle.checked;
+                }
+            }
+
+            return config;
+        });
+
+        formData.append('config', JSON.stringify(fieldsConfig));
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        // Submit the form
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                // Success - redirect or show success message
+                window.location.href = "{% url 'manage_forms' %}";
+            } else {
+                throw new Error('Form submission failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error saving form. Please try again.');
+        })
+        .finally(() => {
+            // Reset button state
+            indicator.style.display = 'inline-block';
+            progress.style.display = 'none';
+            submitButton.disabled = false;
+        });
+    }
+
+    function cancelForm(event) {
+        event.preventDefault();
+        if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+            window.location.href = "{% url 'manage_forms' %}";
+        }
+    }
+
+    function previewForm() {
+        // Open form preview in new tab
+        const formId = "{{ form.id }}";
+        window.open(`/forms/${formId}/`, '_blank');
+    }
+</script>
+
+{% endblock %}

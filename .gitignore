@@ -1,0 +1,35 @@
+# Local environments and Python-generated files
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local settings and secret material. Keep the documented template tracked.
+.env
+.env.*
+!.env.example
+core/saml/certs/*.key
+core/saml/certs/*.p12
+core/saml/certs/*.jks
+
+# Local database artifacts and generated output
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3-journal
+*.sqlite3.bak
+*.sqlite3-bak
+staticfiles/
+media/uploads/
+*.log
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Platform and optional frontend build artifacts
+.DS_Store
+Thumbs.db
+dist/
+build/

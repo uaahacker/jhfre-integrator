@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Redirecting to identity provider…</title>
+</head>
+<body onload="document.forms[0].submit();">
+<noscript>
+    <p>JavaScript is disabled. Click the button below to continue signing in.</p>
+</noscript>
+<form method="post" action="{{ sso_url }}">
+    <input type="hidden" name="SAMLRequest" value="{{ saml_request }}">
+    <input type="hidden" name="RelayState" value="{{ relay_state }}">
+    <noscript><button type="submit">Continue</button></noscript>
+</form>
+</body>
+</html>

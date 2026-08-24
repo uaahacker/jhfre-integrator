@@ -1,0 +1,392 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- Toolbar Section -->
+<div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+    <div id="kt_app_toolbar_container" class="app-container container-fluid d-flex flex-stack">
+        <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+            <h1 class="page-heading d-flex text-gray-900 fw-bold fs-3 flex-column justify-content-center my-0">
+                Permissions Overview
+            </h1>
+        </div>
+        <div class="d-flex align-items-center gap-2 gap-lg-3">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#permissionsModal">
+                <i class="ki-duotone ki-plus fs-2"></i> Add Permission
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Adding Permissions -->
+<div class="modal fade" id="permissionsModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Permissions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="permissionsForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="formSelect" class="form-label">Select Form</label>
+                        <select id="formSelect" class="form-select">
+                            {% for form in forms %}
+                                <option value="{{ form.id }}" data-uuid="{{form.uuid}}">{{ form.formname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="accessLevelSelect" class="form-label">Select Access Level</label>
+                        <select id="accessLevelSelect" class="form-select">
+                            <option value="public">Public</option>
+                            <option value="authenticated">Authenticated Users</option>
+                            <option value="selected_users">Specific Users</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="userSelectContainer" style="display: none;">
+                        <label for="userSelect" class="form-label">Select Users</label>
+                        <select id="userSelect" class="form-select" multiple>
+                            {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="button" id="savePermissions" class="btn btn-sm btn-light-primary fw-bold mt-2">
+                        <span class="indicator-label">Save Permissions</span>
+                        <span class="indicator-progress" style="display: none;">
+                            Please wait... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                        </span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DataTable for Permissions -->
+<div class="card mt-5">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0">Forms Access Control</h3>
+            <div class="badge badge-light-info">
+                <i class="ki-duotone ki-information-5 fs-5 me-1">
+                    <span class="path1"></span>
+                    <span class="path2"></span>
+                    <span class="path3"></span>
+                </i>
+                Showing all forms and their access levels
+            </div>
+        </div>
+        
+        <!-- Access Level Legend -->
+        <div class="alert alert-info d-flex align-items-center p-5 mb-5">
+            <i class="ki-duotone ki-shield-tick fs-2hx text-info me-4">
+                <span class="path1"></span>
+                <span class="path2"></span>
+            </i>
+            <div class="d-flex flex-column">
+                <h4 class="mb-1 text-info">Access Level Guide</h4>
+                <span><strong>Public:</strong> Anyone can access the form (no login required)</span>
+                <span><strong>Authenticated Users:</strong> Only logged-in users can access</span>
+                <span><strong>Specific Users:</strong> Only assigned users can access (requires login)</span>
+            </div>
+        </div>
+
+        <table id="permissionsTable" class="table align-middle table-row-dashed fs-6 gy-5">
+            <thead>
+                <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+                    <th class="min-w-125px">Form Name</th>
+                    <th class="min-w-125px">Access Level</th>
+                    <th class="min-w-125px">Users/Access</th>
+                    <th class="min-w-125px">Assigned At</th>
+                    <th class="text-end min-w-100px">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="fw-semibold text-gray-600">
+                {% for permission in permissions %}
+                <tr id="form-row-{{ permission.form.id }}">
+                    <td>{{ permission.form.formname }}</td>
+                    <td>{{ permission.form.access_level }}</td>
+                    <td>{{ permission.user.username }}</td>
+                    <td>{{ permission.assigned_at }}</td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end align-items-center">
+                            <button class="btn btn-icon btn-active-light-primary edit-btn me-2" data-id="{{ permission.id }}" title="Edit">
+                                <i class="ki-duotone ki-pencil fs-3">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>
+                            </button>
+                            <button class="btn btn-icon btn-active-light-primary text-danger delete-btn" data-id="{{ permission.id }}" title="Delete">
+                                <i class="ki-duotone ki-trash-square fs-3">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                    <span class="path4"></span>
+                                </i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                  <tr>
+                      <td colspan="5" class="text-center">No permissions assigned yet.</td>
+                  </tr>
+              {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+<script>
+$(document).ready(function () {
+    // Initialize DataTable
+    const table = $('#permissionsTable').DataTable({
+        ajax: "{% url 'permissions_data' %}", // URL to fetch data for DataTable
+        processing: true,
+        serverSide: false, // For client-side processing. Consider server-side for large datasets.
+        columns: [
+            { data: 'form_name' },
+            { data: 'access_level' },
+            { data: 'users' },
+            { data: 'assigned_at' },
+            {
+                data: 'actions',
+                orderable: false,
+                searchable: false,
+                render: function(data, type, row) {
+                    return data; // 'actions' data already contains HTML for buttons
+                }
+            }
+        ],
+        columnDefs: [
+            { className: "dt-center", targets: "_all" } // Center all columns
+        ]
+    });
+
+    // Function to update UI based on selected access level
+    function updateUIBasedOnAccessLevel(accessLevel) {
+        const userSelectContainer = $('#userSelectContainer');
+        if (accessLevel === 'selected_users') {
+            userSelectContainer.show();
+        } else {
+            userSelectContainer.hide();
+            userSelectContainer.find('#userSelect').val(null).trigger('change'); // Clear user selection
+        }
+    }
+
+    // Event listener for Access Level select dropdown
+    $('#accessLevelSelect').on('change', function () {
+        updateUIBasedOnAccessLevel($(this).val());
+    });
+
+    // Event listener for Save Permissions button click
+    $('#savePermissions').on('click', function () {
+        const formId = $('#formSelect').val();
+        const accessLevel = $('#accessLevelSelect').val();
+        const userIds = $('#userSelect').val() || [];
+
+        showLoadingButton(); // Show loading state on button
+
+        $.ajax({
+            url: "{% url 'save_permissions' %}", // URL to save permissions
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            contentType: 'application/json',
+            data: JSON.stringify({
+                form_id: formId,
+                access_level: accessLevel,
+                user_ids: userIds
+            }),
+            success: function (response) {
+                hideLoadingButton(); // Hide loading state
+                if (response.success) {
+                    table.ajax.reload(); // Reload DataTable to reflect changes
+                    $('#permissionsModal').modal('hide'); // Close the modal
+                    Swal.fire({
+                        title: 'Success!',
+                        text: response.message,
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        allowOutsideClick: false,
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: response.message || 'Failed to save permissions.',
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        allowOutsideClick: false,
+                    });
+                }
+            },
+            error: function (xhr) {
+                hideLoadingButton(); // Hide loading state in case of error
+                Swal.fire({
+                    title: 'Error!',
+                    text: xhr.responseJSON?.message || 'Failed to save permissions.',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    allowOutsideClick: false,
+                });
+            }
+        });
+    });
+
+    // Event listener for Edit Form Access button click (new functionality)
+    $('#permissionsTable').on('click', '.edit-form-btn', function () {
+        const formId = $(this).data('form-id');
+        // Fetch form data and pre-populate the modal
+        $.ajax({
+            url: `/forms/get-form-access/${formId}/`, // You may need to create this endpoint
+            method: 'GET',
+            success: function (data) {
+                $('#formSelect').val(data.form_id);
+                $('#accessLevelSelect').val(data.access_level);
+                if (data.access_level === 'selected_users') {
+                    $('#userSelect').val(data.user_ids).trigger('change');
+                }
+                updateUIBasedOnAccessLevel(data.access_level);
+                $('#permissionsModal').modal('show');
+            },
+            error: function (xhr) {
+                // If endpoint doesn't exist, just pre-select the form
+                $('#formSelect').val(formId);
+                $('#accessLevelSelect').val('public'); // Default
+                updateUIBasedOnAccessLevel('public');
+                $('#permissionsModal').modal('show');
+            }
+        });
+    });
+
+    // Event listener for Delete Individual Permission button click
+    $('#permissionsTable').on('click', '.delete-permission-btn', function () {
+        const permissionId = $(this).data('id');
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'This will remove the user\'s access to this form!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, remove access!',
+            cancelButtonText: 'Cancel',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/permissions/delete/${permissionId}/`,
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    success: function () {
+                        table.ajax.reload();
+                        Swal.fire({
+                            title: 'Removed!',
+                            text: 'User access has been removed successfully.',
+                            icon: 'success',
+                            confirmButtonText: 'OK',
+                        });
+                    },
+                    error: function (xhr) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: xhr.responseJSON?.message || 'Failed to remove user access.',
+                            icon: 'error',
+                            confirmButtonText: 'OK',
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    // Event listener for Edit button click (within DataTable) - keeping for backward compatibility
+    $('#permissionsTable').on('click', '.edit-btn', function () {
+        const permissionId = $(this).data('id');
+        $.ajax({
+            url: `/permissions/edit/${permissionId}/`, // URL to fetch permission data for editing
+            method: 'GET',
+            success: function (data) {
+                $('#formSelect').val(data.form_id); // Populate form select
+                $('#accessLevelSelect').val(data.access_level); // Populate access level select
+                $('#userSelect').val(data.user_ids).trigger('change'); // Populate user select (for 'selected_users')
+                updateUIBasedOnAccessLevel(data.access_level); // Update UI based on access level
+                $('#permissionsModal').modal('show'); // Show the modal for editing
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    title: 'Error!',
+                    text: xhr.responseJSON?.message || 'Failed to fetch permission details for editing.',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    allowOutsideClick: false,
+                });
+            }
+        });
+    });
+
+    // Event listener for Delete button click (within DataTable)
+    $('#permissionsTable').on('click', '.delete-btn', function () {
+        const permissionId = $(this).data('id');
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You will not be able to recover this permission!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/permissions/delete/${permissionId}/`, // URL to delete permission
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    success: function () {
+                        table.ajax.reload(); // Reload DataTable after deletion
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: 'Permission has been deleted successfully.',
+                            icon: 'success',
+                            confirmButtonText: 'OK',
+                        });
+                    },
+                    error: function (xhr) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: xhr.responseJSON?.message || 'Failed to delete permission.',
+                            icon: 'error',
+                            confirmButtonText: 'OK',
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    // Function to show loading state on button
+    function showLoadingButton() {
+        const submitButton = $("#savePermissions");
+        submitButton.attr("disabled", true);
+        submitButton.find(".indicator-label").hide();
+        submitButton.find(".indicator-progress").show();
+    }
+
+    // Function to hide loading state on button
+    function hideLoadingButton() {
+        const submitButton = $("#savePermissions");
+        submitButton.attr("disabled", false);
+        submitButton.find(".indicator-label").show();
+        submitButton.find(".indicator-progress").hide();
+    }
+});
+
+</script>
+
+{% endblock %}

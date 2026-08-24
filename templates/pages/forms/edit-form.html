@@ -1,0 +1,3351 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- SSO prepopulate fields data for JavaScript access -->
+{{ sso_prepopulate_fields_json|json_script:"sso-prepopulate-fields-data" }}
+
+<style>
+    /* Tab Styling */
+    .nav-tabs {
+        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 2rem;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 1rem 1.5rem;
+        transition: all 0.3s ease;
+        background: none;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: #495057;
+        border-bottom-color: #dee2e6;
+        background: rgba(0,0,0,0.02);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #495057;
+        font-weight: 600;
+        border-bottom-color: #007bff;
+        background: none;
+    }
+
+    .tab-content {
+        min-height: 500px;
+    }
+
+    .tab-pane {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Field Styling */
+    .field-item {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+        cursor: move;
+    }
+
+    .field-item:hover {
+        border-color: #007bff;
+        box-shadow: 0 4px 12px rgba(0,123,255,0.15);
+    }
+
+    .field-item.dragging {
+        opacity: 0.5;
+        border: 2px dashed #ccc;
+        transform: rotate(2deg);
+    }
+
+    .field-header {
+        background: #f8f9fa;
+        border-radius: 8px 8px 0 0;
+        border-bottom: 1px solid #e9ecef;
+        cursor: pointer;
+        padding: 1rem;
+    }
+
+    .field-content {
+        transition: all 0.3s ease;
+        overflow: hidden;
+        padding: 1rem;
+    }
+
+    .field-content.collapsed {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    .collapse-btn {
+        transition: transform 0.2s ease;
+    }
+
+    .collapse-btn.collapsed {
+        transform: rotate(-90deg);
+    }
+
+    .drag-handle {
+        cursor: grab;
+        padding: 8px;
+        color: #6c757d;
+    }
+
+    .drag-handle:active {
+        cursor: grabbing;
+    }
+
+    /* Save buttons styling */
+    .save-buttons {
+        position: sticky;
+        bottom: 20px;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid #e9ecef;
+        padding: 1rem;
+        margin: 2rem -2rem -2rem -2rem;
+        border-radius: 0 0 0.5rem 0.5rem;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+
+    .field-type-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .field-type-card:hover {
+        border-color: #007bff;
+        background: rgba(0,123,255,0.05);
+    }
+</style>
+
+<!-- Toolbar Section -->
+<div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+    <div id="kt_app_toolbar_container" class="app-container container-fluid d-flex flex-stack">
+        <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+            <h1 class="page-heading d-flex text-gray-900 fw-bold fs-3 flex-column justify-content-center my-0">
+                Edit Form: {{ form.formname }}
+            </h1>
+            <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
+                <li class="breadcrumb-item text-muted">
+                    <a href="{% url 'manage_forms' %}" class="text-muted text-hover-primary">Forms</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <span class="bullet bg-gray-500 w-5px h-2px"></span>
+                </li>
+                <li class="breadcrumb-item text-muted">Edit Form</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Area -->
+<div class="app-container container-xxl">
+    <!-- Page Header -->
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="page-heading d-flex text-gray-900 fw-bold fs-3 flex-column justify-content-center my-0">
+                Edit Form Configuration
+            </h1>
+            <p class="text-muted fs-6 mt-2">Configure all aspects of your dynamic form</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary" onclick="previewForm()">
+                <i class="ki-duotone ki-eye fs-6"></i> Preview
+            </button>
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('editForm').dispatchEvent(new Event('submit'))">
+                <i class="ki-duotone ki-check fs-6"></i> Save All Changes
+            </button>
+        </div>
+    </div>
+
+    <!-- Configuration Tabs -->
+    <div class="card">
+        <div class="card-body">
+            <form id="editForm" method="post">
+                {% csrf_token %}
+                
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs" id="configTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab">
+                            <i class="ki-duotone ki-information fs-6 me-2"></i>
+                            Basic Info
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="branding-tab" data-bs-toggle="tab" data-bs-target="#branding" type="button" role="tab">
+                            <i class="ki-duotone ki-color-swatch fs-6 me-2"></i>
+                            Template & Branding
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="fields-tab" data-bs-toggle="tab" data-bs-target="#fields" type="button" role="tab">
+                            <i class="ki-duotone ki-questionnaire-tablet fs-6 me-2"></i>
+                            Form Fields
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="access-tab" data-bs-toggle="tab" data-bs-target="#access" type="button" role="tab">
+                            <i class="ki-duotone ki-security-user fs-6 me-2"></i>
+                            Access & Security
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab">
+                            <i class="ki-duotone ki-setting-2 fs-6 me-2"></i>
+                            Advanced Settings
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="configTabsContent">
+                    
+                    <!-- Basic Info Tab -->
+                    <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                        <h4 class="mb-4">Basic Form Information</h4>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="formName" class="form-label fw-bold">Form Name *</label>
+                                    <input type="text" id="formName" name="formname" class="form-control" 
+                                           value="{{ form.formname }}" required>
+                                    <small class="form-text text-muted">Give your form a descriptive name</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="formUUID" class="form-label">Form UUID</label>
+                                    <input type="text" id="formUUID" name="formUUID" class="form-control"
+                                           value="{{ form.uuid }}" readonly>
+                                    <small class="form-text text-muted">Unique identifier for this form</small>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="formDescription" class="form-label">Form Description</label>
+                                    <textarea id="formDescription" name="description" class="form-control" rows="3" 
+                                              placeholder="Describe the purpose of this form...">{{ form.description|default:"" }}</textarea>
+                                    <small class="form-text text-muted">Optional description shown to users</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Template & Branding Tab -->
+                    <div class="tab-pane fade" id="branding" role="tabpanel">
+                        <h4 class="mb-4">Template & Branding</h4>
+                        
+                        <div class="row g-4">
+                            <!-- Template Selection -->
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Template Selection</h5>
+                                        <div class="form-group">
+                                            <label for="template" class="form-label">Choose Template</label>
+                                            <select id="template" name="template" class="form-select">
+                                                <option value="default" {% if form.template_type == 'default' %}selected{% endif %}>Default Template</option>
+                                                <option value="corporate" {% if form.template_type == 'corporate' %}selected{% endif %}>Corporate Template</option>
+                                                <option value="minimal" {% if form.template_type == 'minimal' %}selected{% endif %}>Minimal Template</option>
+                                                <option value="modern" {% if form.template_type == 'modern' %}selected{% endif %}>Modern Template</option>
+                                                <option value="classic" {% if form.template_type == 'classic' %}selected{% endif %}>Classic Template</option>
+                                                <option value="branded" {% if form.template_type == 'branded' %}selected{% endif %}>Branded Template</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Logo and Branding -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Logo & Images</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="logoUrl" class="form-label">Logo URL</label>
+                                            <input type="text" id="logoUrl" name="logo_url" class="form-control"
+                                                   value="{{ form.logo_url }}" placeholder="https://example.com/logo.png">
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="faviconUrl" class="form-label">Favicon URL</label>
+                                            <input type="text" id="faviconUrl" name="favicon_url" class="form-control"
+                                                   value="{{ form.favicon_url }}" placeholder="https://example.com/favicon.ico">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Colors -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Color Scheme</h5>
+                                        
+                                        <div class="row g-3">
+                                            <div class="col-6">
+                                                <div class="form-group">
+                                                    <label for="primaryColor" class="form-label">Primary Color</label>
+                                                    <input type="color" id="primaryColor" name="primary_color" 
+                                                           class="form-control form-control-color" value="#007bff">
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="form-group">
+                                                    <label for="secondaryColor" class="form-label">Secondary Color</label>
+                                                    <input type="color" id="secondaryColor" name="secondary_color" 
+                                                           class="form-control form-control-color" value="#6c757d">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Fields Tab -->
+                    <div class="tab-pane fade" id="fields" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="mb-0">Form Fields</h4>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="expandAllFields()">
+                                    <i class="ki-duotone ki-down fs-6"></i> Expand All
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="collapseAllFields()">
+                                    <i class="ki-duotone ki-up fs-6"></i> Collapse All
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary add-field-btn" onclick="addFormField()">
+                                    <i class="ki-duotone ki-plus fs-6"></i> Add Field
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="formFields">
+                            <!-- Form fields will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Access & Security Tab -->
+                    <div class="tab-pane fade" id="access" role="tabpanel">
+                        <h4 class="mb-4">Access & Security Settings</h4>
+                        
+                        <div class="row g-4">
+                            <!-- Authentication Settings -->
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Authentication Requirements</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <div class="form-check form-switch">
+                                                <input type="checkbox" id="loginRequired" name="loginRequired" 
+                                                       class="form-check-input" {% if form.login_required %}checked{% endif %}>
+                                                <label for="loginRequired" class="form-check-label fw-bold">Login Required</label>
+                                            </div>
+                                            <small class="form-text text-muted">When enabled, users must be logged in to access this form</small>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="accessLevel" class="form-label fw-bold">Access Level</label>
+                                            <select id="accessLevel" name="accessLevel" class="form-select">
+                                                <option value="public" {% if form.access_level == 'public' %}selected{% endif %}>Public - Anyone can access</option>
+                                                <option value="authenticated" {% if form.access_level == 'authenticated' %}selected{% endif %}>Authenticated Users Only</option>
+                                                <option value="selected_users" {% if form.access_level == 'selected_users' %}selected{% endif %}>Specific Users Only</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SSO Settings -->
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">SSO Integration</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <div class="form-check form-switch">
+                                                <input type="checkbox" id="enableSsoPrepopulate" name="enableSsoPrepopulate" 
+                                                       class="form-check-input" {% if form.enable_sso_prepopulate %}checked{% endif %}>
+                                                <label for="enableSsoPrepopulate" class="form-check-label fw-bold">Enable SSO Field Prepopulation</label>
+                                            </div>
+                                            <small class="form-text text-muted">Automatically populate form fields with SSO user data</small>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <div class="form-check form-switch">
+                                                <input type="checkbox" id="autoRedirectToSso" name="autoRedirectToSso" 
+                                                       class="form-check-input" {% if form.auto_redirect_to_sso %}checked{% endif %}>
+                                                <label for="autoRedirectToSso" class="form-check-label fw-bold">Auto-redirect to SSO Login</label>
+                                            </div>
+                                            <small class="form-text text-muted">When authentication is required, automatically redirect users to SSO login</small>
+                                        </div>
+
+                                        <!-- SSO Field Mapping -->
+                                        <div id="ssoFieldMappingContainer" style="display: none;">
+                                            <hr class="my-4">
+                                            <h6 class="mb-3">SSO Field Mapping</h6>
+                                            <p class="text-muted mb-3">Map SSO user attributes to form fields for automatic prepopulation</p>
+                                            
+                                            <div id="ssoFieldMappings">
+                                                <!-- SSO field mappings will be populated here -->
+                                            </div>
+                                            
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addSsoFieldMapping()">
+                                                <i class="ki-duotone ki-plus fs-6"></i> Add Field Mapping
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- SSO Disabled Fields Section -->
+                                    <div class="col-md-6">
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold">Disabled Fields for SSO Users</label>
+                                            <small class="form-text text-muted d-block mb-2">Fields that SSO users cannot edit (will be read-only)</small>
+                                            
+                                            <div id="ssoDisabledFields">
+                                                <!-- SSO disabled fields will be added here -->
+                                            </div>
+                                            
+                                            <button type="button" class="btn btn-sm btn-outline-warning mt-2" onclick="addSsoDisabledField()">
+                                                <i class="ki-duotone ki-plus fs-6"></i> Add Disabled Field
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Settings Tab -->
+                    <div class="tab-pane fade" id="advanced" role="tabpanel">
+                        <h4 class="mb-4">Advanced Settings</h4>
+                        
+                        <div class="row g-4">
+                            <!-- Webhook Settings -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Webhook Integration</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="webhookUrl" class="form-label">Webhook URL</label>
+                                            <input type="text" id="webhookUrl" name="webhookUrl" class="form-control"
+                                                   placeholder="https://api.example.com/webhook" value="{{ form.webhook_url }}">
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="headers" class="form-label">Custom Headers (JSON)</label>
+                                            <textarea id="headers" name="headers" class="form-control" rows="4" 
+                                                      placeholder='{"Content-Type": "application/json"}'>{{ browser_headers_json }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Post-submission Settings -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Post-Submission Behavior</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="successMessage" class="form-label">Success Message</label>
+                                            <textarea id="successMessage" name="successMessage" class="form-control" rows="3" 
+                                                      placeholder="Thank you! Your form has been submitted successfully.">{% if form.success_message %}{{ form.success_message }}{% endif %}</textarea>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="enableRedirect" 
+                                                       name="enable_redirect" {% if form.enable_redirect %}checked{% endif %}>
+                                                <label class="form-check-label fw-bold" for="enableRedirect">Redirect after submission</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" id="redirectUrlGroup" style="{% if not form.enable_redirect %}display: none;{% endif %}">
+                                            <label for="redirectUrl" class="form-label">Redirect URL</label>
+                                            <input type="url" id="redirectUrl" name="redirectUrl" class="form-control"
+                                                   placeholder="https://example.com/thank-you" value="{{ form.redirect_url }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Buttons (Sticky) -->
+                <div class="save-buttons text-center">
+                    <button type="button" id="submitButton" class="btn btn-primary btn-lg me-3" onclick="submitEditForm()">
+                        <span class="indicator-label">
+                            <i class="ki-duotone ki-check fs-6"></i>
+                            Save All Changes
+                        </span>
+                        <span class="indicator-progress" style="display: none;">
+                            Please wait... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                        </span>
+                    </button>
+                    <button type="button" onclick="cancelForm(event)" class="btn btn-light-danger btn-lg">
+                        <i class="ki-duotone ki-cross fs-6"></i>
+                        Cancel
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Field Template -->
+<template id="fieldTemplate">
+    <div class="card mb-3 field-item" data-field-index="" draggable="true" data-field-id="">
+        <div class="card-body p-0">
+            <div class="field-header d-flex justify-content-between align-items-center" onclick="toggleFieldCollapse(this, event)">
+                <div class="d-flex align-items-center">
+                    <span class="drag-handle me-2" onclick="event.stopPropagation()">
+                        <i class="ki-duotone ki-menu fs-3"></i>
+                    </span>
+                    <h6 class="card-title field-label-display mb-0">New Field</h6>
+                    <span class="field-summary ms-3"></span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="collapse-btn me-2">
+                        <i class="ki-duotone ki-down fs-4"></i>
+                    </span>
+                    <button type="button" class="btn btn-sm btn-danger remove-field-btn" onclick="removeFormField(this)" title="Remove Field">
+                        <i class="ki-duotone ki-trash fs-6"></i>
+                        Remove
+                    </button>
+                </div>
+            </div>
+            <div class="field-content">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Label *</label>
+                        <input type="text" class="form-control field-label" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Name *</label>
+                        <input type="text" class="form-control field-name" required>
+                        <small class="text-muted">Unique identifier (no spaces)</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Type</label>
+                        <select class="form-select field-type">
+                            <option value="text">Text</option>
+                            <option value="email">Email</option>
+                            <option value="number">Number</option>
+                            <option value="currency">Currency</option>
+                            <option value="textarea">Text Area</option>
+                            <option value="select">Dropdown</option>
+                            <option value="radio">Radio Buttons</option>
+                            <option value="checkbox">Checkboxes</option>
+                            <option value="date">Date</option>
+                            <option value="file">File Upload</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input field-required" type="checkbox">
+                            <label class="form-check-label">Required field</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Field Options Container -->
+                <div class="field-options mt-3" style="display: none;">
+                    <!-- Dynamic options will be inserted here based on field type -->
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    let fieldCounter = 0;
+    let formFieldsContainer;
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        formFieldsContainer = document.getElementById('formFields');
+        
+        // Initialize existing form fields if any
+        populateFormFields();
+        
+        // Load all saved dropdown configurations after a delay to ensure dropdowns are populated
+        setTimeout(() => {
+            loadAllSavedConfigurations();
+        }, 1000);
+        
+        // Initialize SSO field mappings after form fields are loaded
+        setTimeout(() => {
+            initializeSsoMappings();
+            populateSsoDisabledFields();
+        }, 1500);
+        
+        // Initialize condition help text for any existing exclusion/inclusion rows
+        document.querySelectorAll('.exclusion-condition').forEach(updateExclusionHelp);
+        document.querySelectorAll('.inclusion-condition').forEach(updateInclusionHelp);
+        
+        // Handle redirect toggle
+        const enableRedirectCheckbox = document.getElementById('enableRedirect');
+        const redirectUrlGroup = document.getElementById('redirectUrlGroup');
+        
+        if (enableRedirectCheckbox) {
+            enableRedirectCheckbox.addEventListener('change', function() {
+                redirectUrlGroup.style.display = this.checked ? 'block' : 'none';
+            });
+        }
+
+        // Handle SSO prepopulate toggle
+        const enableSsoCheckbox = document.getElementById('enableSsoPrepopulate');
+        if (enableSsoCheckbox) {
+            enableSsoCheckbox.addEventListener('change', function() {
+                toggleSsoFieldMapping();
+            });
+            
+            // Initialize SSO field mapping if already enabled
+            if (enableSsoCheckbox.checked) {
+                console.log('Initializing SSO field mapping on page load');
+                toggleSsoFieldMapping();
+            }
+        }
+        
+        // Add tab click listener for Access & Security tab to refresh SSO mappings
+        const accessTab = document.getElementById('access-tab');
+        if (accessTab) {
+            accessTab.addEventListener('click', function() {
+                console.log('Access & Security tab clicked - refreshing SSO mappings');
+                setTimeout(() => {
+                    if (enableSsoCheckbox && enableSsoCheckbox.checked) {
+                        console.log('Refreshing SSO mappings after tab switch');
+                        populateSsoFieldMappings();
+                    }
+                }, 200);
+            });
+        }
+
+        // Handle form submission
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Form submit prevented, calling submitEditForm()');
+            submitEditForm();
+        });
+        
+        // Add extra debugging
+        console.log('Edit form JavaScript initialized successfully');
+        
+        // Add a test button for debugging dropdowns
+        if (window.location.search.includes('debug=true')) {
+            const debugBtn = document.createElement('button');
+            debugBtn.textContent = 'Test Dynamic Dropdown Loading';
+            debugBtn.className = 'btn btn-warning btn-sm me-2';
+            debugBtn.style.position = 'fixed';
+            debugBtn.style.top = '10px';
+            debugBtn.style.right = '10px';
+            debugBtn.style.zIndex = '9999';
+            debugBtn.onclick = function() {
+                testDropdownLoading();
+            };
+            document.body.appendChild(debugBtn);
+            
+            // Add debug SSO button
+            const ssoDebugBtn = document.createElement('button');
+            ssoDebugBtn.textContent = 'Debug SSO';
+            ssoDebugBtn.className = 'btn btn-info btn-sm';
+            ssoDebugBtn.style.position = 'fixed';
+            ssoDebugBtn.style.top = '50px';
+            ssoDebugBtn.style.right = '10px';
+            ssoDebugBtn.style.zIndex = '9999';
+            ssoDebugBtn.onclick = function() {
+                console.log('=== SSO DEBUG ===');
+                initializeSsoMappings();
+                populateSsoDisabledFields();
+            };
+            document.body.appendChild(ssoDebugBtn);
+        }
+    });
+    
+    function testDropdownLoading() {
+        console.log('=== TESTING DROPDOWN LOADING ===');
+        const dynamicFields = document.querySelectorAll('.field-item');
+        dynamicFields.forEach((field, index) => {
+            const fieldType = field.querySelector('.field-type').value;
+            if (fieldType === 'select') {
+                const optionsContainer = field.querySelector('.field-options');
+                const dynamicRadio = optionsContainer.querySelector('input[value="dynamic"]:checked');
+                if (dynamicRadio) {
+                    console.log(`Found dynamic dropdown field ${index + 1}:`);
+                    const connectionSelect = optionsContainer.querySelector('.dynamic-connection');
+                    const tableSelect = optionsContainer.querySelector('.table-selector');
+                    const valueColumn = optionsContainer.querySelector('.value-column-selector');
+                    
+                    console.log('  Connection:', connectionSelect?.value || 'None');
+                    console.log('  Table:', tableSelect?.value || 'None');  
+                    console.log('  Value Column:', valueColumn?.value || 'None');
+                    
+                    // Try to load options if configuration exists
+                    if (connectionSelect?.value && tableSelect?.value && valueColumn?.value) {
+                        console.log('  Attempting to load options...');
+                        const config = {
+                            connection_id: connectionSelect.value,
+                            query_mode: 'guided',
+                            table: tableSelect.value,
+                            value_column: valueColumn.value,
+                            label_column: valueColumn.value
+                        };
+                        loadSavedDropdownOptions(field, config);
+                    }
+                }
+            }
+        });
+    }
+
+    function getDynamicOptionsConfiguration() {
+        console.log('Getting dynamic options configuration from database...');
+        
+        // Get configuration from Django context (database)
+        try {
+            const dbConfig = '{{ form.dynamic_options_config|escapejs }}';
+            if (dbConfig && dbConfig !== 'None' && dbConfig !== '' && dbConfig !== '{}') {
+                const parsedConfig = JSON.parse(dbConfig);
+                console.log('Loaded dynamic config from database:', parsedConfig);
+                return parsedConfig;
+            }
+        } catch (e) {
+            console.log('Error parsing database dynamic config or no config found:', e);
+        }
+        
+        console.log('No dynamic configuration found in database');
+        return {};
+    }
+
+    function initializeSsoMappings() {
+        console.log('=== INITIALIZING SSO MAPPINGS ===');
+        
+        const enableSsoCheckbox = document.getElementById('enableSsoPrepopulate');
+        if (!enableSsoCheckbox) {
+            console.log('SSO checkbox not found');
+            return;
+        }
+        
+        console.log('SSO checkbox checked:', enableSsoCheckbox.checked);
+        
+        if (enableSsoCheckbox.checked) {
+            console.log('SSO is enabled, ensuring field mappings are visible');
+            
+            // Force show the SSO field mapping section
+            const ssoFieldMappingSection = document.getElementById('ssoFieldMappingSection');
+            const ssoFieldMappingContainer = document.getElementById('ssoFieldMappingContainer');
+            
+            if (ssoFieldMappingSection) {
+                ssoFieldMappingSection.style.display = 'block';
+                console.log('SSO field mapping section made visible');
+            }
+            
+            if (ssoFieldMappingContainer) {
+                ssoFieldMappingContainer.style.display = 'block';
+                console.log('SSO field mapping container made visible');
+            }
+            
+            // Populate the SSO field mappings with enhanced timing and multiple attempts
+            console.log('Scheduling SSO field mapping population...');
+            
+            let attempts = 0;
+            const maxAttempts = 5;
+            
+            function attemptPopulation() {
+                attempts++;
+                console.log(`SSO Population attempt ${attempts}/${maxAttempts}`);
+                
+                // Check if form fields are available
+                const formFields = Array.from(formFieldsContainer?.children || []).map(fieldItem => ({
+                    name: fieldItem.querySelector('.field-name')?.value || '',
+                    label: fieldItem.querySelector('.field-label')?.value || 'Unnamed Field',
+                    type: fieldItem.querySelector('.field-type')?.value || 'text'
+                })).filter(field => field.name);
+                
+                console.log(`Found ${formFields.length} form fields for SSO mapping`);
+                
+                if (formFields.length > 0) {
+                    console.log('Form fields available, populating SSO mappings');
+                    populateSsoFieldMappings();
+                } else if (attempts < maxAttempts) {
+                    console.log(`No form fields yet, retrying in ${1000 * attempts}ms...`);
+                    setTimeout(attemptPopulation, 1000 * attempts);
+                } else {
+                    console.log('Max attempts reached, SSO mappings may not populate');
+                }
+            }
+            
+            // Start the first attempt after initial delay
+            setTimeout(attemptPopulation, 1000);
+        } else {
+            console.log('SSO is disabled');
+        }
+    }
+
+    function loadAllSavedConfigurations() {
+        console.log('Loading all saved configurations...');
+        
+        // Get saved configuration from localStorage or server
+        const savedConfig = getDynamicOptionsConfiguration();
+        console.log('All saved configurations:', savedConfig);
+        
+        if (!savedConfig || Object.keys(savedConfig).length === 0) {
+            console.log('No saved configurations found');
+            return;
+        }
+        
+        // For each field with saved configuration, restore its state
+        Object.keys(savedConfig).forEach(fieldName => {
+            const config = savedConfig[fieldName];
+            console.log(`Processing saved config for field: ${fieldName}`, config);
+            
+            // Find the field in the DOM
+            const fieldItem = document.querySelector(`[data-field-name="${fieldName}"]`);
+            if (!fieldItem) {
+                console.log(`Field element not found for: ${fieldName}`);
+                return;
+            }
+            
+            const fieldType = fieldItem.querySelector('.field-type');
+            if (!fieldType || fieldType.value !== 'select') {
+                console.log(`Field ${fieldName} is not a select field`);
+                return;
+            }
+            
+            // Set the dynamic option type
+            const dynamicRadio = fieldItem.querySelector('input[value="dynamic"]');
+            if (dynamicRadio) {
+                dynamicRadio.checked = true;
+                dynamicRadio.dispatchEvent(new Event('change'));
+            }
+            
+            // Wait for dynamic options to be initialized, then set values
+            setTimeout(() => {
+                const connectionSelect = fieldItem.querySelector('.dynamic-connection');
+                if (connectionSelect && config.connection_id) {
+                    connectionSelect.value = config.connection_id;
+                    connectionSelect.dispatchEvent(new Event('change'));
+                    
+                    // Chain the updates with delays
+                    setTimeout(() => {
+                        const tableSelect = fieldItem.querySelector('.table-selector');
+                        if (tableSelect && config.table) {
+                            tableSelect.value = config.table;
+                            tableSelect.dispatchEvent(new Event('change'));
+                            
+                            setTimeout(() => {
+                                const valueColumn = fieldItem.querySelector('.value-column-selector');
+                                const labelColumn = fieldItem.querySelector('.label-column-selector');
+                                
+                                if (valueColumn && config.value_column) {
+                                    valueColumn.value = config.value_column;
+                                }
+                                if (labelColumn && config.label_column) {
+                                    labelColumn.value = config.label_column;
+                                }
+                                
+                                // Load the actual dropdown options AND populate main form field
+                                loadSavedDropdownOptions(fieldItem, config);
+                                
+                                // CRITICAL: Also populate the main form field dropdown
+                                setTimeout(() => {
+                                    populateMainFormFieldDropdown(fieldItem, config);
+                                }, 500);
+                            }, 300);
+                        }
+                    }, 300);
+                }
+            }, 300);
+        });
+    }
+
+    function addFormField() {
+        const template = document.getElementById('fieldTemplate');
+        const clone = template.content.cloneNode(true);
+        
+        // Update field index
+        const fieldItem = clone.querySelector('.field-item');
+        fieldItem.setAttribute('data-field-index', fieldCounter);
+        
+        // Update IDs and names
+        const inputs = clone.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.id) {
+                input.id = input.id.replace('{{ fieldIndex }}', fieldCounter);
+            }
+            if (input.name) {
+                input.name = input.name.replace('{{ fieldIndex }}', fieldCounter);
+            }
+        });
+        
+        const labels = clone.querySelectorAll('label[for]');
+        labels.forEach(label => {
+            if (label.getAttribute('for')) {
+                label.setAttribute('for', label.getAttribute('for').replace('{{ fieldIndex }}', fieldCounter));
+            }
+        });
+
+        // Add change event listener for field type
+        const fieldTypeSelect = clone.querySelector('.field-type');
+        fieldTypeSelect.addEventListener('change', function() {
+            updateFieldOptions(this);
+        });
+
+        // Add input event listeners for live updates
+        const fieldLabel = clone.querySelector('.field-label');
+        const fieldName = clone.querySelector('.field-name');
+        
+        fieldLabel.addEventListener('input', function() {
+            updateFieldDisplay(fieldItem);
+            // Refresh SSO mappings when field label changes
+            setTimeout(() => {
+                populateSsoFieldMappings();
+            }, 200);
+        });
+        
+        fieldName.addEventListener('input', function() {
+            updateFieldDisplay(fieldItem);
+            // Refresh SSO mappings when field name changes
+            setTimeout(() => {
+                populateSsoFieldMappings();
+            }, 200);
+        });
+
+        formFieldsContainer.appendChild(clone);
+        fieldCounter++;
+        
+        // Update display
+        updateFieldDisplay(fieldItem);
+        
+        // Refresh SSO mappings after adding field
+        setTimeout(() => {
+            populateSsoFieldMappings();
+        }, 100);
+    }
+
+    function removeFormField(button) {
+        const fieldItem = button.closest('.field-item');
+        if (fieldItem) {
+            fieldItem.remove();
+            // Refresh SSO mappings after removing field
+            setTimeout(() => {
+                populateSsoFieldMappings();
+            }, 100);
+        }
+    }
+
+    function updateFieldDisplay(fieldItem) {
+        const labelDisplay = fieldItem.querySelector('.field-label-display');
+        const labelInput = fieldItem.querySelector('.field-label');
+        const nameInput = fieldItem.querySelector('.field-name');
+        const typeSelect = fieldItem.querySelector('.field-type');
+        const requiredCheckbox = fieldItem.querySelector('.field-required');
+        const summary = fieldItem.querySelector('.field-summary');
+
+        if (labelInput && labelDisplay) {
+            labelDisplay.textContent = labelInput.value || 'New Field';
+        }
+
+        if (summary && typeSelect) {
+            let summaryText = typeSelect.options[typeSelect.selectedIndex].text;
+            if (requiredCheckbox && requiredCheckbox.checked) {
+                summaryText += ' (Required)';
+            }
+            if (nameInput && nameInput.value) {
+                summaryText += ` - ${nameInput.value}`;
+            }
+            summary.textContent = summaryText;
+        }
+    }
+
+    function updateFieldOptions(typeSelect) {
+        const fieldItem = typeSelect.closest('.field-item');
+        const optionsContainer = fieldItem.querySelector('.field-options');
+        const fieldType = typeSelect.value;
+
+        // Clear existing options
+        optionsContainer.innerHTML = '';
+        optionsContainer.style.display = 'none';
+
+        // Add type-specific options
+        if (fieldType === 'select' || fieldType === 'radio' || fieldType === 'checkbox') {
+            optionsContainer.style.display = 'block';
+            optionsContainer.innerHTML = `
+                <div class="form-group mb-3">
+                    <label class="form-label">Options Configuration</label>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="option-type-${fieldCounter}" value="manual" checked onchange="toggleOptionType(this)">
+                                <label class="form-check-label">Manual Options</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="option-type-${fieldCounter}" value="dynamic" onchange="toggleOptionType(this)">
+                                <label class="form-check-label">Database/Integration Query</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Manual Options -->
+                <div class="manual-options">
+                    <div class="form-group">
+                        <label class="form-label">Options</label>
+                        <div class="options-list">
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control" placeholder="Option 1" name="option[]">
+                                <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">Remove</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addOption(this)">Add Option</button>
+                    </div>
+                </div>
+
+                <!-- Dynamic Options from Database/Integration -->
+                <div class="dynamic-options" style="display: none;">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Connection</label>
+                            <select class="form-select dynamic-connection" onchange="loadDatabaseTables(this)">
+                                <option value="">Select Connection</option>
+                                {% for conn in database_connections %}
+                                <option value="{{ conn.id }}" data-type="{{ conn.type }}">{{ conn.name }} ({{ conn.connection_type }})</option>
+                                {% endfor %}
+                                {% if not database_connections %}
+                                <option value="">No connections available - check login status</option>
+                                {% endif %}
+                            </select>
+                            <!-- Debug info -->
+                            <div class="alert alert-info mt-2">
+                                <strong>🔍 CONNECTION DEBUG INFO:</strong><br>
+                                <strong>User:</strong> {{ user.username }} (ID: {{ user.id }})
+                                {% if user.is_superuser %}<span class="badge bg-success">SUPERUSER</span>{% elif user.is_staff %}<span class="badge bg-primary">ADMIN</span>{% endif %}<br>
+                                <strong>Is authenticated:</strong> {{ user.is_authenticated }}<br>
+                                <strong>Available connections:</strong> {{ database_connections|length }}<br>
+                                {% if database_connections %}
+                                    <strong>Connections found:</strong><br>
+                                    {% for conn in database_connections %}
+                                    &nbsp;&nbsp;• {{ conn.name }} (ID: {{ conn.id }}, Type: {{ conn.connection_type }})<br>
+                                    {% endfor %}
+                                    <span style="color: green;">✅ Integration credentials are available!</span>
+                                {% else %}
+                                    <span style="color: red; font-weight: bold;">❌ No connections available!</span><br>
+                                    <strong>Solution:</strong> 
+                                    {% if not user.is_authenticated %}
+                                        <span style="color: blue;">Please log in first</span>
+                                    {% else %}
+                                        <span style="color: blue;">Log in as 'admin' user (or any admin/superuser) to access integration credentials</span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Query Mode</label>
+                            <select class="form-select query-mode" onchange="toggleQueryMode(this)">
+                                <option value="guided">Guided (Table + Columns)</option>
+                                <option value="custom">Custom SQL Query</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Guided Mode -->
+                        <div class="guided-mode">
+                            <div class="col-md-6">
+                                <label class="form-label">Table</label>
+                                <select class="form-select table-selector" onchange="loadTableColumns(this)">
+                                    <option value="">Select a table</option>
+                                </select>
+                                <div class="table-loading" style="display: none;">
+                                    <small class="text-muted">
+                                        <span class="spinner-border spinner-border-sm me-1"></span>
+                                        Loading tables...
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Value Column</label>
+                                <select class="form-select value-column-selector">
+                                    <option value="">Select value column</option>
+                                </select>
+                                <div class="columns-loading" style="display: none;">
+                                    <small class="text-muted">
+                                        <span class="spinner-border spinner-border-sm me-1"></span>
+                                        Loading columns...
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Label Column</label>
+                                <select class="form-select label-column-selector">
+                                    <option value="">Select label column</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Sort Column (Optional)</label>
+                                <select class="form-select sort-column-selector">
+                                    <option value="">No sorting</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Sort Order</label>
+                                <select class="form-select sort-order-selector">
+                                    <option value="ASC">Ascending</option>
+                                    <option value="DESC">Descending</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Limit Results (Optional)</label>
+                                <input type="number" class="form-control result-limit" placeholder="100" min="1" max="10000">
+                                <small class="text-muted">Maximum 10,000 records</small>
+                            </div>
+                            
+                            <!-- Advanced Filtering Section -->
+                            <div class="col-12">
+                                <div class="card mt-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Advanced Filtering</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- WHERE Conditions -->
+                                        <div class="where-conditions-section mb-3">
+                                            <label class="form-label fw-bold">WHERE Conditions</label>
+                                            <div class="where-conditions-list">
+                                                <div class="where-condition-row mb-2">
+                                                    <div class="row g-2">
+                                                        <div class="col-md-3">
+                                                            <select class="form-select where-column">
+                                                                <option value="">Select column</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <select class="form-select where-operator">
+                                                                <option value="=">=</option>
+                                                                <option value="!=">!=</option>
+                                                                <option value=">">></option>
+                                                                <option value="<"><</option>
+                                                                <option value=">=">>=</option>
+                                                                <option value="<="><=</option>
+                                                                <option value="LIKE">LIKE</option>
+                                                                <option value="NOT LIKE">NOT LIKE</option>
+                                                                <option value="IN">IN</option>
+                                                                <option value="NOT IN">NOT IN</option>
+                                                                <option value="IS NULL">IS NULL</option>
+                                                                <option value="IS NOT NULL">IS NOT NULL</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <input type="text" class="form-control where-value" placeholder="Value">
+                                                            <small class="text-muted">For IN/NOT IN, use comma-separated values</small>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <select class="form-select where-logic">
+                                                                <option value="AND">AND</option>
+                                                                <option value="OR">OR</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-1">
+                                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeWhereCondition(this)">×</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addWhereCondition(this)">
+                                                <i class="ki-duotone ki-plus fs-6"></i> Add WHERE Condition
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Exclusion Section -->
+                                        <div class="exclusions-section mb-3">
+                                            <label class="form-label fw-bold">Exclusions</label>
+                                            <div class="exclusions-list">
+                                                <div class="exclusion-row mb-2">
+                                                    <div class="row g-2">
+                                                        <div class="col-md-3">
+                                                            <select class="form-select exclusion-column" onchange="updateAdvancedGeneratedQuery()">
+                                                                <option value="">Select column to exclude</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <select class="form-select exclusion-condition" onchange="updateAdvancedGeneratedQuery()">
+                                                                <option value="equals">Equals</option>
+                                                                <option value="contains">Contains</option>
+                                                                <option value="starts_with">Starts With</option>
+                                                                <option value="ends_with">Ends With</option>
+                                                                <option value="not_equals">Not Equals</option>
+                                                                <option value="in_list">In List</option>
+                                                                <option value="regex">Regex Pattern</option>
+                                                                <option value="is_null">Is Null</option>
+                                                                <option value="is_not_null">Is Not Null</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-5">
+                                                            <input type="text" class="form-control exclusion-values" placeholder="Enter value(s)" oninput="updateAdvancedGeneratedQuery()">
+                                                            <small class="text-muted exclusion-help">Enter values based on condition selected</small>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeExclusion(this)">Remove</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addExclusion(this)">
+                                                <i class="ki-duotone ki-plus fs-6"></i> Add Exclusion
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Include Only Section -->
+                                        <div class="inclusions-section">
+                                            <label class="form-label fw-bold">Include Only (Optional)</label>
+                                            <div class="inclusions-list">
+                                                <div class="inclusion-row mb-2">
+                                                    <div class="row g-2">
+                                                        <div class="col-md-3">
+                                                            <select class="form-select inclusion-column" onchange="updateAdvancedGeneratedQuery()">
+                                                                <option value="">Select column to filter</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <select class="form-select inclusion-condition" onchange="updateAdvancedGeneratedQuery()">
+                                                                <option value="equals">Equals</option>
+                                                                <option value="contains">Contains</option>
+                                                                <option value="starts_with">Starts With</option>
+                                                                <option value="ends_with">Ends With</option>
+                                                                <option value="not_equals">Not Equals</option>
+                                                                <option value="in_list">In List</option>
+                                                                <option value="regex">Regex Pattern</option>
+                                                                <option value="is_null">Is Null</option>
+                                                                <option value="is_not_null">Is Not Null</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-5">
+                                                            <input type="text" class="form-control inclusion-values" placeholder="Enter value(s)" oninput="updateAdvancedGeneratedQuery()">
+                                                            <small class="text-muted inclusion-help">Enter values based on condition selected</small>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeInclusion(this)">Remove</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-success" onclick="addInclusion(this)">
+                                                <i class="ki-duotone ki-plus fs-6"></i> Add Inclusion
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label">Generated Query (Preview)</label>
+                                <textarea class="form-control generated-query" rows="4" readonly></textarea>
+                                <small class="text-muted">This query will be generated from your selections above</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Custom Mode -->
+                        <div class="custom-mode" style="display: none;">
+                            <div class="col-12">
+                                <label class="form-label">Custom SQL Query</label>
+                                <textarea class="form-control custom-query" rows="3" placeholder="SELECT id, name FROM users WHERE active = 1"></textarea>
+                                <small class="text-muted">Query must return exactly 2 columns: value and label</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="testDynamicQuery(this)">
+                                <i class="ki-duotone ki-check fs-6"></i> Test Query
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-info ms-2" onclick="debugDynamicConfig(this)">
+                                <i class="ki-duotone ki-information fs-6"></i> Debug Config
+                            </button>
+                            <div class="query-result mt-2" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (fieldType === 'currency') {
+            optionsContainer.style.display = 'block';
+            optionsContainer.innerHTML = `
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Currency Symbol</label>
+                        <select class="form-control currency-symbol">
+                            <option value="$">$ (US Dollar)</option>
+                            <option value="€">€ (Euro)</option>
+                            <option value="£">£ (British Pound)</option>
+                            <option value="¥">¥ (Japanese Yen)</option>
+                            <option value="₹">₹ (Indian Rupee)</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        } else if (fieldType === 'file') {
+            optionsContainer.style.display = 'block';
+            optionsContainer.innerHTML = `
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Max File Size (MB)</label>
+                        <input type="number" class="form-control max-file-size" placeholder="5">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Accepted File Types</label>
+                        <input type="text" class="form-control file-accept" placeholder=".pdf,.jpg,.png">
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input multiple-files-toggle" type="checkbox">
+                            <label class="form-check-label">Allow Multiple Files</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 multiple-files-limit-container" style="display: none;">
+                        <label class="form-label">Max Number of Files</label>
+                        <input type="number" class="form-control max-file-count" placeholder="5" min="1" max="20">
+                        <small class="text-muted">Maximum 20 files allowed</small>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listener for multiple files toggle
+            const multipleToggle = optionsContainer.querySelector('.multiple-files-toggle');
+            const limitContainer = optionsContainer.querySelector('.multiple-files-limit-container');
+            
+            if (multipleToggle && limitContainer) {
+                multipleToggle.addEventListener('change', function() {
+                    limitContainer.style.display = this.checked ? 'block' : 'none';
+                });
+            }
+        }
+    }
+
+    function addOption(button) {
+        const optionsList = button.previousElementSibling;
+        const optionCount = optionsList.children.length + 1;
+        const newOption = document.createElement('div');
+        newOption.className = 'input-group mb-2';
+        newOption.innerHTML = `
+            <input type="text" class="form-control" placeholder="Option ${optionCount}" name="option[]">
+            <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">Remove</button>
+        `;
+        optionsList.appendChild(newOption);
+    }
+
+    function toggleFieldCollapse(header, event) {
+        if (event.target.closest('.remove-field-btn') || event.target.closest('.drag-handle')) {
+            return;
+        }
+
+        const fieldItem = header.closest('.field-item');
+        const content = fieldItem.querySelector('.field-content');
+        const collapseBtn = header.querySelector('.collapse-btn');
+
+        content.classList.toggle('collapsed');
+        collapseBtn.classList.toggle('collapsed');
+    }
+
+    function expandAllFields() {
+        document.querySelectorAll('.field-content').forEach(content => {
+            content.classList.remove('collapsed');
+        });
+        document.querySelectorAll('.collapse-btn').forEach(btn => {
+            btn.classList.remove('collapsed');
+        });
+    }
+
+    function collapseAllFields() {
+        document.querySelectorAll('.field-content').forEach(content => {
+            content.classList.add('collapsed');
+        });
+        document.querySelectorAll('.collapse-btn').forEach(btn => {
+            btn.classList.add('collapsed');
+        });
+    }
+
+    function populateFormFields() {
+        console.log('=== POPULATING FORM FIELDS ===');
+        try {
+            const formConfig = JSON.parse('{{ form.config|escapejs }}');
+            console.log('Form config loaded. Total fields:', formConfig ? formConfig.length : 0);
+            
+            if (formConfig && Array.isArray(formConfig)) {
+                formConfig.forEach((fieldData, index) => {
+                    console.log(`Processing field ${index + 1}: ${fieldData.label} (${fieldData.type})`);
+                    addFormField();
+                    const newFieldItem = formFieldsContainer.lastElementChild;
+
+                    // Populate the fields
+                    newFieldItem.querySelector('.field-label').value = fieldData.label || '';
+                    newFieldItem.querySelector('.field-name').value = fieldData.name || '';
+                    
+                    // Special handling for dynamic dropdown fields
+                    let fieldType = fieldData.type || 'text';
+                    
+                    // If this field has dynamic options config but no type, it should be a select
+                    if ((!fieldType || fieldType === '') && fieldData.dynamicOptionsConfig) {
+                        console.log(`🔧 Field ${fieldData.name} has dynamic config but no type, setting to 'select'`);
+                        fieldType = 'select';
+                    }
+                    
+                    newFieldItem.querySelector('.field-type').value = fieldType;
+                    newFieldItem.querySelector('.field-required').checked = fieldData.required || false;
+
+                    // Update field options first
+                    updateFieldOptions(newFieldItem.querySelector('.field-type'));
+
+                    // Now populate type-specific options
+                    if (fieldData.type === 'file') {
+                        const optionsContainer = newFieldItem.querySelector('.field-options');
+                        if (optionsContainer) {
+                            const maxSizeInput = optionsContainer.querySelector('.max-file-size');
+                            const acceptInput = optionsContainer.querySelector('.file-accept');
+                            const multipleToggle = optionsContainer.querySelector('.multiple-files-toggle');
+                            const maxFileCountInput = optionsContainer.querySelector('.max-file-count');
+                            const limitContainer = optionsContainer.querySelector('.multiple-files-limit-container');
+                            
+                            if (maxSizeInput && fieldData.maxFileSizeMB) {
+                                maxSizeInput.value = fieldData.maxFileSizeMB;
+                            }
+                            if (acceptInput && fieldData.accept) {
+                                acceptInput.value = fieldData.accept;
+                            }
+                            if (multipleToggle && fieldData.multiple !== undefined) {
+                                multipleToggle.checked = fieldData.multiple;
+                                
+                                // Show/hide max file count based on multiple setting
+                                if (limitContainer) {
+                                    limitContainer.style.display = fieldData.multiple ? 'block' : 'none';
+                                }
+                                
+                                // Set max file count if specified
+                                if (maxFileCountInput && fieldData.maxFileCount) {
+                                    maxFileCountInput.value = fieldData.maxFileCount;
+                                }
+                            }
+                        }
+                    } else if (fieldData.type === 'currency') {
+                        const optionsContainer = newFieldItem.querySelector('.field-options');
+                        if (optionsContainer) {
+                            const currencySymbolSelect = optionsContainer.querySelector('.currency-symbol');
+                            if (currencySymbolSelect && fieldData.currencySymbol) {
+                                currencySymbolSelect.value = fieldData.currencySymbol;
+                            }
+                        }
+                    } else if (fieldData.type === 'select' || fieldData.type === 'radio' || fieldData.type === 'checkbox') {
+                        const optionsContainer = newFieldItem.querySelector('.field-options');
+                        if (optionsContainer) {
+                            const isDynamic = fieldData.optionType === 'dynamic';
+                            
+                            // Set the option type radio button
+                            const radioButtons = optionsContainer.querySelectorAll('input[name*="option-type"]');
+                            radioButtons.forEach(radio => {
+                                if ((radio.value === 'dynamic' && isDynamic) || (radio.value === 'manual' && !isDynamic)) {
+                                    radio.checked = true;
+                                    toggleOptionType(radio); // Show appropriate container
+                                }
+                            });
+                            
+                            if (isDynamic && fieldData.connectionId) {
+                                // Restore dynamic configuration
+                                const connectionSelect = optionsContainer.querySelector('.dynamic-connection');
+                                const queryModeSelect = optionsContainer.querySelector('.query-mode');
+                                
+                                if (connectionSelect) connectionSelect.value = fieldData.connectionId;
+                                
+                                const queryMode = fieldData.queryMode || 'guided';
+                                if (queryModeSelect) {
+                                    queryModeSelect.value = queryMode;
+                                    toggleQueryMode(queryModeSelect);
+                                }
+                                
+                                // Load advanced dynamic options configuration if available
+                                if (fieldData.dynamicOptionsConfig) {
+                                    console.log('Loading enhanced dynamic config for:', fieldData.label);
+                                    console.log('Config data:', fieldData.dynamicOptionsConfig);
+                                    
+                                    // Store original config as data attribute for potential restoration
+                                    newFieldItem.setAttribute('data-original-dynamic-config', JSON.stringify(fieldData.dynamicOptionsConfig));
+                                    
+                                    setTimeout(() => {
+                                        loadDynamicOptionsConfiguration(newFieldItem, fieldData.dynamicOptionsConfig);
+                                        // Also load the actual dropdown options for preview
+                                        setTimeout(() => {
+                                            console.log('Attempting to load saved dropdown options...');
+                                            loadSavedDropdownOptions(newFieldItem, fieldData.dynamicOptionsConfig);
+                                            
+                                            // CRITICAL: Also populate the main form field dropdown
+                                            setTimeout(() => {
+                                                populateMainFormFieldDropdown(newFieldItem, fieldData.dynamicOptionsConfig);
+                                            }, 1000);
+                                        }, 3000);
+                                    }, 2000); // Wait longer for tables/columns to load
+                                } else if (queryMode === 'guided') {
+                                    // Fallback to legacy configuration
+                                    console.log('Loading legacy dynamic config for:', fieldData.label);
+                                    setTimeout(() => {
+                                        const tableSelector = optionsContainer.querySelector('.table-selector');
+                                        const valueColumnSelector = optionsContainer.querySelector('.value-column-selector');
+                                        const labelColumnSelector = optionsContainer.querySelector('.label-column-selector');
+                                        const sortColumnSelector = optionsContainer.querySelector('.sort-column-selector');
+                                        const generatedQuery = optionsContainer.querySelector('.generated-query');
+                                        
+                                        if (tableSelector && fieldData.tableName) {
+                                            tableSelector.value = fieldData.tableName;
+                                            // Trigger column loading
+                                            loadTableColumns(tableSelector);
+                                            
+                                            setTimeout(() => {
+                                                if (valueColumnSelector && fieldData.valueColumn) valueColumnSelector.value = fieldData.valueColumn;
+                                                if (labelColumnSelector && fieldData.labelColumn) labelColumnSelector.value = fieldData.labelColumn;
+                                                if (sortColumnSelector && fieldData.sortColumn) sortColumnSelector.value = fieldData.sortColumn;
+                                                if (generatedQuery && fieldData.query) generatedQuery.value = fieldData.query;
+                                                
+                                                // Trigger query update
+                                                updateAdvancedGeneratedQuery.call({ target: valueColumnSelector });
+                                            }, 1000);
+                                        }
+                                    }, 1000);
+                                } else {
+                                    // Restore custom query
+                                    const customQueryTextarea = optionsContainer.querySelector('.custom-query');
+                                    if (customQueryTextarea && fieldData.query) customQueryTextarea.value = fieldData.query;
+                                }
+                            } else if (fieldData.choices || fieldData.options) {
+                                // Restore manual options
+                                const optionsList = optionsContainer.querySelector('.options-list');
+                                if (optionsList) {
+                                    // Clear default option
+                                    optionsList.innerHTML = '';
+                                    
+                                    const options = fieldData.choices || fieldData.options;
+                                    options.forEach((choice, index) => {
+                                        const optionDiv = document.createElement('div');
+                                        optionDiv.className = 'input-group mb-2';
+                                        optionDiv.innerHTML = `
+                                            <input type="text" class="form-control" placeholder="Option ${index + 1}" name="option[]" value="${choice.label || choice.value || choice}">
+                                            <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">Remove</button>
+                                        `;
+                                        optionsList.appendChild(optionDiv);
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    // Update display
+                    updateFieldDisplay(newFieldItem);
+                    console.log(`✓ Completed field ${index + 1}: ${fieldData.label}`);
+                });
+                console.log(`=== FINISHED: Populated ${formConfig.length} fields ===`);
+                
+                // Refresh SSO mappings after populating all fields
+                setTimeout(() => {
+                    console.log('🔄 Refreshing SSO mappings after form population');
+                    populateSsoFieldMappings();
+                }, 500);
+            } else {
+                console.log('❌ No valid form config found');
+            }
+        } catch (e) {
+            console.error('❌ Error in populateFormFields:', e);
+        }
+    }
+
+    function submitEditForm() {
+        const submitButton = document.getElementById('submitButton');
+        const indicator = submitButton.querySelector('.indicator-label');
+        const progress = submitButton.querySelector('.indicator-progress');
+        
+        // Show loading state
+        indicator.style.display = 'none';
+        progress.style.display = 'inline-block';
+        submitButton.disabled = true;
+
+        // Collect field configurations
+        const fieldsConfig = Array.from(formFieldsContainer.children).map((fieldItem, index) => {
+            // Debug: Log field processing
+            const fieldLabel = fieldItem.querySelector('.field-label')?.value || 'Unknown';
+            const fieldName = fieldItem.querySelector('.field-name')?.value || 'unknown';
+            console.log(`Processing field ${index + 1}: ${fieldLabel} (${fieldName})`);
+            
+            // Get field type with debugging
+            const fieldTypeElement = fieldItem.querySelector('.field-type');
+            if (!fieldTypeElement) {
+                console.error(`❌ No field-type element found for field: ${fieldLabel}`);
+                return null;
+            }
+            
+            let fieldType = fieldTypeElement.value;
+            console.log(`  Field type: "${fieldType}"`);
+            
+            // Enhanced field type validation with dynamic config detection
+            const optionsContainer = fieldItem.querySelector('.field-options');
+            const dynamicRadio = optionsContainer?.querySelector('input[value="dynamic"]:checked');
+            const hasDynamicConfig = dynamicRadio !== null;
+            
+            if (!fieldType || fieldType.trim() === '') {
+                console.error(`❌ Empty field type for field: ${fieldLabel}`);
+                if (hasDynamicConfig) {
+                    console.log(`  🔧 Field has dynamic config, forcing type to 'select'`);
+                    fieldType = 'select';
+                    fieldTypeElement.value = 'select'; // Update DOM element too
+                }
+            } else if (hasDynamicConfig && fieldType !== 'select') {
+                console.warn(`⚠️  Field '${fieldLabel}' has dynamic config but type is '${fieldType}', should be 'select'`);
+                console.log(`  🔧 Correcting type from '${fieldType}' to 'select'`);
+                fieldType = 'select';
+                fieldTypeElement.value = 'select'; // Update DOM element too
+            }
+            
+            const config = {
+                label: fieldItem.querySelector('.field-label')?.value || '',
+                name: fieldItem.querySelector('.field-name')?.value || '',
+                type: fieldType || 'text', // Ensure we always have a type
+                required: fieldItem.querySelector('.field-required')?.checked || false
+            };
+            
+            console.log(`  Final config type: "${config.type}"`);
+
+            // Add type-specific configurations
+            if (config.type === 'select' || config.type === 'radio' || config.type === 'checkbox') {
+                // Check if using dynamic options (database/integration query)
+                const isDynamic = hasDynamicConfig;
+                
+                if (isDynamic) {
+                    config.optionType = 'dynamic';
+                    
+                    // Save the complete dynamic options configuration
+                    const dynamicConfig = saveDynamicOptionsConfiguration(fieldItem);
+                    if (dynamicConfig && Object.keys(dynamicConfig).length > 0) {
+                        config.dynamicOptionsConfig = dynamicConfig;
+                        console.log('✅ Saved dynamic config for field:', config.label, dynamicConfig);
+                    } else {
+                        console.warn(`⚠️  Field '${fieldLabel}' has dynamic radio checked but no configuration found`);
+                        // Try to preserve any existing configuration if available from the form
+                        const existingConfig = fieldItem.getAttribute('data-original-dynamic-config');
+                        if (existingConfig) {
+                            try {
+                                config.dynamicOptionsConfig = JSON.parse(existingConfig);
+                                console.log('✅ Restored dynamic config from data attribute for field:', config.label);
+                            } catch (e) {
+                                console.error('❌ Failed to parse existing dynamic config:', e);
+                            }
+                        }
+                    }
+                    
+                    // Backward compatibility - keep existing fields
+                    if (config.dynamicOptionsConfig) {
+                        config.connectionId = config.dynamicOptionsConfig.connection_id;
+                        config.queryMode = config.dynamicOptionsConfig.query_mode;
+                        config.tableName = config.dynamicOptionsConfig.table;
+                        config.valueColumn = config.dynamicOptionsConfig.value_column;
+                        config.labelColumn = config.dynamicOptionsConfig.label_column;
+                        config.query = config.dynamicOptionsConfig.query_mode === 'custom' ? config.dynamicOptionsConfig.custom_query : optionsContainer.querySelector('.generated-query')?.value;
+                    }
+                } else {
+                    config.optionType = 'manual';
+                    const optionInputs = optionsContainer.querySelectorAll('input[name="option[]"]');
+                    config.options = Array.from(optionInputs).map(input => input.value).filter(val => val.trim());
+                }
+            } else if (config.type === 'file') {
+                const maxSizeInput = optionsContainer.querySelector('.max-file-size');
+                const acceptInput = optionsContainer.querySelector('.file-accept');
+                const multipleToggle = optionsContainer.querySelector('.multiple-files-toggle');
+                const maxFileCountInput = optionsContainer.querySelector('.max-file-count');
+                
+                if (maxSizeInput && maxSizeInput.value) {
+                    config.maxFileSizeMB = parseInt(maxSizeInput.value);
+                }
+                if (acceptInput && acceptInput.value) {
+                    config.accept = acceptInput.value;
+                }
+                if (multipleToggle) {
+                    config.multiple = multipleToggle.checked;
+                    
+                    // If multiple files are allowed, also get max file count
+                    if (config.multiple && maxFileCountInput && maxFileCountInput.value) {
+                        config.maxFileCount = parseInt(maxFileCountInput.value);
+                    }
+                }
+            } else if (config.type === 'currency') {
+                const currencySymbolSelect = optionsContainer.querySelector('.currency-symbol');
+                if (currencySymbolSelect && currencySymbolSelect.value) {
+                    config.currencySymbol = currencySymbolSelect.value;
+                }
+            }
+
+            console.log(`  ✅ Field ${fieldLabel} processed successfully`);
+            return config;
+        }).filter(config => config !== null); // Remove any null configs
+
+        console.log(`📋 Collected ${fieldsConfig.length} field configurations:`, fieldsConfig);
+
+        // Collect SSO field mappings (using backend expected field name)
+        const ssoFieldMappings = {};
+        const ssoEnabled = document.getElementById('enableSsoPrepopulate').checked;
+        console.log(`🔐 SSO prepopulate enabled: ${ssoEnabled}`);
+        
+        if (ssoEnabled) {
+            const mappingSelects = document.querySelectorAll('.sso-attribute');
+            console.log(`🔍 Found ${mappingSelects.length} SSO mapping selects`);
+            
+            mappingSelects.forEach((select, index) => {
+                const fieldName = select.name.replace('sso_mapping_', '');
+                const attributeValue = select.value;
+                console.log(`  SSO mapping ${index + 1}: ${fieldName} -> ${attributeValue || 'no mapping'}`);
+                
+                if (attributeValue) {
+                    ssoFieldMappings[fieldName] = attributeValue;
+                }
+            });
+            
+            console.log(`📋 Collected SSO mappings:`, ssoFieldMappings);
+        } else {
+            console.log('SSO prepopulate disabled, no mappings collected');
+        }
+
+        // Prepare JSON payload matching backend expectations
+        const jsonData = {
+            formname: document.getElementById('formName').value,
+            form_description: document.getElementById('formDescription').value,
+            template_type: document.getElementById('template').value,
+            logo_url: document.getElementById('logoUrl').value,
+            favicon_url: document.getElementById('faviconUrl').value,
+            primary_color: document.getElementById('primaryColor').value,
+            secondary_color: document.getElementById('secondaryColor').value,
+            login_required: document.getElementById('loginRequired').checked,
+            access_level: document.getElementById('accessLevel').value,
+            enable_sso_prepopulate: document.getElementById('enableSsoPrepopulate').checked,
+            auto_redirect_to_sso: document.getElementById('autoRedirectToSso').checked,
+            webhook_url: document.getElementById('webhookUrl').value,
+            headers: document.getElementById('headers').value,
+            success_message: document.getElementById('successMessage').value,
+            enable_redirect: document.getElementById('enableRedirect').checked,
+            redirect_url: document.getElementById('redirectUrl').value,
+            fields: fieldsConfig,
+            sso_prepopulate_fields: ssoFieldMappings,
+            sso_disabled_fields: getSsoDisabledFields()
+        };
+
+        // Submit the form as JSON
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => {
+            if (response.ok) {
+                // Success - redirect or show success message
+                window.location.href = "{% url 'manage_forms' %}";
+            } else {
+                throw new Error('Form submission failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error saving form. Please try again.');
+        })
+        .finally(() => {
+            // Reset button state
+            indicator.style.display = 'inline-block';
+            progress.style.display = 'none';
+            submitButton.disabled = false;
+        });
+    }
+
+    function cancelForm(event) {
+        event.preventDefault();
+        if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+            window.location.href = "{% url 'manage_forms' %}";
+        }
+    }
+
+    function previewForm() {
+        // Open form preview in new tab using the correct UUID
+        const formUuid = "{{ form.uuid }}";
+        window.open(`/fill-form/${formUuid}/`, '_blank');
+    }
+
+    // Database/Integration Query Functions
+    function toggleOptionType(radioButton) {
+        const optionsContainer = radioButton.closest('.field-options');
+        const isManual = radioButton.value === 'manual';
+        
+        const manualOptions = optionsContainer.querySelector('.manual-options');
+        const dynamicOptions = optionsContainer.querySelector('.dynamic-options');
+        
+        if (isManual) {
+            manualOptions.style.display = 'block';
+            dynamicOptions.style.display = 'none';
+        } else {
+            manualOptions.style.display = 'none';
+            dynamicOptions.style.display = 'block';
+        }
+    }
+
+    function toggleQueryMode(selectElement) {
+        const container = selectElement.closest('.dynamic-options');
+        const isGuided = selectElement.value === 'guided';
+        
+        const guidedMode = container.querySelector('.guided-mode');
+        const customMode = container.querySelector('.custom-mode');
+        
+        if (isGuided) {
+            guidedMode.style.display = 'contents';
+            customMode.style.display = 'none';
+        } else {
+            guidedMode.style.display = 'none';
+            customMode.style.display = 'block';
+        }
+    }
+
+    function loadDatabaseTables(connectionSelect) {
+        const container = connectionSelect.closest('.dynamic-options');
+        const tableSelector = container.querySelector('.table-selector');
+        const tableLoading = container.querySelector('.table-loading');
+        const valueColumnSelector = container.querySelector('.value-column-selector');
+        const labelColumnSelector = container.querySelector('.label-column-selector');
+        
+        const connectionId = connectionSelect.value;
+        
+        // Reset dependent selectors
+        tableSelector.innerHTML = '<option value="">Select a table</option>';
+        valueColumnSelector.innerHTML = '<option value="">Select value column</option>';
+        labelColumnSelector.innerHTML = '<option value="">Select label column</option>';
+        
+        if (!connectionId) {
+            return;
+        }
+        
+        // Show loading indicator
+        tableLoading.style.display = 'block';
+        
+        // Query to get all tables
+        const tablesQuery = `
+            SELECT TABLE_NAME as table_name 
+            FROM INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_TYPE = 'BASE TABLE' 
+            ORDER BY TABLE_NAME
+        `;
+        
+        fetch('/fetch-database-data/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                connection_id: connectionId,
+                query: tablesQuery
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (Array.isArray(data) && data.length > 0) {
+                data.forEach(table => {
+                    const tableName = table.table_name || table.TABLE_NAME;
+                    const option = document.createElement('option');
+                    option.value = tableName;
+                    option.textContent = tableName;
+                    tableSelector.appendChild(option);
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No tables found';
+                tableSelector.appendChild(option);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading tables:', error);
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'Error loading tables';
+            tableSelector.appendChild(option);
+        })
+        .finally(() => {
+            tableLoading.style.display = 'none';
+        });
+    }
+
+    function loadTableColumns(tableSelector) {
+        const container = tableSelector.closest('.dynamic-options');
+        const connectionSelect = container.querySelector('.dynamic-connection');
+        const valueColumnSelector = container.querySelector('.value-column-selector');
+        const labelColumnSelector = container.querySelector('.label-column-selector');
+        const sortColumnSelector = container.querySelector('.sort-column-selector');
+        const columnsLoading = container.querySelector('.columns-loading');
+        
+        const connectionId = connectionSelect.value;
+        const tableName = tableSelector.value;
+        
+        // Reset column selectors
+        valueColumnSelector.innerHTML = '<option value="">Select value column</option>';
+        labelColumnSelector.innerHTML = '<option value="">Select label column</option>';
+        sortColumnSelector.innerHTML = '<option value="">No sorting</option>';
+        
+        // Reset advanced filtering selectors
+        const whereColumns = container.querySelectorAll('.where-column');
+        const exclusionColumns = container.querySelectorAll('.exclusion-column');
+        const inclusionColumns = container.querySelectorAll('.inclusion-column');
+        
+        whereColumns.forEach(select => {
+            select.innerHTML = '<option value="">Select column</option>';
+        });
+        exclusionColumns.forEach(select => {
+            select.innerHTML = '<option value="">Select column to exclude</option>';
+        });
+        inclusionColumns.forEach(select => {
+            select.innerHTML = '<option value="">Select column to filter</option>';
+        });
+        
+        if (!connectionId || !tableName) {
+            return;
+        }
+        
+        // Show loading indicator
+        columnsLoading.style.display = 'block';
+        
+        // Query to get table columns
+        const columnsQuery = `
+            SELECT COLUMN_NAME as column_name, DATA_TYPE as data_type
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME = '${tableName}'
+            ORDER BY ORDINAL_POSITION
+        `;
+        
+        fetch('/fetch-database-data/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                connection_id: connectionId,
+                query: columnsQuery
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (Array.isArray(data) && data.length > 0) {
+                data.forEach(column => {
+                    const columnName = column.column_name || column.COLUMN_NAME;
+                    const dataType = column.data_type || column.DATA_TYPE;
+                    
+                    // Add to value column selector
+                    const valueOption = document.createElement('option');
+                    valueOption.value = columnName;
+                    valueOption.textContent = `${columnName} (${dataType})`;
+                    valueColumnSelector.appendChild(valueOption);
+                    
+                    // Add to label column selector
+                    const labelOption = document.createElement('option');
+                    labelOption.value = columnName;
+                    labelOption.textContent = `${columnName} (${dataType})`;
+                    labelColumnSelector.appendChild(labelOption);
+                    
+                    // Add to sort column selector
+                    const sortOption = document.createElement('option');
+                    sortOption.value = columnName;
+                    sortOption.textContent = `${columnName} (${dataType})`;
+                    sortColumnSelector.appendChild(sortOption);
+                    
+                    // Add to advanced filtering selectors
+                    whereColumns.forEach(select => {
+                        const whereOption = document.createElement('option');
+                        whereOption.value = columnName;
+                        whereOption.textContent = `${columnName} (${dataType})`;
+                        select.appendChild(whereOption);
+                    });
+                    
+                    exclusionColumns.forEach(select => {
+                        const exclusionOption = document.createElement('option');
+                        exclusionOption.value = columnName;
+                        exclusionOption.textContent = `${columnName} (${dataType})`;
+                        select.appendChild(exclusionOption);
+                    });
+                    
+                    inclusionColumns.forEach(select => {
+                        const inclusionOption = document.createElement('option');
+                        inclusionOption.value = columnName;
+                        inclusionOption.textContent = `${columnName} (${dataType})`;
+                        select.appendChild(inclusionOption);
+                    });
+                });
+                
+                // Add event listeners to update generated query
+                valueColumnSelector.addEventListener('change', updateAdvancedGeneratedQuery);
+                labelColumnSelector.addEventListener('change', updateAdvancedGeneratedQuery);
+                sortColumnSelector.addEventListener('change', updateAdvancedGeneratedQuery);
+                container.querySelector('.sort-order-selector').addEventListener('change', updateAdvancedGeneratedQuery);
+                container.querySelector('.result-limit').addEventListener('input', updateAdvancedGeneratedQuery);
+                
+                // Update generated query initially
+                updateAdvancedGeneratedQuery.call({ target: valueColumnSelector });
+            } else {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No columns found';
+                valueColumnSelector.appendChild(option);
+                labelColumnSelector.appendChild(option);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading columns:', error);
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'Error loading columns';
+            valueColumnSelector.appendChild(option);
+            labelColumnSelector.appendChild(option);
+        })
+        .finally(() => {
+            columnsLoading.style.display = 'none';
+        });
+    }
+
+    function updateGeneratedQuery() {
+        const container = event.target.closest('.dynamic-options');
+        if (!container) return;
+        
+        const tableSelector = container.querySelector('.table-selector');
+        const valueColumnSelector = container.querySelector('.value-column-selector');
+        const labelColumnSelector = container.querySelector('.label-column-selector');
+        const whereCondition = container.querySelector('.where-condition');
+        const generatedQueryTextarea = container.querySelector('.generated-query');
+        
+        const tableName = tableSelector.value;
+        const valueColumn = valueColumnSelector.value;
+        const labelColumn = labelColumnSelector.value;
+        const whereClause = whereCondition.value.trim();
+        
+        if (tableName && valueColumn && labelColumn) {
+            let query = `SELECT ${valueColumn}, ${labelColumn} FROM ${tableName}`;
+            if (whereClause) {
+                query += ` WHERE ${whereClause}`;
+            }
+            generatedQueryTextarea.value = query;
+        } else {
+            generatedQueryTextarea.value = '';
+        }
+    }
+
+    function testDynamicQuery(button) {
+        const container = button.closest('.dynamic-options');
+        const resultDiv = container.querySelector('.query-result');
+        
+        const connectionId = container.querySelector('.dynamic-connection').value;
+        const queryMode = container.querySelector('.query-mode').value;
+        
+        let query = '';
+        
+        if (queryMode === 'guided') {
+            const generatedQueryTextarea = container.querySelector('.generated-query');
+            query = generatedQueryTextarea.value.trim();
+        } else {
+            const customQueryTextarea = container.querySelector('.custom-query');
+            query = customQueryTextarea.value.trim();
+        }
+        
+        if (!connectionId) {
+            resultDiv.innerHTML = '<div class="alert alert-warning">Please select a connection</div>';
+            resultDiv.style.display = 'block';
+            return;
+        }
+        
+        if (!query) {
+            resultDiv.innerHTML = '<div class="alert alert-warning">Please enter a query or complete the guided setup</div>';
+            resultDiv.style.display = 'block';
+            return;
+        }
+        
+        // Show loading
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Testing...';
+        
+        fetch('/fetch-database-data/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                connection_id: connectionId,
+                query: query
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (Array.isArray(data) && data.length > 0) {
+                let html = `<div class="alert alert-success"><strong>Query successful!</strong> Found ${data.length} results:</div>`;
+                html += '<div class="table-responsive">';
+                html += '<table class="table table-sm table-striped">';
+                
+                // Table header
+                const keys = Object.keys(data[0]);
+                html += '<thead><tr>';
+                keys.forEach(key => {
+                    html += `<th>${key}</th>`;
+                });
+                html += '</tr></thead>';
+                
+                // Table body - show all results, not just sample
+                html += '<tbody>';
+                data.forEach(item => {
+                    html += '<tr>';
+                    keys.forEach(key => {
+                        const value = item[key] || '';
+                        html += `<td>${value}</td>`;
+                    });
+                    html += '</tr>';
+                });
+                html += '</tbody>';
+                html += '</table>';
+                html += '</div>';
+                
+                if (data.length > 50) {
+                    html += `<div class="alert alert-info mt-2">Showing all ${data.length} results. Consider adding a LIMIT if this is too many.</div>`;
+                }
+                
+                resultDiv.innerHTML = html;
+            } else if (data.error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Query failed:</strong> ${data.error}</div>`;
+            } else {
+                resultDiv.innerHTML = '<div class="alert alert-info">Query executed successfully but returned no results</div>';
+            }
+            resultDiv.style.display = 'block';
+        })
+        .catch(error => {
+            resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${error.message}</div>`;
+            resultDiv.style.display = 'block';
+        })
+        .finally(() => {
+            button.disabled = false;
+            button.innerHTML = '<i class="ki-duotone ki-check fs-6"></i> Test Query';
+        });
+    }
+
+    // SSO Field Mapping Functions
+    function toggleSsoFieldMapping() {
+        console.log('=== TOGGLING SSO FIELD MAPPING ===');
+        
+        const enableSsoPrepopulate = document.getElementById('enableSsoPrepopulate');
+        const ssoFieldMappingContainer = document.getElementById('ssoFieldMappingContainer');
+        
+        console.log('Enable SSO checkbox:', enableSsoPrepopulate?.checked);
+        console.log('SSO container found:', !!ssoFieldMappingContainer);
+        
+        if (enableSsoPrepopulate && ssoFieldMappingContainer) {
+            if (enableSsoPrepopulate.checked) {
+                console.log('Showing SSO field mapping section');
+                ssoFieldMappingContainer.style.display = 'block';
+                
+                // Add a small delay to ensure the container is visible before populating
+                setTimeout(() => {
+                    populateSsoFieldMappings();
+                }, 100);
+            } else {
+                console.log('Hiding SSO field mapping section');
+                ssoFieldMappingContainer.style.display = 'none';
+            }
+        } else {
+            console.log('SSO elements not found:', {
+                enableSsoPrepopulate: !!enableSsoPrepopulate,
+                ssoFieldMappingContainer: !!ssoFieldMappingContainer
+            });
+        }
+    }
+
+    function populateSsoFieldMappings() {
+        console.log('=== POPULATING SSO FIELD MAPPINGS ===');
+        
+        // Get all form fields to populate mapping options
+        const formFields = Array.from(formFieldsContainer.children).map(fieldItem => ({
+            name: fieldItem.querySelector('.field-name').value || '',
+            label: fieldItem.querySelector('.field-label').value || 'Unnamed Field',
+            type: fieldItem.querySelector('.field-type').value || 'text'
+        })).filter(field => field.name.trim() !== '');
+
+        console.log('Available form fields for SSO mapping:', formFields);
+
+        const ssoFieldMappings = document.getElementById('ssoFieldMappings');
+        
+        if (!ssoFieldMappings) {
+            console.log('❌ SSO field mappings container not found');
+            return;
+        }
+        
+        if (formFields.length === 0) {
+            console.log('No form fields available for SSO mapping');
+            ssoFieldMappings.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="ki-duotone ki-information fs-4 me-2"></i>
+                    No form fields available. Please add form fields first in the "Form Fields" tab.
+                </div>
+            `;
+            return;
+        }
+
+        // Load existing mappings if any - with safe JSON parsing
+        let existingMappings = {};
+        try {
+            // Use Django's json_script approach for safer JSON embedding
+            const ssoFieldsElement = document.getElementById('sso-prepopulate-fields-data');
+            if (ssoFieldsElement) {
+                existingMappings = JSON.parse(ssoFieldsElement.textContent);
+            } else {
+                // Fallback to direct template variable
+                const ssoFieldsData = '{{ sso_prepopulate_fields_json|escapejs }}';
+                console.log('Raw SSO fields data from template:', ssoFieldsData);
+                
+                if (ssoFieldsData && ssoFieldsData !== 'None' && ssoFieldsData !== '' && ssoFieldsData !== '{}') {
+                    // Handle escaped unicode characters
+                    const unescapedData = ssoFieldsData.replace(/\\u0022/g, '"').replace(/\\u0027/g, "'");
+                    existingMappings = JSON.parse(unescapedData);
+                }
+            }
+            console.log('✅ Loaded existing SSO mappings:', existingMappings);
+        } catch (e) {
+            console.log('⚠️ Error parsing SSO mappings (using empty object):', e);
+            console.log('Original data:', typeof ssoFieldsElement !== 'undefined' ? ssoFieldsElement?.textContent : ssoFieldsData);
+            existingMappings = {};
+        }
+        
+        // DEBUG: Also log the entire form object to see what's available
+        console.log('Form object available in template:', {
+            sso_prepopulate_fields: '{{ sso_prepopulate_fields_json|safe }}',
+            enable_sso_prepopulate: '{{ form.enable_sso_prepopulate }}',
+            formname: '{{ form.formname }}'
+        });
+        
+        ssoFieldMappings.innerHTML = '';
+        
+        console.log(`Creating mappings for ${formFields.length} fields...`);
+        
+        // Create mapping for each form field
+        formFields.forEach((field, index) => {
+            const existingMapping = existingMappings[field.name] || '';
+            console.log(`Field ${index + 1}: ${field.name} -> ${existingMapping || 'no mapping'}`);
+            console.log(`🔍 FIELD ${index + 1} DEBUG:`, {
+                fieldName: field.name,
+                lookupResult: existingMappings[field.name],
+                finalMapping: existingMapping,
+                allMappings: existingMappings
+            });
+            
+            const mappingDiv = document.createElement('div');
+            mappingDiv.className = 'row g-3 mb-3 sso-field-mapping';
+            mappingDiv.innerHTML = `
+                <div class="col-md-4">
+                    <label class="form-label">${field.label}</label>
+                    <input type="text" class="form-control" value="${field.name}" readonly>
+                    <small class="text-muted">Field Name (${field.type})</small>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">SSO Attribute</label>
+                    <select class="form-select sso-attribute" name="sso_mapping_${field.name}">
+                        <option value="">No mapping</option>
+                        <option value="email" ${existingMapping === 'email' ? 'selected' : ''}>Email</option>
+                        <option value="first_name" ${existingMapping === 'first_name' ? 'selected' : ''}>First Name</option>
+                        <option value="last_name" ${existingMapping === 'last_name' ? 'selected' : ''}>Last Name</option>
+                        <option value="full_name" ${existingMapping === 'full_name' ? 'selected' : ''}>Full Name (First + Last)</option>
+                        <option value="display_name" ${existingMapping === 'display_name' ? 'selected' : ''}>Display Name</option>
+                        <option value="username" ${existingMapping === 'username' ? 'selected' : ''}>Username</option>
+                        <option value="department" ${existingMapping === 'department' ? 'selected' : ''}>Department</option>
+                        <option value="title" ${existingMapping === 'title' ? 'selected' : ''}>Job Title</option>
+                        <option value="phone" ${existingMapping === 'phone' ? 'selected' : ''}>Phone Number</option>
+                        <option value="phone_number" ${existingMapping === 'phone_number' ? 'selected' : ''}>Phone Number (Alt)</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <span class="badge bg-light-info text-info">Auto-populated</span>
+                    ${existingMapping ? `<span class="badge bg-light-success text-success ms-2">Mapped</span>` : ''}
+                </div>
+            `;
+            
+            ssoFieldMappings.appendChild(mappingDiv);
+        });
+        
+        console.log('✅ SSO field mappings populated successfully');
+    }
+
+    function addSsoFieldMapping() {
+        // This function is for future use if manual mapping is needed
+        console.log('Add SSO field mapping clicked');
+    }
+
+    // SSO Disabled Fields Functions
+    function addSsoDisabledField() {
+        const container = document.getElementById('ssoDisabledFields');
+        const fieldDiv = document.createElement('div');
+        fieldDiv.className = 'row g-2 mb-2 align-items-end';
+        fieldDiv.innerHTML = `
+            <div class="col-md-10">
+                <label class="form-label">Form Field Name</label>
+                <input type="text" class="form-control sso-disabled-field" placeholder="e.g., user_email">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSsoDisabledField(this)">
+                    <i class="ki-duotone ki-trash fs-6"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(fieldDiv);
+    }
+
+    function removeSsoDisabledField(btn) {
+        btn.closest('.row').remove();
+    }
+
+    function getSsoDisabledFields() {
+        const disabledFields = [];
+        const disabledRows = document.querySelectorAll('#ssoDisabledFields .row');
+        
+        disabledRows.forEach(row => {
+            const fieldName = row.querySelector('.sso-disabled-field').value.trim();
+            if (fieldName) {
+                disabledFields.push(fieldName);
+            }
+        });
+        
+        return disabledFields;
+    }
+
+    function populateSsoDisabledFields() {
+        const container = document.getElementById('ssoDisabledFields');
+        if (!container) return;
+
+        // Clear existing fields
+        container.innerHTML = '';
+
+        // Get existing disabled fields from form data
+        const existingDisabledFields = {{ sso_disabled_fields_json|safe }};
+        
+        if (Array.isArray(existingDisabledFields) && existingDisabledFields.length > 0) {
+            existingDisabledFields.forEach(fieldName => {
+                const fieldDiv = document.createElement('div');
+                fieldDiv.className = 'row g-2 mb-2 align-items-end';
+                fieldDiv.innerHTML = `
+                    <div class="col-md-10">
+                        <label class="form-label">Form Field Name</label>
+                        <input type="text" class="form-control sso-disabled-field" value="${fieldName}" placeholder="e.g., user_email">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSsoDisabledField(this)">
+                            <i class="ki-duotone ki-trash fs-6"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(fieldDiv);
+            });
+        }
+    }
+
+    // Advanced filtering functions
+    function addWhereCondition(button) {
+        const conditionsList = button.previousElementSibling;
+        const newCondition = document.createElement('div');
+        newCondition.className = 'where-condition-row mb-2';
+        newCondition.innerHTML = `
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <select class="form-select where-column" onchange="updateAdvancedGeneratedQuery()">
+                        <option value="">Select column</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select where-operator" onchange="updateAdvancedGeneratedQuery()">
+                        <option value="=">=</option>
+                        <option value="!=">!=</option>
+                        <option value=">">></option>
+                        <option value="<"><</option>
+                        <option value=">=">>=</option>
+                        <option value="<="><=</option>
+                        <option value="LIKE">LIKE</option>
+                        <option value="NOT LIKE">NOT LIKE</option>
+                        <option value="IN">IN</option>
+                        <option value="NOT IN">NOT IN</option>
+                        <option value="IS NULL">IS NULL</option>
+                        <option value="IS NOT NULL">IS NOT NULL</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control where-value" placeholder="Value" oninput="updateAdvancedGeneratedQuery()">
+                    <small class="text-muted">For IN/NOT IN, use comma-separated values</small>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select where-logic" onchange="updateAdvancedGeneratedQuery()">
+                        <option value="AND">AND</option>
+                        <option value="OR">OR</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeWhereCondition(this)">×</button>
+                </div>
+            </div>
+        `;
+        
+        conditionsList.appendChild(newCondition);
+        populateColumnOptions(newCondition);
+    }
+
+    function removeWhereCondition(button) {
+        button.closest('.where-condition-row').remove();
+        updateAdvancedGeneratedQuery();
+    }
+
+    function addExclusion(button) {
+        const exclusionsList = button.previousElementSibling;
+        const newExclusion = document.createElement('div');
+        newExclusion.className = 'exclusion-row mb-2';
+        newExclusion.innerHTML = `
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <select class="form-select exclusion-column" onchange="updateAdvancedGeneratedQuery()">
+                        <option value="">Select column to exclude</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select exclusion-condition" onchange="updateExclusionHelp(this); updateAdvancedGeneratedQuery()">
+                        <option value="equals">Equals</option>
+                        <option value="contains">Contains</option>
+                        <option value="starts_with">Starts With</option>
+                        <option value="ends_with">Ends With</option>
+                        <option value="not_equals">Not Equals</option>
+                        <option value="in_list">In List</option>
+                        <option value="regex">Regex Pattern</option>
+                        <option value="is_null">Is Null</option>
+                        <option value="is_not_null">Is Not Null</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <input type="text" class="form-control exclusion-values" placeholder="Enter value(s)" oninput="updateAdvancedGeneratedQuery()">
+                    <small class="text-muted exclusion-help">Enter values based on condition selected</small>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeExclusion(this)">Remove</button>
+                </div>
+            </div>
+        `;
+        
+        exclusionsList.appendChild(newExclusion);
+        populateColumnOptions(newExclusion);
+        updateExclusionHelp(newExclusion.querySelector('.exclusion-condition'));
+    }
+
+    function removeExclusion(button) {
+        button.closest('.exclusion-row').remove();
+        updateAdvancedGeneratedQuery();
+    }
+
+    function addInclusion(button) {
+        const inclusionsList = button.previousElementSibling;
+        const newInclusion = document.createElement('div');
+        newInclusion.className = 'inclusion-row mb-2';
+        newInclusion.innerHTML = `
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <select class="form-select inclusion-column" onchange="updateAdvancedGeneratedQuery()">
+                        <option value="">Select column to filter</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select inclusion-condition" onchange="updateInclusionHelp(this); updateAdvancedGeneratedQuery()">
+                        <option value="equals">Equals</option>
+                        <option value="contains">Contains</option>
+                        <option value="starts_with">Starts With</option>
+                        <option value="ends_with">Ends With</option>
+                        <option value="not_equals">Not Equals</option>
+                        <option value="in_list">In List</option>
+                        <option value="regex">Regex Pattern</option>
+                        <option value="is_null">Is Null</option>
+                        <option value="is_not_null">Is Not Null</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <input type="text" class="form-control inclusion-values" placeholder="Enter value(s)" oninput="updateAdvancedGeneratedQuery()">
+                    <small class="text-muted inclusion-help">Enter values based on condition selected</small>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeInclusion(this)">Remove</button>
+                </div>
+            </div>
+        `;
+        
+        inclusionsList.appendChild(newInclusion);
+        populateColumnOptions(newInclusion);
+        updateInclusionHelp(newInclusion.querySelector('.inclusion-condition'));
+    }
+
+    function removeInclusion(button) {
+        button.closest('.inclusion-row').remove();
+        updateAdvancedGeneratedQuery();
+    }
+
+    function populateColumnOptions(row) {
+        const container = row.closest('.dynamic-options');
+        const tableSelector = container.querySelector('.table-selector');
+        
+        if (!tableSelector.value) return;
+        
+        // Get available columns from existing selectors
+        const valueColumnSelector = container.querySelector('.value-column-selector');
+        const columns = Array.from(valueColumnSelector.options).slice(1); // Skip first "Select" option
+        
+        const columnSelectors = row.querySelectorAll('.where-column, .exclusion-column, .inclusion-column');
+        columnSelectors.forEach(select => {
+            columns.forEach(option => {
+                const newOption = document.createElement('option');
+                newOption.value = option.value;
+                newOption.textContent = option.textContent;
+                select.appendChild(newOption);
+            });
+        });
+        
+        // Initialize condition help text for new exclusion/inclusion rows
+        const exclusionCondition = row.querySelector('.exclusion-condition');
+        const inclusionCondition = row.querySelector('.inclusion-condition');
+        if (exclusionCondition) updateExclusionHelp(exclusionCondition);
+        if (inclusionCondition) updateInclusionHelp(inclusionCondition);
+    }
+
+    function updateAdvancedGeneratedQuery() {
+        const container = this.target ? this.target.closest('.dynamic-options') : event.target.closest('.dynamic-options');
+        if (!container) return;
+        
+        const tableSelector = container.querySelector('.table-selector');
+        const valueColumnSelector = container.querySelector('.value-column-selector');
+        const labelColumnSelector = container.querySelector('.label-column-selector');
+        const sortColumnSelector = container.querySelector('.sort-column-selector');
+        const sortOrderSelector = container.querySelector('.sort-order-selector');
+        const resultLimit = container.querySelector('.result-limit');
+        const generatedQueryTextarea = container.querySelector('.generated-query');
+        
+        const tableName = tableSelector.value;
+        const valueColumn = valueColumnSelector.value;
+        const labelColumn = labelColumnSelector.value;
+        
+        if (!tableName || !valueColumn || !labelColumn) {
+            generatedQueryTextarea.value = '';
+            return;
+        }
+        
+        // Build base query
+        let query = `SELECT ${valueColumn}, ${labelColumn} FROM ${tableName}`;
+        
+        // Build WHERE clause
+        const whereClauses = [];
+        
+        // Add WHERE conditions
+        const whereRows = container.querySelectorAll('.where-condition-row');
+        whereRows.forEach((row, index) => {
+            const column = row.querySelector('.where-column').value;
+            const operator = row.querySelector('.where-operator').value;
+            const value = row.querySelector('.where-value').value;
+            const logic = row.querySelector('.where-logic').value;
+            
+            if (column && operator && (value || operator.includes('NULL'))) {
+                let condition = '';
+                
+                if (operator === 'IN' || operator === 'NOT IN') {
+                    const values = value.split(',').map(v => `'${v.trim()}'`).join(', ');
+                    condition = `${column} ${operator} (${values})`;
+                } else if (operator.includes('NULL')) {
+                    condition = `${column} ${operator}`;
+                } else if (operator === 'LIKE' || operator === 'NOT LIKE') {
+                    condition = `${column} ${operator} '${value}'`;
+                } else {
+                    condition = `${column} ${operator} '${value}'`;
+                }
+                
+                if (whereClauses.length > 0) {
+                    condition = `${logic} ${condition}`;
+                }
+                whereClauses.push(condition);
+            }
+        });
+        
+        // Add exclusions
+        const exclusionRows = container.querySelectorAll('.exclusion-row');
+        exclusionRows.forEach(row => {
+            const column = row.querySelector('.exclusion-column').value;
+            const condition = row.querySelector('.exclusion-condition').value;
+            const values = row.querySelector('.exclusion-values').value;
+            
+            if (column && condition && (values || condition.includes('null'))) {
+                let condition_sql = '';
+                
+                switch(condition) {
+                    case 'equals':
+                        condition_sql = `${column} != '${values}'`;
+                        break;
+                    case 'contains':
+                        condition_sql = `${column} NOT LIKE '%${values}%'`;
+                        break;
+                    case 'starts_with':
+                        condition_sql = `${column} NOT LIKE '${values}%'`;
+                        break;
+                    case 'ends_with':
+                        condition_sql = `${column} NOT LIKE '%${values}'`;
+                        break;
+                    case 'not_equals':
+                        condition_sql = `${column} = '${values}'`;
+                        break;
+                    case 'in_list':
+                        const valueList = values.split(',').map(v => `'${v.trim()}'`).join(', ');
+                        condition_sql = `${column} NOT IN (${valueList})`;
+                        break;
+                    case 'regex':
+                        condition_sql = `${column} NOT REGEXP '${values}'`;
+                        break;
+                    case 'is_null':
+                        condition_sql = `${column} IS NOT NULL`;
+                        break;
+                    case 'is_not_null':
+                        condition_sql = `${column} IS NULL`;
+                        break;
+                }
+                
+                if (whereClauses.length > 0) {
+                    whereClauses.push(`AND ${condition_sql}`);
+                } else {
+                    whereClauses.push(condition_sql);
+                }
+            }
+        });
+        
+        // Add inclusions
+        const inclusionRows = container.querySelectorAll('.inclusion-row');
+        inclusionRows.forEach(row => {
+            const column = row.querySelector('.inclusion-column').value;
+            const condition = row.querySelector('.inclusion-condition').value;
+            const values = row.querySelector('.inclusion-values').value;
+            
+            if (column && condition && (values || condition.includes('null'))) {
+                let condition_sql = '';
+                
+                switch(condition) {
+                    case 'equals':
+                        condition_sql = `${column} = '${values}'`;
+                        break;
+                    case 'contains':
+                        condition_sql = `${column} LIKE '%${values}%'`;
+                        break;
+                    case 'starts_with':
+                        condition_sql = `${column} LIKE '${values}%'`;
+                        break;
+                    case 'ends_with':
+                        condition_sql = `${column} LIKE '%${values}'`;
+                        break;
+                    case 'not_equals':
+                        condition_sql = `${column} != '${values}'`;
+                        break;
+                    case 'in_list':
+                        const valueList = values.split(',').map(v => `'${v.trim()}'`).join(', ');
+                        condition_sql = `${column} IN (${valueList})`;
+                        break;
+                    case 'regex':
+                        condition_sql = `${column} REGEXP '${values}'`;
+                        break;
+                    case 'is_null':
+                        condition_sql = `${column} IS NULL`;
+                        break;
+                    case 'is_not_null':
+                        condition_sql = `${column} IS NOT NULL`;
+                        break;
+                }
+                
+                if (whereClauses.length > 0) {
+                    whereClauses.push(`AND ${condition_sql}`);
+                } else {
+                    whereClauses.push(condition_sql);
+                }
+            }
+        });
+        
+        // Add WHERE clause if any conditions exist
+        if (whereClauses.length > 0) {
+            query += ` WHERE ${whereClauses.join(' ')}`;
+        }
+        
+        // Add ORDER BY clause
+        if (sortColumnSelector.value) {
+            query += ` ORDER BY ${sortColumnSelector.value} ${sortOrderSelector.value}`;
+        }
+        
+        // Add LIMIT clause
+        if (resultLimit.value && parseInt(resultLimit.value) > 0) {
+            query += ` LIMIT ${parseInt(resultLimit.value)}`;
+        }
+        
+        generatedQueryTextarea.value = query;
+    }
+
+    // Helper functions for condition descriptions
+    function updateExclusionHelp(selectElement) {
+        const helpElement = selectElement.closest('.row').querySelector('.exclusion-help');
+        const condition = selectElement.value;
+        
+        switch(condition) {
+            case 'equals':
+                helpElement.textContent = 'Exclude rows where column equals this exact value';
+                break;
+            case 'contains':
+                helpElement.textContent = 'Exclude rows where column contains this text (e.g., "101")';
+                break;
+            case 'starts_with':
+                helpElement.textContent = 'Exclude rows where column starts with this text (e.g., "ABC")';
+                break;
+            case 'ends_with':
+                helpElement.textContent = 'Exclude rows where column ends with this text (e.g., "_test")';
+                break;
+            case 'not_equals':
+                helpElement.textContent = 'Exclude rows where column does NOT equal this value';
+                break;
+            case 'in_list':
+                helpElement.textContent = 'Exclude rows where column matches any of these comma-separated values';
+                break;
+            case 'regex':
+                helpElement.textContent = 'Exclude rows where column matches this regex pattern';
+                break;
+            case 'is_null':
+                helpElement.textContent = 'Exclude rows where column is null (no value needed)';
+                break;
+            case 'is_not_null':
+                helpElement.textContent = 'Exclude rows where column has any value (no value needed)';
+                break;
+            default:
+                helpElement.textContent = 'Enter values based on condition selected';
+        }
+        
+        // Disable/enable input for null conditions
+        const inputElement = selectElement.closest('.row').querySelector('.exclusion-values');
+        if (condition === 'is_null' || condition === 'is_not_null') {
+            inputElement.disabled = true;
+            inputElement.placeholder = 'No value needed for this condition';
+        } else {
+            inputElement.disabled = false;
+            inputElement.placeholder = 'Enter value(s)';
+        }
+    }
+
+    function updateInclusionHelp(selectElement) {
+        const helpElement = selectElement.closest('.row').querySelector('.inclusion-help');
+        const condition = selectElement.value;
+        
+        switch(condition) {
+            case 'equals':
+                helpElement.textContent = 'Include only rows where column equals this exact value';
+                break;
+            case 'contains':
+                helpElement.textContent = 'Include only rows where column contains this text (e.g., "101")';
+                break;
+            case 'starts_with':
+                helpElement.textContent = 'Include only rows where column starts with this text (e.g., "ABC")';
+                break;
+            case 'ends_with':
+                helpElement.textContent = 'Include only rows where column ends with this text (e.g., "_test")';
+                break;
+            case 'not_equals':
+                helpElement.textContent = 'Include only rows where column does NOT equal this value';
+                break;
+            case 'in_list':
+                helpElement.textContent = 'Include only rows where column matches any of these comma-separated values';
+                break;
+            case 'regex':
+                helpElement.textContent = 'Include only rows where column matches this regex pattern';
+                break;
+            case 'is_null':
+                helpElement.textContent = 'Include only rows where column is null (no value needed)';
+                break;
+            case 'is_not_null':
+                helpElement.textContent = 'Include only rows where column has any value (no value needed)';
+                break;
+            default:
+                helpElement.textContent = 'Enter values based on condition selected';
+        }
+        
+        // Disable/enable input for null conditions
+        const inputElement = selectElement.closest('.row').querySelector('.inclusion-values');
+        if (condition === 'is_null' || condition === 'is_not_null') {
+            inputElement.disabled = true;
+            inputElement.placeholder = 'No value needed for this condition';
+        } else {
+            inputElement.disabled = false;
+            inputElement.placeholder = 'Enter value(s)';
+        }
+    }
+
+    // Form saving/loading functionality
+    function saveDynamicOptionsConfiguration(fieldElement) {
+        const container = fieldElement.closest('.field-item').querySelector('.dynamic-options');
+        if (!container) {
+            console.log('No dynamic options container found');
+            return {};
+        }
+        
+        const config = {
+            connection_id: container.querySelector('.dynamic-connection')?.value || '',
+            query_mode: container.querySelector('.query-mode')?.value || 'guided',
+            table: container.querySelector('.table-selector')?.value || '',
+            value_column: container.querySelector('.value-column-selector')?.value || '',
+            label_column: container.querySelector('.label-column-selector')?.value || '',
+            sort_column: container.querySelector('.sort-column-selector')?.value || '',
+            sort_order: container.querySelector('.sort-order-selector')?.value || 'ASC',
+            result_limit: container.querySelector('.result-limit')?.value || '',
+            custom_query: container.querySelector('.custom-query')?.value || '',
+            where_conditions: [],
+            exclusions: [],
+            inclusions: []
+        };
+        
+        console.log('Saving dynamic config - base values:', {
+            connection: config.connection_id,
+            table: config.table,
+            value_column: config.value_column,
+            label_column: config.label_column
+        });
+        
+        // Save WHERE conditions
+        const whereRows = container.querySelectorAll('.where-condition-row');
+        whereRows.forEach((row, index) => {
+            const condition = {
+                column: row.querySelector('.where-column')?.value || '',
+                operator: row.querySelector('.where-operator')?.value || '=',
+                value: row.querySelector('.where-value')?.value || '',
+                logic: row.querySelector('.where-logic')?.value || 'AND'
+            };
+            if (condition.column || condition.value) {
+                config.where_conditions.push(condition);
+            }
+        });
+        console.log('Saved WHERE conditions:', config.where_conditions.length);
+        
+        // Save exclusions
+        const exclusionRows = container.querySelectorAll('.exclusion-row');
+        exclusionRows.forEach((row, index) => {
+            const exclusion = {
+                column: row.querySelector('.exclusion-column')?.value || '',
+                condition: row.querySelector('.exclusion-condition')?.value || 'equals',
+                values: row.querySelector('.exclusion-values')?.value || ''
+            };
+            if (exclusion.column || exclusion.values) {
+                config.exclusions.push(exclusion);
+            }
+        });
+        console.log('Saved exclusions:', config.exclusions.length);
+        
+        // Save inclusions
+        const inclusionRows = container.querySelectorAll('.inclusion-row');
+        inclusionRows.forEach((row, index) => {
+            const inclusion = {
+                column: row.querySelector('.inclusion-column')?.value || '',
+                condition: row.querySelector('.inclusion-condition')?.value || 'equals',
+                values: row.querySelector('.inclusion-values')?.value || ''
+            };
+            if (inclusion.column || inclusion.values) {
+                config.inclusions.push(inclusion);
+            }
+        });
+        console.log('Saved inclusions:', config.inclusions.length);
+        
+        console.log('Complete saved config:', config);
+        return config;
+    }
+    
+    function loadSavedDropdownOptions(fieldElement, config) {
+        if (!config || !config.connection_id) {
+            console.log('No config or connection_id found for loading saved dropdown options');
+            return;
+        }
+        
+        const container = fieldElement.closest('.field-item');
+        const previewSelect = container.querySelector('.dynamic-options-preview select');
+        
+        if (!previewSelect) {
+            console.log('No preview select found');
+            return;
+        }
+        
+        console.log('Loading saved dropdown options for preview...');
+        
+        let query = '';
+        
+        // Build query based on saved configuration
+        if (config.query_mode === 'custom' && config.custom_query) {
+            query = config.custom_query;
+        } else if (config.query_mode === 'guided' && config.table && config.value_column) {
+            // Build guided query with all filters
+            query = `SELECT DISTINCT ${config.value_column} as value`;
+            
+            if (config.label_column && config.label_column !== config.value_column) {
+                query += `, ${config.label_column} as label`;
+            }
+            
+            query += ` FROM ${config.table}`;
+            
+            // Add WHERE conditions
+            const whereClauses = [];
+            
+            // Add basic WHERE conditions
+            if (config.where_conditions && config.where_conditions.length > 0) {
+                config.where_conditions.forEach((condition, index) => {
+                    let clause = `${condition.column} ${condition.operator}`;
+                    
+                    if (condition.operator.includes('NULL')) {
+                        // IS NULL, IS NOT NULL don't need values
+                    } else if (condition.operator === 'IN') {
+                        clause += ` (${condition.value})`;
+                    } else {
+                        clause += ` '${condition.value}'`;
+                    }
+                    
+                    if (index > 0 && condition.logic) {
+                        clause = `${condition.logic} ${clause}`;
+                    }
+                    
+                    whereClauses.push(clause);
+                });
+            }
+            
+            // Add exclusion conditions
+            if (config.exclusions && config.exclusions.length > 0) {
+                config.exclusions.forEach(exclusion => {
+                    let clause = `${exclusion.column} ${exclusion.condition}`;
+                    if (!exclusion.condition.includes('NULL')) {
+                        if (exclusion.condition === 'NOT IN') {
+                            clause += ` (${exclusion.value})`;
+                        } else {
+                            clause += ` '${exclusion.value}'`;
+                        }
+                    }
+                    whereClauses.push(`AND NOT (${clause})`);
+                });
+            }
+            
+            // Add inclusion conditions  
+            if (config.inclusions && config.inclusions.length > 0) {
+                const inclusionClauses = [];
+                config.inclusions.forEach(inclusion => {
+                    let clause = `${inclusion.column} ${inclusion.condition}`;
+                    if (!inclusion.condition.includes('NULL')) {
+                        if (inclusion.condition === 'IN') {
+                            clause += ` (${inclusion.value})`;
+                        } else {
+                            clause += ` '${inclusion.value}'`;
+                        }
+                    }
+                    inclusionClauses.push(clause);
+                });
+                if (inclusionClauses.length > 0) {
+                    whereClauses.push(`AND (${inclusionClauses.join(' OR ')})`);
+                }
+            }
+            
+            if (whereClauses.length > 0) {
+                query += ` WHERE ${whereClauses.join(' ')}`;
+            }
+            
+            // Add sorting
+            if (config.sort_column) {
+                const sortOrder = config.sort_order || 'ASC';
+                query += ` ORDER BY ${config.sort_column} ${sortOrder}`;
+            }
+            
+            // Add limit
+            if (config.result_limit) {
+                query += ` OFFSET 0 ROWS FETCH NEXT ${config.result_limit} ROWS ONLY`;
+            }
+        }
+        
+        if (!query) {
+            console.log('No valid query generated for dropdown options');
+            return;
+        }
+        
+        console.log('Executing query for dropdown options:', query);
+        
+        // Fetch the data
+        fetch('/fetch-database-data/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                connection_id: config.connection_id,
+                query: query
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Dropdown options data received:', data);
+            
+            // Clear existing options
+            previewSelect.innerHTML = '<option value="">Select an option</option>';
+            
+            if (Array.isArray(data) && data.length > 0) {
+                data.forEach(row => {
+                    const option = document.createElement('option');
+                    option.value = row.value;
+                    option.textContent = row.label || row.value;
+                    previewSelect.appendChild(option);
+                });
+                
+                console.log(`Loaded ${data.length} options into dropdown preview`);
+                
+                // Show success message
+                const previewContainer = container.querySelector('.dynamic-options-preview');
+                const statusDiv = previewContainer.querySelector('.preview-status') || document.createElement('div');
+                statusDiv.className = 'preview-status alert alert-success alert-sm mt-2';
+                statusDiv.innerHTML = `<i class="ki-duotone ki-check fs-6 me-1"></i> Loaded ${data.length} options`;
+                if (!previewContainer.querySelector('.preview-status')) {
+                    previewContainer.appendChild(statusDiv);
+                }
+                
+                setTimeout(() => {
+                    statusDiv.remove();
+                }, 3000);
+            } else {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No options found';
+                previewSelect.appendChild(option);
+                console.log('No options found for dropdown');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading saved dropdown options:', error);
+            previewSelect.innerHTML = '<option value="">Error loading options</option>';
+        });
+    }
+
+    // Function to populate the main form field dropdown with dynamic data
+    function populateMainFormFieldDropdown(fieldElement, config) {
+        if (!config || !config.connection_id) {
+            console.log('No config for populating main form field dropdown');
+            return;
+        }
+        
+        console.log('Populating main form field dropdown with config:', config);
+        
+        // Find the main form field select element (not the preview one)
+        const fieldContainer = fieldElement.closest('.field-item');
+        const mainSelect = fieldContainer.querySelector('select:not(.dynamic-connection):not(.table-selector):not(.value-column-selector):not(.label-column-selector):not(.sort-column-selector):not(.dynamic-options-preview select)');
+        
+        if (!mainSelect) {
+            console.log('Main form field select not found');
+            return;
+        }
+        
+        console.log('Found main form field select:', mainSelect);
+        
+        // Build query from configuration
+        let query = '';
+        if (config.query_mode === 'custom' && config.custom_query) {
+            query = config.custom_query;
+        } else if (config.query_mode === 'guided' && config.table && config.value_column) {
+            query = `SELECT DISTINCT ${config.value_column} as value`;
+            
+            if (config.label_column && config.label_column !== config.value_column) {
+                query += `, ${config.label_column} as label`;
+            }
+            
+            query += ` FROM ${config.table}`;
+            
+            // Add WHERE conditions
+            if (config.where_conditions && config.where_conditions.length > 0) {
+                const whereClauses = [];
+                config.where_conditions.forEach((condition, index) => {
+                    let clause = `${condition.column} ${condition.operator}`;
+                    
+                    if (!condition.operator.includes('NULL')) {
+                        if (condition.operator === 'IN') {
+                            clause += ` (${condition.value})`;
+                        } else {
+                            clause += ` '${condition.value}'`;
+                        }
+                    }
+                    
+                    whereClauses.push(clause);
+                });
+                
+                if (whereClauses.length > 0) {
+                    query += ` WHERE ${whereClauses.join(' AND ')}`;
+                }
+            }
+            
+            // Add sorting
+            if (config.sort_column && config.sort_order) {
+                query += ` ORDER BY ${config.sort_column} ${config.sort_order}`;
+            }
+            
+            // Add limit
+            if (config.result_limit) {
+                query += ` LIMIT ${config.result_limit}`;
+            }
+        }
+        
+        if (!query) {
+            console.log('No query to execute for main form field dropdown');
+            return;
+        }
+        
+        console.log('Executing query for main form field:', query);
+        
+        // Show loading state
+        mainSelect.innerHTML = '<option value="">Loading options...</option>';
+        mainSelect.disabled = true;
+        
+        // Execute query
+        fetch('/fetch-database-data/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                connection_id: config.connection_id,
+                query: query
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Main form field dropdown query results:', data);
+            
+            mainSelect.innerHTML = '<option value="">Select an option</option>';
+            mainSelect.disabled = false;
+            
+            if (data && data.length > 0) {
+                data.forEach(row => {
+                    const option = document.createElement('option');
+                    option.value = row.value || row[Object.keys(row)[0]];
+                    option.textContent = row.label || row[Object.keys(row)[1]] || option.value;
+                    mainSelect.appendChild(option);
+                });
+                
+                console.log(`✅ Successfully populated main form field dropdown with ${data.length} options`);
+            } else {
+                mainSelect.innerHTML = '<option value="">No options available</option>';
+                console.log('❌ No data returned for main form field dropdown');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading main form field dropdown options:', error);
+            mainSelect.innerHTML = '<option value="">Error loading options</option>';
+            mainSelect.disabled = false;
+        });
+    }
+
+    // Debug function to check current configuration
+    function debugDynamicConfig(button) {
+        const fieldElement = button.closest('.field-item');
+        const config = saveDynamicOptionsConfiguration(fieldElement);
+        const resultDiv = button.closest('.col-12').querySelector('.query-result');
+        
+        let html = '<div class="alert alert-info"><strong>Current Dynamic Configuration:</strong></div>';
+        html += '<pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 12px;">';
+        html += JSON.stringify(config, null, 2);
+        html += '</pre>';
+        
+        resultDiv.innerHTML = html;
+        resultDiv.style.display = 'block';
+        console.log('Dynamic config debug:', config);
+    }
+
+    function loadDynamicOptionsConfiguration(fieldElement, config) {
+        const container = fieldElement.closest('.field-item').querySelector('.dynamic-options');
+        if (!container || !config) {
+            console.log('No container or config found for loading dynamic options');
+            return;
+        }
+        
+        console.log('Loading dynamic config:', config);
+        
+        // Load basic configuration
+        if (config.connection_id) {
+            const connectionSelect = container.querySelector('.dynamic-connection');
+            if (connectionSelect) {
+                connectionSelect.value = config.connection_id;
+                console.log('Set connection to:', config.connection_id);
+            }
+        }
+        
+        if (config.query_mode) {
+            const queryModeSelect = container.querySelector('.query-mode');
+            if (queryModeSelect) {
+                queryModeSelect.value = config.query_mode;
+                toggleQueryMode(queryModeSelect);
+                console.log('Set query mode to:', config.query_mode);
+            }
+        }
+        
+        if (config.custom_query && config.query_mode === 'custom') {
+            const customQueryTextarea = container.querySelector('.custom-query');
+            if (customQueryTextarea) {
+                customQueryTextarea.value = config.custom_query;
+                console.log('Set custom query');
+            }
+        }
+        
+        // For guided mode, load table and then columns
+        if (config.query_mode === 'guided' && config.table) {
+            const tableSelector = container.querySelector('.table-selector');
+            if (tableSelector) {
+                // First load the tables, then set the selected table
+                const connectionSelect = container.querySelector('.dynamic-connection');
+                if (connectionSelect.value) {
+                    loadDatabaseTables(connectionSelect);
+                    
+                    setTimeout(() => {
+                        tableSelector.value = config.table;
+                        console.log('Set table to:', config.table);
+                        
+                        // Load columns for the selected table
+                        loadTableColumns(tableSelector);
+                        
+                        setTimeout(() => {
+                            // Set column values
+                            if (config.value_column) {
+                                const valueColumnSelector = container.querySelector('.value-column-selector');
+                                if (valueColumnSelector) {
+                                    valueColumnSelector.value = config.value_column;
+                                    console.log('Set value column to:', config.value_column);
+                                }
+                            }
+                            
+                            if (config.label_column) {
+                                const labelColumnSelector = container.querySelector('.label-column-selector');
+                                if (labelColumnSelector) {
+                                    labelColumnSelector.value = config.label_column;
+                                    console.log('Set label column to:', config.label_column);
+                                }
+                            }
+                            
+                            if (config.sort_column) {
+                                const sortColumnSelector = container.querySelector('.sort-column-selector');
+                                if (sortColumnSelector) {
+                                    sortColumnSelector.value = config.sort_column;
+                                    console.log('Set sort column to:', config.sort_column);
+                                }
+                            }
+                            
+                            if (config.sort_order) {
+                                const sortOrderSelector = container.querySelector('.sort-order-selector');
+                                if (sortOrderSelector) {
+                                    sortOrderSelector.value = config.sort_order;
+                                    console.log('Set sort order to:', config.sort_order);
+                                }
+                            }
+                            
+                            if (config.result_limit) {
+                                const resultLimit = container.querySelector('.result-limit');
+                                if (resultLimit) {
+                                    resultLimit.value = config.result_limit;
+                                    console.log('Set result limit to:', config.result_limit);
+                                }
+                            }
+                            
+                            // Load WHERE conditions
+                            if (config.where_conditions && config.where_conditions.length > 0) {
+                                const whereList = container.querySelector('.where-conditions-list');
+                                // Clear existing conditions
+                                whereList.innerHTML = '';
+                                
+                                config.where_conditions.forEach((condition, index) => {
+                                    if (index === 0) {
+                                        // Add first condition
+                                        addWhereCondition(container.querySelector('.where-conditions-section button'));
+                                    } else {
+                                        // Add additional conditions  
+                                        addWhereCondition(container.querySelector('.where-conditions-section button'));
+                                    }
+                                    
+                                    const newRow = whereList.lastElementChild;
+                                    newRow.querySelector('.where-column').value = condition.column;
+                                    newRow.querySelector('.where-operator').value = condition.operator;
+                                    newRow.querySelector('.where-value').value = condition.value;
+                                    newRow.querySelector('.where-logic').value = condition.logic;
+                                });
+                                console.log('Loaded', config.where_conditions.length, 'WHERE conditions');
+                            }
+                            
+                            // Load exclusions
+                            if (config.exclusions && config.exclusions.length > 0) {
+                                const exclusionsList = container.querySelector('.exclusions-list');
+                                exclusionsList.innerHTML = '';
+                                
+                                config.exclusions.forEach((exclusion, index) => {
+                                    addExclusion(container.querySelector('.exclusions-section button'));
+                                    const newRow = exclusionsList.lastElementChild;
+                                    newRow.querySelector('.exclusion-column').value = exclusion.column;
+                                    newRow.querySelector('.exclusion-condition').value = exclusion.condition;
+                                    newRow.querySelector('.exclusion-values').value = exclusion.values;
+                                    updateExclusionHelp(newRow.querySelector('.exclusion-condition'));
+                                });
+                                console.log('Loaded', config.exclusions.length, 'exclusions');
+                            }
+                            
+                            // Load inclusions
+                            if (config.inclusions && config.inclusions.length > 0) {
+                                const inclusionsList = container.querySelector('.inclusions-list');
+                                inclusionsList.innerHTML = '';
+                                
+                                config.inclusions.forEach((inclusion, index) => {
+                                    addInclusion(container.querySelector('.inclusions-section button'));
+                                    const newRow = inclusionsList.lastElementChild;
+                                    newRow.querySelector('.inclusion-column').value = inclusion.column;
+                                    newRow.querySelector('.inclusion-condition').value = inclusion.condition;
+                                    newRow.querySelector('.inclusion-values').value = inclusion.values;
+                                    updateInclusionHelp(newRow.querySelector('.inclusion-condition'));
+                                });
+                                console.log('Loaded', config.inclusions.length, 'inclusions');
+                            }
+                            
+                            // Update the generated query
+                            setTimeout(() => {
+                                updateAdvancedGeneratedQuery.call({ target: container.querySelector('.value-column-selector') });
+                                console.log('Updated generated query');
+                            }, 500);
+                        }, 1500);
+                    }, 1500);
+                }
+            }
+        }
+    }
+    
+    // Load targeted persistence enhancements (frontend only)
+    console.log('🔧 Loading targeted persistence enhancements...');
+</script>
+
+<!-- Load targeted persistence fix (frontend only - no backend interference) -->
+<script src="{% static 'js/targeted-persistence-fix.js' %}"></script>
+
+{% endblock %}

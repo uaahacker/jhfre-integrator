@@ -1,0 +1,42 @@
+# Local environments and Python-generated files
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local settings and secret material -- must never enter the build context
+.env
+.env.*
+!.env.example
+
+# Local database artifacts and generated output
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3-journal
+*.sqlite3.bak
+*.sqlite3-bak
+staticfiles/
+media/uploads/
+*.log
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# VCS and editor metadata
+.git/
+.gitignore
+.gitattributes
+.vscode/
+.idea/
+
+# Platform and optional frontend build artifacts
+.DS_Store
+Thumbs.db
+dist/
+build/
+
+# Docs are not needed inside the image
+docs/

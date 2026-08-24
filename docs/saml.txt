@@ -1,0 +1,23 @@
+Based on your code, the active SAML app is sso_auth, mounted at /sso/. Your SAML endpoints are:
+
+Endpoint	Path
+Metadata	/sso/saml/metadata/
+ACS	/sso/saml/acs/
+SLO/Logout	/sso/saml/logout/
+Using your Cloudflare tunnel hostname https://jefre.djangix.com, fill in your Django Add SSO Provider → SAML 2.0 form like this:
+
+SP values to enter in your Django form
+Field	Value
+SP Entity ID	https://jefre.djangix.com/sso/saml/metadata/
+SP ACS URL	https://jefre.djangix.com/sso/saml/acs/
+SP SLO URL	https://jefre.djangix.com/sso/saml/logout/
+Use these exact full URLs — do not substitute 127.0.0.1 here.
+
+What to enter into SAMLTest.dev
+On SAMLTest.dev, create an app and use:
+
+Field	Value
+SP ACS URL	https://jefre.djangix.com/sso/saml/acs/
+SP Entity ID	https://jefre.djangix.com/sso/saml/metadata/
+NameID Format	persistent
+RelayState	enabled

@@ -1,0 +1,250 @@
+/* ==========================================================================
+   JHFRE Integrator - left sidebar navigation refinements.
+
+   Scope: everything here is scoped under #kt_app_sidebar. It extends the
+   existing Metronic menu system (its --bs-menu-link-* custom properties,
+   .menu-link / .menu-sub / .menu-accordion / .menu-arrow classes, and the
+   existing KTMenu/KTDrawer/KTToggle JS) rather than replacing it. No sidebar
+   markup structure, JS, or Django template logic is changed by this file.
+   Loaded after style.bundle.css in base.html so these rules win on
+   specificity without needing !important.
+   ========================================================================== */
+
+#kt_app_sidebar {
+  /* Restrained enterprise palette for the (always-dark) sidebar. */
+  --sidebar-accent: #1b84ff;                 /* existing app primary blue */
+  --sidebar-text: #b6bac6;                   /* primary nav text (inactive) */
+  --sidebar-text-muted: #7d8190;             /* submenu text (inactive) */
+  --sidebar-text-strong: #ffffff;            /* active / hovered text */
+  --sidebar-hover-bg: rgba(255, 255, 255, .045);
+  --sidebar-here-bg: rgba(255, 255, 255, .035);
+  --sidebar-active-bg: rgba(27, 132, 255, .14);
+  --sidebar-divider: rgba(255, 255, 255, .07);
+
+  /* Feed Metronic's own menu-link variables so every existing .menu-link,
+     .here, .active, .show and :hover rule already in style.bundle.css
+     picks these up automatically -- no need to re-implement those states. */
+  --bs-menu-link-color: var(--sidebar-text);
+  --bs-menu-link-color-hover: var(--sidebar-text-strong);
+  --bs-menu-link-color-show: var(--sidebar-text-strong);
+  --bs-menu-link-color-here: var(--sidebar-text-strong);
+  --bs-menu-link-color-active: var(--sidebar-text-strong);
+  --bs-menu-link-bg-color-hover: var(--sidebar-hover-bg);
+  --bs-menu-link-bg-color-show: var(--sidebar-here-bg);
+  --bs-menu-link-bg-color-here: var(--sidebar-here-bg);
+  --bs-menu-link-bg-color-active: var(--sidebar-active-bg);
+}
+
+/* --------------------------------------------------------------------------
+   1. Brand / logo area
+   -------------------------------------------------------------------------- */
+
+#kt_app_sidebar_logo {
+  display: flex;
+  align-items: center;
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--sidebar-divider); /* replaces the dashed vendor divider */
+}
+
+#kt_app_sidebar_logo .sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  text-decoration: none;
+  min-width: 0;
+}
+
+/* Always-visible mark inside the expanded brand row: safe to force flex
+   since its parent's (.app-sidebar-logo-default) own show/hide is untouched. */
+#kt_app_sidebar_logo .sidebar-brand-mark {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: var(--sidebar-accent);
+  color: #ffffff;
+  font-size: .85rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Minimized-state mark: carries the vendor's own .app-sidebar-logo-minimize
+   class, so display:none/inline-block is left entirely to Metronic's
+   existing [data-kt-app-sidebar-minimize] rules -- only box/text styling is
+   added here, no display override, so the collapse toggle keeps working. */
+#kt_app_sidebar_logo .sidebar-brand-mark-only {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: var(--sidebar-accent);
+  color: #ffffff;
+  font-size: .85rem;
+  font-weight: 700;
+  line-height: 32px;
+  text-align: center;
+}
+
+#kt_app_sidebar_logo .sidebar-brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+#kt_app_sidebar_logo .sidebar-brand-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#kt_app_sidebar_logo .sidebar-brand-subtitle {
+  font-size: .66rem;
+  font-weight: 600;
+  color: var(--sidebar-text-muted);
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  margin-top: 1px;
+}
+
+/* Real uploaded company logo image: keep the existing <img>, just center it. */
+#kt_app_sidebar_logo img.app-sidebar-logo-default {
+  display: block;
+}
+
+/* Sidebar collapse/expand toggle: keep Metronic's existing button, just
+   make sure it stays vertically centered on the taller brand row. */
+#kt_app_sidebar_toggle {
+  top: 50%;
+}
+
+/* --------------------------------------------------------------------------
+   2. Top-level navigation rows (Dashboard, Forms, Administration, Account)
+   -------------------------------------------------------------------------- */
+
+#kt_app_sidebar_menu > .menu-item > .menu-link,
+#kt_app_sidebar_menu > .menu-item > span.menu-link {
+  padding-top: .72rem;
+  padding-bottom: .72rem;
+  border-radius: .5rem;
+}
+
+#kt_app_sidebar_menu > .menu-item > .menu-link .menu-title,
+#kt_app_sidebar_menu > .menu-item > span.menu-link .menu-title {
+  font-size: .975rem;
+  font-weight: 500;
+}
+
+#kt_app_sidebar_menu > .menu-item.here > .menu-link .menu-title,
+#kt_app_sidebar_menu > .menu-item.menu-accordion.show > .menu-link .menu-title,
+#kt_app_sidebar_menu > .menu-item.menu-accordion.here > .menu-link .menu-title {
+  font-weight: 600;
+}
+
+#kt_app_sidebar_menu .menu-icon {
+  width: 1.75rem;
+  margin-right: .65rem;
+}
+
+#kt_app_sidebar_menu .menu-icon i {
+  font-size: 1.15rem;
+}
+
+/* --------------------------------------------------------------------------
+   3. Nested submenu (Users, Permissions, Integrations, Configurations,
+      SSO Providers, and the other menu-sub groups)
+   -------------------------------------------------------------------------- */
+
+/* Remove the bullet dots; hierarchy now reads through indentation, size and
+   color alone. */
+#kt_app_sidebar .menu-sub .menu-bullet {
+  display: none;
+}
+
+#kt_app_sidebar .menu-sub .menu-link {
+  padding-top: .5rem;
+  padding-bottom: .5rem;
+  padding-left: 2.7rem;
+  min-height: 0;
+  border-radius: .425rem;
+}
+
+#kt_app_sidebar .menu-sub .menu-link .menu-title {
+  font-size: .875rem;
+  font-weight: 500;
+}
+
+/* Thin left accent indicator on the active submenu item, instead of a
+   filled pill. Sits inside the row's own rounded background. */
+#kt_app_sidebar .menu-sub .menu-link.active {
+  position: relative;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--sidebar-accent);
+}
+
+#kt_app_sidebar .menu-sub .menu-link.active .menu-title {
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   4. Administration (and other) accordion parent rows
+   -------------------------------------------------------------------------- */
+
+#kt_app_sidebar .menu-accordion > .menu-link {
+  align-items: center;
+}
+
+#kt_app_sidebar .menu-arrow {
+  width: 8px;
+  height: 8px;
+  margin-left: .5rem;
+}
+
+/* --------------------------------------------------------------------------
+   5. Bottom "Home" footer item -- restyled as a restrained nav-style row
+      instead of a large centered pill button. Href/behaviour untouched.
+   -------------------------------------------------------------------------- */
+
+#kt_app_sidebar_footer {
+  padding-top: 1rem;
+  border-top: 1px solid var(--sidebar-divider);
+}
+
+#kt_app_sidebar_footer .app-sidebar-footer-link {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: .65rem;
+  width: 100%;
+  padding: .65rem .75rem;
+  border-radius: .5rem;
+  background-color: transparent;
+  color: var(--sidebar-text);
+  font-size: .925rem;
+  font-weight: 500;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+#kt_app_sidebar_footer .app-sidebar-footer-link:hover {
+  background-color: var(--sidebar-hover-bg);
+  color: var(--sidebar-text-strong);
+}
+
+#kt_app_sidebar_footer .app-sidebar-footer-link .menu-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+}
+
+#kt_app_sidebar_footer .app-sidebar-footer-link .menu-icon i {
+  font-size: 1.1rem;
+}

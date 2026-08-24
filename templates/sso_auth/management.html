@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-column-fluid">
+    <!--begin::Toolbar-->
+    <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+        <div id="kt_app_toolbar_container" class="app-container container-xxl d-flex flex-stack">
+            <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+                <h1 class="page-heading d-flex text-dark fw-bold fs-3 flex-column justify-content-center my-0">
+                    SSO Configuration Management
+                </h1>
+                <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
+                    <li class="breadcrumb-item text-muted">
+                        <a href="{% url 'home' %}" class="text-muted text-hover-primary">Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <span class="bullet bg-gray-400 w-5px h-2px"></span>
+                    </li>
+                    <li class="breadcrumb-item text-muted">Settings</li>
+                    <li class="breadcrumb-item">
+                        <span class="bullet bg-gray-400 w-5px h-2px"></span>
+                    </li>
+                    <li class="breadcrumb-item text-muted">SSO Configuration</li>
+                </ul>
+            </div>
+            <div class="d-flex align-items-center gap-2 gap-lg-3">
+                <a href="{% url 'sso:create_provider' %}" class="btn btn-sm fw-bold btn-primary">
+                    <i class="ki-duotone ki-plus fs-2"></i>Add SSO Provider
+                </a>
+            </div>
+        </div>
+    </div>
+    <!--end::Toolbar-->
+
+    <!--begin::Content-->
+    <div id="kt_app_content" class="app-content flex-column-fluid">
+        <div id="kt_app_content_container" class="app-container container-xxl">
+            
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Single Provider Notice -->
+            <div class="alert alert-info d-flex align-items-center mb-10" role="alert">
+                <i class="ki-duotone ki-information-5 fs-2hx text-info me-4"></i>
+                <div class="d-flex flex-column">
+                    <h4 class="mb-1 text-info">Single Active Provider</h4>
+                    <span>Only one SSO provider can be active at a time. Enabling a provider will automatically disable all others.</span>
+                </div>
+            </div>
+
+            <!--begin::Card-->
+            <div class="card">
+                <!--begin::Card header-->
+                <div class="card-header border-0 pt-6">
+                    <div class="card-title">
+                        <div class="d-flex align-items-center position-relative my-1">
+                            <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <input type="text" data-kt-docs-table-filter="search" class="form-control form-control-solid w-250px ps-13" placeholder="Search providers..." />
+                        </div>
+                    </div>
+                    <div class="card-toolbar">
+                        <div class="d-flex justify-content-end" data-kt-docs-table-toolbar="base">
+                            <button type="button" class="btn btn-light-primary me-3" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                <i class="ki-duotone ki-filter fs-2">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>Filter
+                            </button>
+                            <div class="menu menu-sub menu-sub-dropdown w-300px w-md-325px" data-kt-menu="true" id="kt-toolbar-filter">
+                                <div class="px-7 py-5">
+                                    <div class="fs-4 text-dark fw-bold">Filter Options</div>
+                                </div>
+                                <div class="separator border-gray-200"></div>
+                                <div class="px-7 py-5">
+                                    <div class="mb-10">
+                                        <label class="form-label fw-semibold">Protocol:</label>
+                                        <div>
+                                            <select class="form-select form-select-solid" data-kt-select2="true" data-placeholder="Select protocol" data-allow-clear="true" data-kt-docs-table-filter="protocol">
+                                                <option></option>
+                                                <option value="saml">SAML 2.0</option>
+                                                <option value="oidc">OpenID Connect</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-10">
+                                        <label class="form-label fw-semibold">Status:</label>
+                                        <div>
+                                            <select class="form-select form-select-solid" data-kt-select2="true" data-placeholder="Select status" data-allow-clear="true" data-kt-docs-table-filter="status">
+                                                <option></option>
+                                                <option value="active">Active</option>
+                                                <option value="inactive">Inactive</option>
+                                                <option value="testing">Testing</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-end">
+                                        <button type="reset" class="btn btn-light btn-active-light-primary me-2" data-kt-menu-dismiss="true" data-kt-docs-table-filter="reset">Reset</button>
+                                        <button type="submit" class="btn btn-primary" data-kt-menu-dismiss="true" data-kt-docs-table-filter="filter">Apply</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--end::Card header-->
+
+                <!--begin::Card body-->
+                <div class="card-body pt-0">
+                    <!--begin::Table-->
+                    <table class="table align-middle table-row-dashed fs-6 gy-5" id="sso_providers_table">
+                        <thead>
+                            <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                                <th class="min-w-125px">Name</th>
+                                <th class="min-w-100px">Protocol</th>
+                                <th class="min-w-100px">Status</th>
+                                <th class="min-w-100px">Enabled</th>
+                                <th class="min-w-125px">Last Tested</th>
+                                <th class="min-w-100px">Test Status</th>
+                                <th class="text-end min-w-100px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-600 fw-semibold">
+                            {% for provider in sso_providers %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="symbol symbol-50px me-5">
+                                            <span class="symbol-label bg-light-{% if provider.protocol == 'saml' %}primary{% else %}success{% endif %} text-{% if provider.protocol == 'saml' %}primary{% else %}success{% endif %} fw-bold">
+                                                {% if provider.protocol == 'saml' %}SAML{% else %}OIDC{% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="d-flex justify-content-start flex-column">
+                                            <a href="{% url 'sso:edit_provider' provider.id %}" class="text-dark fw-bold text-hover-primary mb-1 fs-6">{{ provider.name }}</a>
+                                            <span class="text-muted fw-semibold text-muted d-block fs-7">{{ provider.description|default:"No description" }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-light-{% if provider.protocol == 'saml' %}primary{% else %}success{% endif %} fw-bold fs-8 px-2 py-1">
+                                        {{ provider.get_protocol_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-light-{% if provider.status == 'active' %}success{% elif provider.status == 'testing' %}warning{% else %}secondary{% endif %} fw-bold fs-8 px-2 py-1">
+                                        {{ provider.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if provider.enabled %}
+                                        <span class="badge badge-light-success fw-bold fs-8 px-2 py-1">Enabled</span>
+                                    {% else %}
+                                        <span class="badge badge-light-danger fw-bold fs-8 px-2 py-1">Disabled</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if provider.last_tested %}
+                                        <span class="text-muted fw-semibold d-block fs-7">{{ provider.last_tested|date:"M d, Y H:i" }}</span>
+                                    {% else %}
+                                        <span class="text-muted fw-semibold d-block fs-7">Never</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if provider.test_results %}
+                                        {% if provider.test_results.success %}
+                                            <span class="badge badge-light-success fw-bold fs-8 px-2 py-1">
+                                                <i class="ki-duotone ki-check fs-8"></i>Passed
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-light-danger fw-bold fs-8 px-2 py-1">
+                                                <i class="ki-duotone ki-cross fs-8"></i>Failed
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge badge-light-secondary fw-bold fs-8 px-2 py-1">Not tested</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="#" class="btn btn-light btn-active-light-primary btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                        Actions
+                                        <i class="ki-duotone ki-down fs-5 m-0"></i>
+                                    </a>
+                                    <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-125px py-4" data-kt-menu="true">
+                                        <div class="menu-item px-3">
+                                            <a href="{% url 'sso:edit_provider' provider.id %}" class="menu-link px-3">Edit</a>
+                                        </div>
+                                        <div class="menu-item px-3">
+                                            <form method="post" action="{% url 'sso:test_provider' provider.id %}" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="menu-link px-3 border-0 bg-transparent text-start w-100">Test Connection</button>
+                                            </form>
+                                        </div>
+                                        {% if provider.protocol == 'saml' %}
+                                        <div class="menu-item px-3">
+                                            <a href="{% url 'sso:saml_metadata_named' provider.name %}" target="_blank" class="menu-link px-3">View Metadata</a>
+                                        </div>
+                                        {% endif %}
+                                        <div class="menu-item px-3">
+                                            <a href="#" class="menu-link px-3" onclick="viewAuditLogs({{ provider.id }})">Audit Logs</a>
+                                        </div>
+                                        <div class="menu-item px-3">
+                                            <form method="post" action="{% url 'sso:delete_provider' provider.id %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this provider?');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="menu-link px-3 border-0 bg-transparent text-start w-100 text-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <!--end::Table-->
+                </div>
+                <!--end::Card body-->
+            </div>
+            <!--end::Card-->
+        </div>
+    </div>
+    <!--end::Content-->
+</div>
+
+<!-- Modal for Audit Logs -->
+<div class="modal fade" id="audit_logs_modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fw-bold">Audit Logs</h2>
+                <div class="btn btn-icon btn-sm btn-active-icon-primary" data-bs-dismiss="modal">
+                    <i class="ki-duotone ki-cross fs-1">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div id="audit_logs_content">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// DataTable initialization
+$(document).ready(function() {
+    var table = $("#sso_providers_table").DataTable({
+        "responsive": true,
+        "pageLength": 10,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "autoWidth": false,
+        "language": {
+            "emptyTable": "No SSO providers have been configured yet."
+        },
+    });
+
+    // Search functionality
+    $('[data-kt-docs-table-filter="search"]').on('keyup', function() {
+        table.search(this.value).draw();
+    });
+
+    // Filter functionality
+    $('[data-kt-docs-table-filter="filter"]').on('click', function() {
+        var protocol = $('[data-kt-docs-table-filter="protocol"]').val();
+        var status = $('[data-kt-docs-table-filter="status"]').val();
+
+        table.columns(1).search(protocol).draw();
+        table.columns(2).search(status).draw();
+    });
+
+    // Reset filter
+    $('[data-kt-docs-table-filter="reset"]').on('click', function() {
+        $('[data-kt-docs-table-filter="protocol"]').val('').trigger('change');
+        $('[data-kt-docs-table-filter="status"]').val('').trigger('change');
+        table.search('').columns().search('').draw();
+    });
+});
+
+// View audit logs
+function escapeHtml(value) {
+    const element = document.createElement('div');
+    element.textContent = value == null ? '' : String(value);
+    return element.innerHTML;
+}
+
+function viewAuditLogs(providerId) {
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('audit_logs_modal')).show();
+    document.getElementById('audit_logs_content').innerHTML = '<div class="d-flex justify-content-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+    
+    fetch(`/sso/api/provider/${providerId}/logs/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Unable to load audit logs.');
+            }
+            return response.json();
+        })
+        .then(data => {
+            let html = '<div class="table-responsive"><table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">';
+            html += '<thead><tr class="fw-bold text-muted"><th>Event</th><th>User</th><th>IP Address</th><th>Timestamp</th></tr></thead><tbody>';
+            
+            if (!Array.isArray(data.logs) || data.logs.length === 0) {
+                html += '<tr><td colspan="4" class="text-center py-5">No audit logs found</td></tr>';
+            } else {
+                data.logs.forEach(log => {
+                    html += `<tr>
+                        <td><span class="badge badge-light-info">${escapeHtml(log.event_type)}</span></td>
+                        <td>${escapeHtml(log.user_identifier || '-')}</td>
+                        <td>${escapeHtml(log.ip_address || '-')}</td>
+                        <td><small class="text-muted">${escapeHtml(new Date(log.timestamp).toLocaleString())}</small></td>
+                    </tr>`;
+                });
+            }
+            
+            html += '</tbody></table></div>';
+            document.getElementById('audit_logs_content').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading audit logs:', error);
+            document.getElementById('audit_logs_content').innerHTML = '<div class="alert alert-danger">Unable to load audit logs.</div>';
+        });
+}
+</script>
+{% endblock extra_scripts %}

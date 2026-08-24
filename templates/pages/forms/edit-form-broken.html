@@ -1,0 +1,2742 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .field-item.dragging {
+        opacity: 0.5;
+        border: 2px dashed #ccc;
+        transform: rotate(2deg);
+    }
+    .field-item.drag-over{
+        border: 2px solid #007bff;
+        background-color: #f0f8ff;
+    }
+    .field-item {
+        cursor: move;
+        transition: all 0.2s ease;
+    }
+    .field-item:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .drag-handle {
+        cursor: grab;
+        padding: 8px;
+        color: #6c757d;
+    }
+    .drag-handle:active {
+        cursor: grabbing;
+    }
+    .field-content {
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    .field-content.collapsed {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+    .collapse-btn {
+        transition: transform 0.2s ease;
+    }
+    .collapse-btn.collapsed {
+        transform: rotate(-90deg);
+    }
+    .field-header {
+        cursor: pointer;
+        border-bottom: 1px solid #e9ecef;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+    }
+    .field-summary {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-left: auto;
+    }
+
+    /* Tab styling */
+    .nav-tabs {
+        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 2rem;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 1rem 1.5rem;
+        transition: all 0.3s ease;
+        background: none;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: #495057;
+        border-bottom-color: #dee2e6;
+        background: rgba(0,0,0,0.02);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #495057;
+        font-weight: 600;
+        border-bottom-color: #007bff;
+        background: none;
+    }
+
+    .tab-content {
+        min-height: 500px;
+    }
+
+    .tab-pane {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Save buttons styling */
+    .save-buttons {
+        position: sticky;
+        bottom: 20px;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid #e9ecef;
+        padding: 1rem;
+        margin: 2rem -2rem -2rem -2rem;
+        border-radius: 0 0 0.5rem 0.5rem;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+
+    /* Field styling improvements */
+    .field-item {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .field-item:hover {
+        border-color: #007bff;
+        box-shadow: 0 4px 12px rgba(0,123,255,0.15);
+    }
+
+    .field-header {
+        background: #f8f9fa;
+        border-radius: 8px 8px 0 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+</style>
+
+<!-- Toolbar Section -->
+<div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+    <div id="kt_app_toolbar_container" class="app-container container-fluid d-flex flex-stack">
+        <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+            <h1 class="page-heading d-flex text-gray-900 fw-bold fs-3 flex-column justify-content-center my-0">
+                Edit Form: {{ form.formname }}
+            </h1>
+            <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
+                <li class="breadcrumb-item text-muted">
+                    <a href="{% url 'manage_forms' %}" class="text-muted text-hover-primary">Forms</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <span class="bullet bg-gray-500 w-5px h-2px"></span>
+                </li>
+                <li class="breadcrumb-item text-muted">Edit Form</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Area -->
+<div class="app-container container-xxl">
+    <!-- Page Header -->
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="page-heading d-flex text-gray-900 fw-bold fs-3 flex-column justify-content-center my-0">
+                Edit Form Configuration
+            </h1>
+            <p class="text-muted fs-6 mt-2">Configure all aspects of your dynamic form</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary" onclick="previewForm()">
+                <i class="ki-duotone ki-eye fs-6"></i> Preview
+            </button>
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('editForm').dispatchEvent(new Event('submit'))">
+                <i class="ki-duotone ki-check fs-6"></i> Save All Changes
+            </button>
+        </div>
+    </div>
+
+    <!-- Configuration Tabs -->
+    <div class="card">
+        <div class="card-body p-0">
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs config-tabs" id="configTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab">
+                        <div class="tab-icon">
+                            <i class="ki-duotone ki-document">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                        </div>
+                        Basic Info
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="branding-tab" data-bs-toggle="tab" data-bs-target="#branding" type="button" role="tab">
+                        <div class="tab-icon">
+                            <i class="ki-duotone ki-colorfilter">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                        </div>
+                        Template & Branding
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="fields-tab" data-bs-toggle="tab" data-bs-target="#fields" type="button" role="tab">
+                        <div class="tab-icon">
+                            <i class="ki-duotone ki-element-11">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                                <span class="path4"></span>
+                            </i>
+                        </div>
+                        Form Fields
+                        <span class="badge badge-light-primary ms-2" id="fieldsCount">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="access-tab" data-bs-toggle="tab" data-bs-target="#access" type="button" role="tab">
+                        <div class="tab-icon">
+                            <i class="ki-duotone ki-shield-tick">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                        </div>
+                        Access & Security
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab">
+                        <div class="tab-icon">
+                            <i class="ki-duotone ki-gear">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                        </div>
+                        Advanced Settings
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="configTabsContent">
+                <form id="editForm">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Info Tab -->
+                    <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                        <h4 class="mb-4">Basic Information</h4>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="formName" class="form-label required">Form Name</label>
+                                    <input type="text" id="formName" name="formName" class="form-control"
+                                           placeholder="Enter form name" value="{{ form.formname }}" required>
+                                    <small class="form-text text-muted">A clear, descriptive name for your form</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="formDescription" class="form-label">Form Description</label>
+                                    <input type="text" id="formDescription" name="form_description" class="form-control" 
+                                           value="{{ form.form_description }}" placeholder="Brief description of the form's purpose">
+                                    <small class="form-text text-muted">Optional description to help users understand the form</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Template & Branding Tab -->
+                    <div class="tab-pane fade" id="branding" role="tabpanel">
+                        <h4 class="mb-4">Template & Branding</h4>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="templateType" class="form-label">Template Design</label>
+                                    <select id="templateType" name="template_type" class="form-select" onchange="handleTemplateChange()">
+                                        <option value="default" {% if form.template_type == 'default' %}selected{% endif %}>Default Template</option>
+                                        <option value="corporate" {% if form.template_type == 'corporate' %}selected{% endif %}>Corporate Template</option>
+                                        <option value="minimal" {% if form.template_type == 'minimal' %}selected{% endif %}>Minimal Template</option>
+                                        <option value="modern" {% if form.template_type == 'modern' %}selected{% endif %}>Modern Template</option>
+                                        <option value="classic" {% if form.template_type == 'classic' %}selected{% endif %}>Classic Template</option>
+                                        <option value="branded" {% if form.template_type == 'branded' %}selected{% endif %}>Branded Template</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="customLogo" class="form-label">Custom Logo</label>
+                                    <input type="file" id="customLogo" name="custom_logo" class="form-control" accept="image/*">
+                                    {% if form.custom_logo %}
+                                        <small class="text-muted">Current: <a href="{{ form.custom_logo.url }}" target="_blank">View Logo</a></small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="headerText" class="form-label">Header Text</label>
+                                    <input type="text" id="headerText" name="header_text" class="form-control" value="{{ form.header_text }}" placeholder="Custom header text">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="footerText" class="form-label">Footer Text</label>
+                                    <input type="text" id="footerText" name="footer_text" class="form-control" value="{{ form.footer_text }}" placeholder="Custom footer text">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Color Customization -->
+                        <div class="mt-4" id="colorCustomization" style="display: none;">
+                            <h5 class="mb-3">Color Customization</h5>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="primaryColor" class="form-label">Primary Color</label>
+                                        <input type="color" id="primaryColor" name="primary_color" class="form-control form-control-color" value="#007bff">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="secondaryColor" class="form-label">Secondary Color</label>
+                                        <input type="color" id="secondaryColor" name="secondary_color" class="form-control form-control-color" value="#6c757d">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="accentColor" class="form-label">Accent Color</label>
+                                        <input type="color" id="accentColor" name="accent_color" class="form-control form-control-color" value="#28a745">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="backgroundColor" class="form-label">Background Color</label>
+                                        <input type="color" id="backgroundColor" name="background_color" class="form-control form-control-color" value="#ffffff">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Template Preview -->
+                        <div class="mt-4">
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="previewTemplate()">
+                                <i class="ki-duotone ki-eye fs-6"></i> Preview Template
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="saveTemplateSettings()">
+                                <i class="ki-duotone ki-check fs-6"></i> Save Template Settings
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Form Fields Tab -->
+                    <div class="tab-pane fade" id="fields" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="mb-0">Form Fields</h4>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="expandAllFields()" title="Expand All Fields">
+                                    <i class="ki-duotone ki-down fs-6"></i> Expand All
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="collapseAllFields()" title="Collapse All Fields">
+                                    <i class="ki-duotone ki-up fs-6"></i> Collapse All
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary add-field-btn">
+                                    <i class="ki-duotone ki-plus fs-6"></i> Add Field
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="formFields">
+                            <!-- Form fields will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Access & Security Tab -->
+                    <div class="tab-pane fade" id="access" role="tabpanel">
+                        <h4 class="mb-4">Access & Security Settings</h4>
+                        
+                        <div class="row g-4">
+                            <!-- Login Requirements -->
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Authentication Requirements</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <div class="form-check form-switch">
+                                                <input type="checkbox" id="loginRequired" name="loginRequired" class="form-check-input" {% if form.login_required %}checked{% endif %}>
+                                                <label for="loginRequired" class="form-check-label fw-bold">Login Required</label>
+                                            </div>
+                                            <small class="form-text text-muted">When enabled, users must be logged in to access this form</small>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="accessLevel" class="form-label fw-bold">Access Level</label>
+                                            <select id="accessLevel" name="accessLevel" class="form-select">
+                                                <option value="public" {% if form.access_level == 'public' %}selected{% endif %}>Public - Anyone can access</option>
+                                                <option value="authenticated" {% if form.access_level == 'authenticated' %}selected{% endif %}>Authenticated Users Only</option>
+                                                <option value="selected_users" {% if form.access_level == 'selected_users' %}selected{% endif %}>Specific Users Only</option>
+                                            </select>
+                                            <small class="form-text text-muted">
+                                                <strong>Public:</strong> No restrictions<br>
+                                                <strong>Authenticated:</strong> User must be logged in<br>
+                                                <strong>Specific Users:</strong> Only assigned users can access (managed in <a href="{% url 'permissions' %}" target="_blank">Permissions</a>)
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SSO Integration -->
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">SSO Integration Settings</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <div class="form-check form-switch">
+                                                <input type="checkbox" id="enableSsoPrepopulate" name="enableSsoPrepopulate" class="form-check-input" {% if form.enable_sso_prepopulate %}checked{% endif %}>
+                                                <label for="enableSsoPrepopulate" class="form-check-label fw-bold">Enable SSO Field Prepopulation</label>
+                                            </div>
+                                            <small class="form-text text-muted">Automatically populate form fields with SSO user data</small>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <div class="form-check form-switch">
+                                                <input type="checkbox" id="autoRedirectToSso" name="autoRedirectToSso" class="form-check-input" {% if form.auto_redirect_to_sso %}checked{% endif %}>
+                                                <label for="autoRedirectToSso" class="form-check-label fw-bold">Auto-redirect to SSO Login</label>
+                                            </div>
+                                            <small class="form-text text-muted">
+                                                When authentication is required, automatically redirect users to SSO login instead of showing the login page.
+                                                <strong>This bypasses the manual "Organization Login" button click.</strong><br>
+                                                <span id="ssoProviderInfo" class="text-info" style="display: none;">
+                                                    <i class="fas fa-info-circle"></i> <span id="ssoProviderText"></span>
+                                                </span>
+                                            </small>
+                                        </div>
+
+                                        <div id="ssoSettings" style="{% if not form.enable_sso_prepopulate %}display: none;{% endif %}">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label fw-bold">SSO Field Mapping</label>
+                                                <small class="form-text text-muted d-block mb-2">Map form fields to SSO attributes for automatic population</small>
+                                                
+                                                <div id="ssoFieldMappings">
+                                                    <!-- SSO field mappings will be added here -->
+                                                </div>
+                                                
+                                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addSsoFieldMapping()">
+                                                    <i class="ki-duotone ki-plus fs-6"></i> Add Field Mapping
+                                                </button>
+                                            </div>
+
+                                            <div class="form-group mb-3">
+                                                <label class="form-label fw-bold">Disabled Fields for SSO Users</label>
+                                                <small class="form-text text-muted d-block mb-2">Fields that SSO users cannot edit (will be read-only)</small>
+                                                
+                                                <div id="ssoDisabledFields">
+                                                    <!-- SSO disabled fields will be added here -->
+                                                </div>
+                                                
+                                                <button type="button" class="btn btn-sm btn-outline-warning mt-2" onclick="addSsoDisabledField()">
+                                                    <i class="ki-duotone ki-plus fs-6"></i> Add Disabled Field
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Settings Tab -->
+                    <div class="tab-pane fade" id="advanced" role="tabpanel">
+                        <h4 class="mb-4">Advanced Settings</h4>
+                        
+                        <div class="row g-4">
+                            <!-- Form Configuration -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Form Configuration</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="formUUID" class="form-label">Form UUID</label>
+                                            <input type="text" id="formUUID" name="formUUID" class="form-control"
+                                                   placeholder="Auto-generated UUID" value="{{ form.uuid }}" readonly>
+                                            <small class="form-text text-muted">Unique identifier for this form</small>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="successMessage" class="form-label">Success Message</label>
+                                            <textarea id="successMessage" name="successMessage" class="form-control" rows="3" 
+                                                placeholder="Thank you! Your form has been submitted successfully.">{% if form.success_message %}{{ form.success_message }}{% endif %}</textarea>
+                                            <small class="text-muted">Custom message to show after form submission. If empty, default message will be used.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Webhook & Integration -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Webhook Integration</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="webhookUrl" class="form-label">Webhook URL</label>
+                                            <input type="text" id="webhookUrl" name="webhookUrl" class="form-control"
+                                                   placeholder="https://api.example.com/webhook" value="{{ form.webhook_url }}">
+                                            <small class="form-text text-muted">URL to send form submissions to</small>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="headers" class="form-label">Custom Headers (JSON)</label>
+                                            <textarea id="headers" name="headers" class="form-control" rows="4">{{ browser_headers_json|default:"{}" }}</textarea>
+                                            <small class="text-muted">Enter headers as JSON: {"Content-Type": "application/json"}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Redirect Settings -->
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Post-Submission Behavior</h5>
+                                        
+                                        <div class="form-group mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="enableRedirect" name="enable_redirect" {% if form.enable_redirect %}checked{% endif %}>
+                                                <label class="form-check-label fw-bold" for="enableRedirect">Redirect after form submission</label>
+                                            </div>
+                                            <small class="form-text text-muted">Automatically redirect users to a specific URL after successful submission</small>
+                                        </div>
+
+                                        <div class="form-group mb-3" id="redirectUrlGroup" style="{% if not form.enable_redirect %}display: none;{% endif %}">
+                                            <label for="redirectUrl" class="form-label">Redirect URL</label>
+                                            <input type="url" id="redirectUrl" name="redirectUrl" class="form-control"
+                                                placeholder="https://example.com/thank-you" value="{{ form.redirect_url }}">
+                                            <small class="text-muted">URL to redirect users after successful form submission.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save Buttons (Sticky) -->
+                    <div class="save-buttons text-center">
+                        <button type="submit" id="submitButton" class="btn btn-primary btn-lg me-3">
+                            <span class="indicator-label">
+                                <i class="ki-duotone ki-check fs-6"></i>
+                                Save All Changes
+                            </span>
+                            <span class="indicator-progress" style="display: none;">
+                                Please wait... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                            </span>
+                        </button>
+                        <button type="button" onclick="cancelForm(event)" class="btn btn-light-danger btn-lg">
+                            <i class="ki-duotone ki-cross fs-6"></i>
+                            Cancel
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for selecting field types -->
+    <div class="modal fade" id="fieldTypeModal" tabindex="-1" aria-labelledby="fieldTypeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fieldTypeModalLabel">Select Field Type</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <!-- Basic Fields -->
+                        <div class="col-md-4">
+                            <div class="field-type-card" onclick="selectFieldType('text')">
+                                <i class="ki-duotone ki-text-field fs-2x mb-2"></i>
+                                <h6>Text Field</h6>
+                                <p class="text-muted">Single line text input</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="field-type-card" onclick="selectFieldType('email')">
+                                <i class="ki-duotone ki-sms fs-2x mb-2"></i>
+                                <h6>Email Field</h6>
+                                <p class="text-muted">Email input with validation</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="field-type-card" onclick="selectFieldType('textarea')">
+                                <i class="ki-duotone ki-text-block fs-2x mb-2"></i>
+                                <h6>Text Area</h6>
+                                <p class="text-muted">Multi-line text input</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="field-type-card" onclick="selectFieldType('select')">
+                                <i class="ki-duotone ki-down fs-2x mb-2"></i>
+                                <h6>Dropdown</h6>
+                                <p class="text-muted">Select from options</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="field-type-card" onclick="selectFieldType('radio')">
+                                <i class="ki-duotone ki-radio-button fs-2x mb-2"></i>
+                                <h6>Radio Buttons</h6>
+                                <p class="text-muted">Choose one option</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="field-type-card" onclick="selectFieldType('checkbox')">
+                                <i class="ki-duotone ki-check-square fs-2x mb-2"></i>
+                                <h6>Checkboxes</h6>
+                                <p class="text-muted">Multiple selections</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="field-type-card" onclick="selectFieldType('number')">
+                                <i class="ki-duotone ki-calculator fs-2x mb-2"></i>
+                                <h6>Number</h6>
+                                <p class="text-muted">Numeric input</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="field-type-card" onclick="selectFieldType('date')">
+                                <i class="ki-duotone ki-calendar fs-2x mb-2"></i>
+                                <h6>Date Picker</h6>
+                                <p class="text-muted">Date selection</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="field-type-card" onclick="selectFieldType('file')">
+                                <i class="ki-duotone ki-document fs-2x mb-2"></i>
+                                <h6>File Upload</h6>
+                                <p class="text-muted">File attachment</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Field Template -->
+<template id="fieldTemplate">
+    <div class="card mb-3 field-item" data-field-index="" draggable="true" data-field-id="">
+        <div class="card-body p-3">
+            <div class="field-header d-flex justify-content-between align-items-center" onclick="toggleFieldCollapse(this, event)">
+                <div class="d-flex align-items-center">
+                    <span class="drag-handle me-2" onclick="event.stopPropagation()">
+                        <i class="ki-duotone ki-menu fs-3"></i>
+                    </span>
+                    <h6 class="card-title field-label-display mb-0">New Field</h6>
+                    <span class="field-summary ms-3"></span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="collapse-btn me-2">
+                        <i class="ki-duotone ki-down fs-4"></i>
+                    </span>
+                    <button type="button" class="btn btn-sm btn-danger remove-field-btn" title="Remove Field">
+                        <i class="ki-duotone ki-trash fs-6">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                            <span class="path4"></span>
+                            <span class="path5"></span>
+                        </i>
+                        Remove
+                    </button>
+                </div>
+            </div>
+            <div class="field-content">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="fieldLabel{{ fieldIndex }}" class="form-label">Label</label>
+                        <input type="text" id="fieldLabel{{ fieldIndex }}" class="form-control field-label" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="fieldName{{ fieldIndex }}" class="form-label">Name</label>
+                    <input type="text" id="fieldName{{ fieldIndex }}" class="form-control field-name" required>
+                    <small class="text-muted">Unique identifier (no spaces).</small>
+                </div>
+                <div class="col-md-4">
+                    <label for="fieldType{{ fieldIndex }}" class="form-label">Type</label>
+                    <select id="fieldType{{ fieldIndex }}" class="form-select field-type">
+                        <option value="text">Text</option>
+                        <option value="email">Email</option>
+                        <option value="number">Number</option>
+                        <option value="currency">Currency</option>
+                        <option value="tel">Phone</option>
+                        <option value="textarea">Text Area</option>
+                        <option value="select">Dropdown</option>
+                        <option value="radio">Radio Buttons</option>
+                        <option value="checkbox">Checkboxes</option>
+                        <option value="date">Date</option>
+                        <option value="file">File Upload</option>
+                        <option value="country">Country</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row g-3 mt-2 file-options-container" style="display: none;">
+                <div class="col-md-6">
+                    <label for="maxFileSize{{ fieldIndex }}" class="form-label">Max File Size (MB)</label>
+                    <input type="number" id="maxFileSize{{ fieldIndex }}" class="form-control max-file-size" placeholder="e.g., 5">
+                </div>
+                <div class="col-md-6">
+                    <label for="fileAccept{{ fieldIndex }}" class="form-label">Accepted File Types</label>
+                    <input type="text" id="fileAccept{{ fieldIndex }}" class="form-control file-accept" placeholder=".pdf,.jpg,.png">
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch mt-4">
+                        <input class="form-check-input multiple-files-toggle" type="checkbox" id="multipleFiles{{ fieldIndex }}">
+                        <label class="form-check-label" for="multipleFiles{{ fieldIndex }}">Allow Multiple Files</label>
+                    </div>
+                </div>
+                <div class="col-md-6 multiple-files-limit-container" style="display: none;">
+                    <label for="maxFileCount{{ fieldIndex }}" class="form-label">Max Number of Files</label>
+                    <input type="number" id="maxFileCount{{ fieldIndex }}" class="form-control max-file-count" placeholder="e.g., 3" min="1" max="20">
+                    <small class="text-muted">Maximum 20 files allowed</small>
+                </div>
+            </div>
+            <div class="row g-3 mt-2 currency-options-container" style="display: none;">
+                <div class="col-md-6">
+                    <label for="currencySymbol{{ fieldIndex }}" class="form-label">Currency Symbol</label>
+                    <select id="currencySymbol{{ fieldIndex }}" class="form-select currency-symbol">
+                        <option value="$">$ (US Dollar)</option>
+                        <option value="€">€ (Euro)</option>
+                        <option value="£">£ (British Pound)</option>
+                        <option value="¥">¥ (Japanese Yen)</option>
+                        <option value="₹">₹ (Indian Rupee)</option>
+                        <option value="¢">¢ (Cent)</option>
+                        <option value="custom">Custom Symbol</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="customCurrencySymbol{{ fieldIndex }}" class="form-label">Custom Symbol</label>
+                    <input type="text" id="customCurrencySymbol{{ fieldIndex }}" class="form-control custom-currency-symbol" placeholder="e.g., CAD$" style="display: none;">
+                </div>
+            </div>
+             <div class="mt-3 field-options">
+                <!-- Options specific to the field type will be added here -->
+            </div>
+            <div class="mt-3">
+                <div class="form-check">
+                    <input type="checkbox" id="fieldRequired{{ fieldIndex }}" class="form-check-input field-required">
+                    <label for="fieldRequired{{ fieldIndex }}" class="form-check-label">Required</label>
+                </div>
+            </div>
+            </div> <!-- End field-content -->
+        </div>
+    </div>
+</template>
+
+<template id="selectOptionsTemplate">
+    <div>
+        <h6>Dropdown Options</h6>
+        <div class="mb-3">
+            <label for="optionSource{{ fieldIndex }}" class="form-label">Option Source</label>
+            <select id="optionSource{{ fieldIndex }}" class="form-select option-source-select">
+                <option value="manual">Manual</option>
+                <option value="database">Database</option>
+                <option value="api">API</option>
+            </select>
+        </div>
+
+        <!-- Database Options -->
+        <div class="database-options mt-2" style="display: none;">
+            <div class="mb-3">
+                <label for="dbConnection{{ fieldIndex }}" class="form-label">Database Connection</label>
+                <select id="dbConnection{{ fieldIndex }}" class="form-select db-connection-select">
+                    <option value="">Select a connection</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="dbQuery{{ fieldIndex }}" class="form-label">SQL Query</label>
+                <textarea id="dbQuery{{ fieldIndex }}" class="form-control db-query" rows="3"
+                    placeholder="SELECT value_field, label_field FROM table_name"></textarea>
+                <small class="text-muted">Must return columns for value and label.</small>
+            </div>
+            <div class="mb-3">
+                <button type="button" class="btn btn-sm btn-light-primary fetch-db-options-btn">Fetch Options</button>
+            </div>
+            <!-- Sorting Options for Database -->
+            <div class="mb-3 sort-options-container" style="display: none;">
+                <label class="form-label">Sort Options</label>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <select class="form-select form-select-sm sort-type-select">
+                            <option value="none">No Sorting</option>
+                            <option value="label-asc">Label (A-Z)</option>
+                            <option value="label-desc">Label (Z-A)</option>
+                            <option value="value-asc">Value (Ascending)</option>
+                            <option value="value-desc">Value (Descending)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <button type="button" class="btn btn-sm btn-light-info apply-sort-btn">Apply Sort</button>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-2 option-preview-container">
+                <!-- Dropdown preview will be added here -->
+            </div>
+        </div>
+
+        <!-- API Options -->
+        <div class="api-options mt-2" style="display: none;">
+            <div class="mb-3">
+                <label for="apiUrl{{ fieldIndex }}" class="form-label">API URL</label>
+                <input type="text" id="apiUrl{{ fieldIndex }}" class="form-control api-url" placeholder="API URL">
+            </div>
+            <div class="mb-3">
+                 <label for="apiHeaders{{ fieldIndex }}" class="form-label">Headers (JSON)</label>
+                 <textarea id="apiHeaders{{ fieldIndex }}" class="form-control api-headers" rows="2"
+                    placeholder='{"Content-Type": "application/json"}'></textarea>
+                 <small class="text-muted">Enter headers as a JSON object</small>
+            </div>
+             <div class="mb-3">
+                   <!-- removed onclick and added class -->
+                <button type="button" class="btn btn-sm btn-light-primary fetch-api-options-btn">Fetch Options</button>
+             </div>
+             <!-- Sorting Options for API -->
+            <div class="mb-3 sort-options-container" style="display: none;">
+                <label class="form-label">Sort Options</label>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <select class="form-select form-select-sm sort-type-select">
+                            <option value="none">No Sorting</option>
+                            <option value="label-asc">Label (A-Z)</option>
+                            <option value="label-desc">Label (Z-A)</option>
+                            <option value="value-asc">Value (Ascending)</option>
+                            <option value="value-desc">Value (Descending)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <button type="button" class="btn btn-sm btn-light-info apply-sort-btn">Apply Sort</button>
+                    </div>
+                </div>
+            </div>
+             <div class="mt-2 option-preview-container">
+                   <!-- Dropdown preview will be added here -->
+            </div>
+         </div>
+
+
+        <!-- Manual Options -->
+        <div class="manual-options">
+            <div class="mb-3">
+                <!-- removed onclick -->
+                <button type="button" class="btn btn-sm btn-light-primary add-select-option">Add Option</button>
+            </div>
+            <!-- Sorting Options for Manual -->
+            <div class="mb-3 sort-options-container" style="display: none;">
+                <label class="form-label">Sort Options</label>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <select class="form-select form-select-sm sort-type-select">
+                            <option value="none">No Sorting</option>
+                            <option value="label-asc">Label (A-Z)</option>
+                            <option value="label-desc">Label (Z-A)</option>
+                            <option value="value-asc">Value (Ascending)</option>
+                            <option value="value-desc">Value (Descending)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <button type="button" class="btn btn-sm btn-light-info apply-sort-btn">Apply Sort</button>
+                    </div>
+                </div>
+            </div>
+            <div class="select-options-container">
+                <!-- Options specific to the field type will be added here -->
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- column select model -->
+<div class="modal fade" id="dataSettingsModal" tabindex="-1" aria-labelledby="dataSettingsModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dataSettingsModalLabel">Data Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="valueField" class="form-label">Value Field</label>
+                    <input type="text" id="valueField" class="form-control" placeholder="Field to use for values">
+                </div>
+                <div class="mb-3">
+                    <label for="labelField" class="form-label">Label Field</label>
+                    <input type="text" id="labelField" class="form-control" placeholder="Field to use for labels">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-light-primary apply-data-settings-btn">Apply
+                    Settings</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<template id="selectOptionItemTemplate">
+    <div class="row g-3 mb-2 select-option-item">
+        <div class="col-md-5">
+            <input type="text" class="form-control select-option-value" placeholder="Value" required>
+        </div>
+        <div class="col-md-5">
+            <input type="text" class="form-control select-option-label" placeholder="Label" required>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-sm btn-light-danger removeSelectOption">Remove</button>
+        </div>
+    </div>
+</template>
+
+<template id="countryOptionsTemplate">
+    <div>
+        <h6>Country & Timezone</h6>
+        <select class="form-select country-select mt-2" onchange="updateTimezones(this, this.closest('.field-item'))">
+            <option value="" selected disabled>Select Country</option>
+        </select>
+        <select class="form-select timezone-select mt-2" style="display: none;">
+            <option value="" selected disabled>Select Timezone</option>
+        </select>
+    </div>
+</template>
+
+
+<template id="radioOptionsTemplate">
+    <div>
+        <h6>Radio Button Options</h6>
+        <div class="mb-3">
+            <!-- Removed inline onclick, added class-->
+            <button type="button" class="btn btn-sm btn-light-primary add-radio-option">
+                Add Option
+            </button>
+        </div>
+        <div class="radio-options-container">
+            <!-- Radio options will be added here -->
+        </div>
+    </div>
+</template>
+
+<template id="radioOptionItemTemplate">
+    <div class="row g-3 mb-2 radio-option-item">
+        <div class="col-md-5">
+            <input type="text" class="form-control radio-option-value" placeholder="Value" required>
+        </div>
+        <div class="col-md-5">
+            <input type="text" class="form-control radio-option-label" placeholder="Label" required>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-sm btn-light-danger removeRadioOption">Remove</button>
+        </div>
+    </div>
+</template>
+<template id="checkboxOptionsTemplate">
+    <div>
+        <h6>Checkbox Options</h6>
+        <div class="mb-3">
+            <!-- Removed inline onclick, added class-->
+            <button type="button" class="btn btn-sm btn-light-primary add-checkbox-option">Add Option</button>
+        </div>
+        <div class="checkbox-options-container">
+            <!-- Checkbox options will be added here -->
+        </div>
+    </div>
+</template>
+
+<template id="checkboxOptionItemTemplate">
+    <div class="row g-3 mb-2 checkbox-option-item">
+        <div class="col-md-5">
+            <input type="text" class="form-control checkbox-option-value" placeholder="Value" required>
+        </div>
+        <div class="col-md-5">
+            <input type="text" class="form-control checkbox-option-label" placeholder="Label" required>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-sm btn-light-danger removeCheckboxOption">Remove</button>
+        </div>
+    </div>
+</template>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    // Database connections from Django context
+    const databaseConnections = [
+        {% for conn in database_connections %}
+            {
+                id: "{{ conn.id|escapejs }}",
+                name: "{{ conn.name|escapejs }}"
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+</script>
+<script>
+    /*****************************************************/
+    /* GLOBALS & INITIAL VARIABLES                       */
+    /*****************************************************/
+
+    const advancedOptionsDiv = document.getElementById('advancedOptions');
+    const formFieldsContainer = document.getElementById('formFields');
+    const fieldTemplate = document.getElementById('fieldTemplate');
+    let fieldIndex = 0;
+    let countryTimezones = null;   // Populated from JSON for 'country' type
+    let currentFetchedData = [];     // Temporarily holds DB/API results
+    let currentFieldOptions = null;   // .field-options container currently being configured
+    
+    /*****************************************************/
+    /* DRAG AND DROP FUNCTIONALITY                       */
+    /*****************************************************/
+    function initializeDragAndDrop() {
+        // Add event listeners to formFields container for delegation
+        formFieldsContainer.addEventListener('dragstart', handleDragStart);
+        formFieldsContainer.addEventListener('dragend', handleDragEnd);
+        formFieldsContainer.addEventListener('dragover', handleDragOver);
+        formFieldsContainer.addEventListener('drop', handleDrop);
+        formFieldsContainer.addEventListener('dragenter', handleDragEnter);
+        formFieldsContainer.addEventListener('dragleave', handleDragLeave);
+    }
+
+    function handleDragStart(e) {
+        if (!e.target.classList.contains('field-item')) return;
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', e.target.outerHTML);
+        e.dataTransfer.setData('text/plain', e.target.dataset.fieldIndex);
+    }
+
+    function handleDragEnd(e) {
+        if (!e.target.classList.contains('field-item')) return;
+        e.target.classList.remove('dragging');
+        // Remove drag-over class from all field items
+        document.querySelectorAll('.field-item').forEach(item => {
+            item.classList.remove('drag-over');
+        });
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        
+        const afterElement = getDragAfterElement(formFieldsContainer, e.clientY);
+        const dragging = document.querySelector('.dragging');
+        
+        if (afterElement == null) {
+            formFieldsContainer.appendChild(dragging);
+        } else {
+            formFieldsContainer.insertBefore(dragging, afterElement);
+        }
+    }
+
+    function handleDragEnter(e) {
+        e.preventDefault();
+        if (e.target.classList.contains('field-item') && !e.target.classList.contains('dragging')) {
+            e.target.classList.add('drag-over');
+        }
+    }
+
+    function handleDragLeave(e) {
+        if (e.target.classList.contains('field-item')) {
+            e.target.classList.remove('drag-over');
+        }
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        // Cleanup is handled in dragend
+    }
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.field-item:not(.dragging)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    /*****************************************************/
+    /* COLLAPSE/EXPAND FUNCTIONALITY                     */
+    /*****************************************************/
+    function toggleFieldCollapse(headerElement, event) {
+        // Don't collapse if clicking on remove button
+        if (event && (event.target.closest('.remove-field-btn') || event.target.classList.contains('remove-field-btn'))) {
+            return;
+        }
+        
+        const fieldItem = headerElement.closest('.field-item');
+        const fieldContent = fieldItem.querySelector('.field-content');
+        const collapseBtn = fieldItem.querySelector('.collapse-btn');
+        const fieldSummary = fieldItem.querySelector('.field-summary');
+        
+        fieldContent.classList.toggle('collapsed');
+        collapseBtn.classList.toggle('collapsed');
+        
+        // Update field summary when collapsed
+        if (fieldContent.classList.contains('collapsed')) {
+            const label = fieldItem.querySelector('.field-label').value || 'New Field';
+            const type = fieldItem.querySelector('.field-type').value || 'text';
+            const required = fieldItem.querySelector('.field-required').checked ? ' (Required)' : '';
+            fieldSummary.textContent = `${type.toUpperCase()}${required}`;
+        } else {
+            fieldSummary.textContent = '';
+        }
+    }
+
+    function expandAllFields() {
+        document.querySelectorAll('.field-content.collapsed').forEach(content => {
+            content.classList.remove('collapsed');
+            const fieldItem = content.closest('.field-item');
+            fieldItem.querySelector('.collapse-btn').classList.remove('collapsed');
+            fieldItem.querySelector('.field-summary').textContent = '';
+        });
+    }
+
+    function collapseAllFields() {
+        document.querySelectorAll('.field-content:not(.collapsed)').forEach(content => {
+            content.classList.add('collapsed');
+            const fieldItem = content.closest('.field-item');
+            fieldItem.querySelector('.collapse-btn').classList.add('collapsed');
+            
+            const label = fieldItem.querySelector('.field-label').value || 'New Field';
+            const type = fieldItem.querySelector('.field-type').value || 'text';
+            const required = fieldItem.querySelector('.field-required').checked ? ' (Required)' : '';
+            fieldItem.querySelector('.field-summary').textContent = `${type.toUpperCase()}${required}`;
+        });
+    }
+
+    /*****************************************************/
+    /* CURRENCY FIELD FUNCTIONALITY                      */
+    /*****************************************************/
+    function setupCurrencyField(fieldItem) {
+        const currencySymbolSelect = fieldItem.querySelector('.currency-symbol');
+        const customSymbolInput = fieldItem.querySelector('.custom-currency-symbol');
+        
+        // Handle currency symbol selection
+        currencySymbolSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customSymbolInput.style.display = 'block';
+                customSymbolInput.required = true;
+            } else {
+                customSymbolInput.style.display = 'none';
+                customSymbolInput.required = false;
+            }
+        });
+    }
+
+    function formatCurrency(input, currencySymbol) {
+        let value = input.value.replace(/[^\d.-]/g, ''); // Remove all non-numeric characters except decimal and minus
+        
+        // Handle negative values
+        let isNegative = value.startsWith('-');
+        if (isNegative) {
+            value = value.substring(1);
+        }
+        
+        // Ensure only one decimal point
+        const parts = value.split('.');
+        if (parts.length > 2) {
+            value = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        // Limit to 2 decimal places
+        if (parts[1] && parts[1].length > 2) {
+            value = parts[0] + '.' + parts[1].substring(0, 2);
+        }
+        
+        // Add commas for thousands
+        if (value) {
+            const [integerPart, decimalPart] = value.split('.');
+            const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            value = decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+        }
+        
+        // Add currency symbol and negative sign
+        const formattedValue = value ? `${currencySymbol}${isNegative ? '-' : ''}${value}` : '';
+        input.value = formattedValue;
+        
+        return formattedValue;
+    }
+
+    function getCurrencyValue(input) {
+        // Extract numeric value from formatted currency
+        return input.value.replace(/[^\d.-]/g, '');
+    }
+
+    function addCurrencyEventListeners(fieldItem) {
+        // This will be called when the form is actually created/rendered
+        const fieldType = fieldItem.querySelector('.field-type').value;
+        if (fieldType === 'currency') {
+            const currencySymbolSelect = fieldItem.querySelector('.currency-symbol');
+            const customSymbolInput = fieldItem.querySelector('.custom-currency-symbol');
+            
+            // Get the current currency symbol
+            function getCurrentSymbol() {
+                if (currencySymbolSelect.value === 'custom') {
+                    return customSymbolInput.value || '$';
+                }
+                return currencySymbolSelect.value;
+            }
+            
+            // Add event listener to currency inputs in the form preview/actual form
+            document.addEventListener('input', function(e) {
+                if (e.target.dataset && e.target.dataset.fieldType === 'currency') {
+                    formatCurrency(e.target, getCurrentSymbol());
+                }
+            });
+            
+            // Update formatting when currency symbol changes
+            currencySymbolSelect.addEventListener('change', function() {
+                const currencyInputs = document.querySelectorAll('[data-field-type="currency"]');
+                currencyInputs.forEach(input => {
+                    if (input.value) {
+                        formatCurrency(input, getCurrentSymbol());
+                    }
+                });
+            });
+            
+            customSymbolInput.addEventListener('input', function() {
+                if (currencySymbolSelect.value === 'custom') {
+                    const currencyInputs = document.querySelectorAll('[data-field-type="currency"]');
+                    currencyInputs.forEach(input => {
+                        if (input.value) {
+                            formatCurrency(input, getCurrentSymbol());
+                        }
+                    });
+                }
+            });
+        }
+    }
+    /*****************************************************/
+    /* TEMPLATE HANDLING FUNCTIONS                       */
+    /*****************************************************/
+    function handleTemplateChange() {
+        const templateType = document.getElementById('templateType').value;
+        const colorCustomization = document.getElementById('colorCustomization');
+        
+        // Show color customization for branded template
+        if (templateType === 'branded') {
+            colorCustomization.style.display = 'block';
+        } else {
+            colorCustomization.style.display = 'none';
+        }
+        
+        // Load template preview or update UI based on selection
+        updateTemplatePreview(templateType);
+    }
+    
+    function updateTemplatePreview(templateType) {
+        // This will show a preview of how the form will look
+        console.log('Template changed to:', templateType);
+        // You can implement actual preview logic here
+    }
+    
+    function previewTemplate() {
+        const templateType = document.getElementById('templateType').value;
+        const formName = document.getElementById('formName').value;
+        
+        if (!formName) {
+            alert('Please enter a form name first');
+            return;
+        }
+        
+        // Open preview in new window
+        const previewUrl = `/forms/${formName}/preview?template=${templateType}`;
+        window.open(previewUrl, '_blank', 'width=800,height=600');
+    }
+
+    async function saveTemplateSettings() {
+        const formName = document.getElementById('formName').value;
+        const formUUID = document.getElementById('formUUID').value;
+        
+        if (!formName) {
+            alert('Please enter a form name first');
+            return;
+        }
+
+        const templateData = {
+            formname: formName,
+            uuid: formUUID,
+            template_type: document.getElementById('templateType').value || 'default',
+            custom_colors: JSON.stringify({
+                primary: document.getElementById('primaryColor')?.value || '#007bff',
+                secondary: document.getElementById('secondaryColor')?.value || '#6c757d'
+            }),
+            header_text: document.getElementById('headerText').value || '',
+            footer_text: document.getElementById('footerText').value || ''
+        };
+
+        try {
+            const response = await fetch(`{% url 'edit_form' form.uuid %}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                body: JSON.stringify(templateData),
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                showSuccessPopup("Template settings saved successfully!");
+            } else {
+                showErrorPopup(result.error || "Failed to save template settings.");
+            }
+        } catch (error) {
+            showErrorPopup(`An error occurred: ${error.message}`);
+        }
+    }
+
+    /*****************************************************/
+    /* FORM SUBMISSION                                   */
+    /*****************************************************/
+    async function submitEditForm(event) {
+        event.preventDefault();
+        const formName = document.getElementById('formName').value;
+        const formDescription = document.getElementById('formDescription').value;
+        const webhookUrl = document.getElementById('webhookUrl').value;
+        const headers = document.getElementById('headers').value;
+        const successMessage = document.getElementById('successMessage').value;
+        const enableRedirect = document.getElementById('enableRedirect').checked;
+        const redirectUrl = enableRedirect ? document.getElementById('redirectUrl').value : null;
+        const loginRequired = document.getElementById('loginRequired').checked; // Get login_required value
+        const accessLevel = document.getElementById('accessLevel').value; // Get access_level value
+        const formUUID = document.getElementById('formUUID').value; // Get UUID value
+
+        const fieldsConfig = Array.from(formFieldsContainer.children).map(fieldItem => {
+            const label = fieldItem.querySelector('.field-label').value;
+            const name = fieldItem.querySelector('.field-name').value;
+            const type = fieldItem.querySelector('.field-type').value;
+            const required = fieldItem.querySelector('.field-required').checked;
+
+            let fieldConfig = {
+                label: label,
+                name: name,
+                type: type,
+                required: required,
+            };
+
+            if (type === 'select') {
+                const optionSourceSelect = fieldItem.querySelector('.option-source-select');
+                if (optionSourceSelect) {
+                    fieldConfig.source = optionSourceSelect.value;
+                }
+                const sortSelect = fieldItem.querySelector('.sort-type-select');
+                if (sortSelect) {
+                    fieldConfig.sort = sortSelect.value;
+                }
+            }
+
+            if (type === 'select' || type === 'radio' || type === 'checkbox') {
+                fieldConfig.choices = [];
+                const optionSourceSelect = fieldItem.querySelector('.option-source-select');
+                if (optionSourceSelect && (optionSourceSelect.value === 'manual' || optionSourceSelect.value === 'database' || optionSourceSelect.value === 'api')) {
+                    const optionsContainer = fieldItem.querySelector(`.${type}-options-container`) || fieldItem.querySelector('.select-options-container');
+                    if (optionsContainer) {
+                        const choiceItems = optionsContainer.querySelectorAll('.select-option-item, .radio-option-item, .checkbox-option-item');
+                        choiceItems.forEach(opt => {
+                            const valInput = opt.querySelector('.select-option-value, .radio-option-value, .checkbox-option-value');
+                            const lblInput = opt.querySelector('.select-option-label, .radio-option-label, .checkbox-option-label');
+                            if (valInput && lblInput) {
+                                fieldConfig.choices.push({ value: valInput.value, label: lblInput.value });
+                            }
+                        });
+                    }
+                    
+                    // If it's database source, save the connection and query details
+                    if (optionSourceSelect.value === 'database') {
+                        const connectionSelect = fieldItem.querySelector('.db-connection-select');
+                        const queryInput = fieldItem.querySelector('.db-query');
+                        if (connectionSelect) fieldConfig.connectionId = connectionSelect.value;
+                        if (queryInput) fieldConfig.query = queryInput.value;
+                    }
+                    
+                    // If it's API source, save the API details
+                    if (optionSourceSelect.value === 'api') {
+                        const apiUrlInput = fieldItem.querySelector('.api-url');
+                        const apiHeadersInput = fieldItem.querySelector('.api-headers');
+                        if (apiUrlInput) fieldConfig.apiUrl = apiUrlInput.value;
+                        if (apiHeadersInput) fieldConfig.apiHeaders = apiHeadersInput.value;
+                    }
+                    
+                     // If choices were fetched via API and displayed in a preview dropdown (and not necessarily in individual items)
+                    const apiPreviewDropdown = fieldItem.querySelector('.api-options .form-select');
+                    if (apiPreviewDropdown && fieldConfig.choices.length === 0) { // Only if manual/db options didn't populate choices
+                        for (let i = 0; i < apiPreviewDropdown.options.length; i++) {
+                            const option = apiPreviewDropdown.options[i];
+                            if (option.value && option.value !== "") { // Avoid placeholder
+                                fieldConfig.choices.push({ value: option.value, label: option.textContent });
+                            }
+                        }
+                    }
+                }
+            } else if (type === 'file') {
+                const maxSizeInput = fieldItem.querySelector('.max-file-size');
+                const acceptInput = fieldItem.querySelector('.file-accept');
+                const multipleToggle = fieldItem.querySelector('.multiple-files-toggle');
+                const maxFileCountInput = fieldItem.querySelector('.max-file-count');
+                
+                if (maxSizeInput && maxSizeInput.value) {
+                    fieldConfig.maxFileSizeMB = parseInt(maxSizeInput.value, 10);
+                }
+                if (acceptInput && acceptInput.value) {
+                    fieldConfig.accept = acceptInput.value.trim();
+                }
+                if (multipleToggle && multipleToggle.checked) {
+                    fieldConfig.multiple = true;
+                    if (maxFileCountInput && maxFileCountInput.value) {
+                        fieldConfig.maxFileCount = parseInt(maxFileCountInput.value, 10);
+                    } else {
+                        fieldConfig.maxFileCount = 3; // Default max file count
+                    }
+                } else {
+                    fieldConfig.multiple = false;
+                }
+            } else if (type === 'country') {
+                const countrySelect = fieldItem.querySelector('.country-select');
+                const timezoneSelect = fieldItem.querySelector('.timezone-select');
+                if (countrySelect) {
+                    fieldConfig.country = countrySelect.value;
+                }
+                if (timezoneSelect) {
+                    fieldConfig.timezone = timezoneSelect.value;
+                }
+            } else if (type === 'currency') {
+                const currencySymbolSelect = fieldItem.querySelector('.currency-symbol');
+                const customSymbolInput = fieldItem.querySelector('.custom-currency-symbol');
+                if (currencySymbolSelect) {
+                    if (currencySymbolSelect.value === 'custom') {
+                        fieldConfig.currencySymbol = customSymbolInput.value || '$';
+                    } else {
+                        fieldConfig.currencySymbol = currencySymbolSelect.value;
+                    }
+                }
+            }
+            // Add other field type specific logic here if needed
+
+            return fieldConfig;
+        });
+
+        const formData = {
+            formname: formName,
+            form_description: formDescription,
+            fields: fieldsConfig, // Changed 'config: JSON.stringify(fieldsConfig)' to 'fields: fieldsConfig'
+            webhook_url: webhookUrl,
+            headers: headers ? JSON.parse(headers) : {},
+            success_message: successMessage,
+            enable_redirect: enableRedirect,
+            redirect_url: redirectUrl,
+            login_required: loginRequired,
+            access_level: accessLevel, // Add access level to form data
+            uuid: formUUID, // Add UUID to form data
+            // Template-related fields
+            template_type: document.getElementById('templateType').value || 'default',
+            custom_colors: JSON.stringify({
+                primary: document.getElementById('primaryColor')?.value || '#007bff',
+                secondary: document.getElementById('secondaryColor')?.value || '#6c757d'
+            }),
+            header_text: document.getElementById('headerText').value || '',
+            footer_text: document.getElementById('footerText').value || '',
+            // SSO Integration fields
+            enable_sso_prepopulate: document.getElementById('enableSsoPrepopulate').checked,
+            auto_redirect_to_sso: document.getElementById('autoRedirectToSso').checked,
+            sso_prepopulate_fields: getSsoPrepopulateFields(),
+            sso_disabled_fields: getSsoDisabledFields()
+        };
+
+        // Loading indicator
+        const submitButton = document.getElementById("submitButton");
+        const indicatorLabel = submitButton.querySelector(".indicator-label");
+        const indicatorProgress = submitButton.querySelector(".indicator-progress");
+        indicatorLabel.style.display = "none";
+        indicatorProgress.style.display = "inline-block";
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch(`{% url 'edit_form' form.uuid %}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                body: JSON.stringify(formData),
+            });
+
+
+            const result = await response.json();
+            if (response.ok) {
+                showSuccessPopup("Form updated successfully!");
+                setTimeout(() => {
+                    window.location.href = "{% url 'manage_forms' %}";
+                }, 2000);
+            } else {
+                showErrorPopup(result.error || "Failed to update form.");
+            }
+        } catch (error) {
+            showErrorPopup(`An error occurred: ${error.message}`);
+        } finally {
+            // Hide loading
+            indicatorLabel.style.display = "inline";
+            indicatorProgress.style.display = "none";
+            submitButton.disabled = false;
+        }
+    }
+    /*****************************************************/
+    /* PAGE LOAD                                         */
+    /*****************************************************/
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize drag and drop functionality
+        initializeDragAndDrop();
+        
+        // Listen for form submission
+        const formElement = document.getElementById('editForm');
+        formElement.addEventListener('submit', submitEditForm);
+
+        // Show/hide advanced
+        const toggleAdvancedButton = document.getElementById('toggleAdvanced');
+        toggleAdvancedButton.addEventListener('click', () => {
+            advancedOptionsDiv.style.display =
+                (advancedOptionsDiv.style.display === 'none' ? 'block' : 'none');
+            toggleAdvancedButton.classList.toggle('btn-outline-secondary');
+            toggleAdvancedButton.classList.toggle('btn-secondary');
+        });
+
+        // Handle redirect toggle
+        const enableRedirectCheckbox = document.getElementById('enableRedirect');
+        const redirectUrlGroup = document.getElementById('redirectUrlGroup');
+        
+        enableRedirectCheckbox.addEventListener('change', () => {
+            if (enableRedirectCheckbox.checked) {
+                redirectUrlGroup.style.display = 'block';
+            } else {
+                redirectUrlGroup.style.display = 'none';
+            }
+        });
+
+        // Add a field by default
+        populateFormFields();
+
+        // "Add Field" button
+        document.querySelector('.add-field-btn').addEventListener('click', () => {
+            addFormField();
+        });
+
+        // On field changes
+        document.addEventListener('change', (e) => {
+            // 1) If changed field-type
+            if (e.target.classList.contains('field-type')) {
+                updateFieldOptions(e.target);
+            }
+            // 2) If changed .option-source-select
+            else if (e.target.classList.contains('option-source-select')) {
+                toggleOptionSource(e.target);
+            }
+            // 3) If changed multiple files toggle
+            else if (e.target.classList.contains('multiple-files-toggle')) {
+                toggleMultipleFilesLimit(e.target);
+            }
+        });
+
+        // On clicks: remove fields, add manual options, fetch DB/API, etc.
+        document.addEventListener('click', (e) => {
+            const el = e.target;
+
+            // Remove entire field
+            if (el.classList.contains('remove-field-btn') || el.closest('.remove-field-btn')) {
+                e.stopPropagation(); // Prevent collapse toggle
+                const button = el.classList.contains('remove-field-btn') ? el : el.closest('.remove-field-btn');
+                removeFormField(button);
+                return;
+            }
+            // If inside .field-options container
+            const fieldOptions = el.closest('.field-options');
+            if (fieldOptions) {
+                // Add manual <select> option
+                if (el.classList.contains('add-select-option')) {
+                    addSelectOption(el);
+                    return;
+                }
+                // Add radio option
+                if (el.classList.contains('add-radio-option')) {
+                    addRadioOption(el);
+                    return;
+                }
+                // Add checkbox option
+                if (el.classList.contains('add-checkbox-option')) {
+                    addCheckboxOption(el);
+                    return;
+                }
+                // Fetch from DB
+                if (el.classList.contains('fetch-db-options-btn')) {
+                    fetchDatabaseOptions(el);
+                    return;
+                }
+                // Fetch from API
+                if (el.classList.contains('fetch-api-options-btn')) {
+                    fetchApiOptions(el);
+                    return;
+                }
+                // "Set Value & Label" button
+                if (el.classList.contains('show-data-settings-btn')) {
+                    showDataSettingsModal(fieldOptions, el);
+                    return;
+                }
+                // Apply Sort button
+                if (el.classList.contains('apply-sort-btn')) {
+                    applyOptionSort(el);
+                    return;
+                }
+            }
+
+            // Remove an individual <select> option
+            if (el.classList.contains('removeSelectOption')) {
+                removeSelectOption(el);
+                return;
+            }
+            // Remove radio
+            if (el.classList.contains('removeRadioOption')) {
+                removeRadioOption(el);
+                return;
+            }
+            // Remove checkbox
+            if (el.classList.contains('removeCheckboxOption')) {
+                removeCheckboxOption(el);
+                return;
+            }
+        });
+        const dataSettingsModalElement = document.getElementById('dataSettingsModal');
+        dataSettingsModalElement.addEventListener('hidden.bs.modal', () => {
+            const valueFieldInput = document.getElementById('valueField');
+            const labelFieldInput = document.getElementById('labelField');
+            valueFieldInput.value = '';
+            labelFieldInput.value = '';
+        });
+    });
+
+
+    /*****************************************************/
+    /* ADD / REMOVE A FIELD                              */
+    /*****************************************************/
+    function addFormField() {
+        const newField = fieldTemplate.content.cloneNode(true);
+        const fieldElement = newField.querySelector('.field-item');
+        fieldElement.dataset.fieldIndex = fieldIndex;
+        fieldElement.dataset.fieldId = Date.now() + '-' + Math.random().toString(36).substring(2, 15); // Unique ID
+
+        // Update label display
+        updateFieldLabelDisplay(fieldElement);
+        // Unique IDs
+        updateFieldIds(fieldElement, fieldIndex);
+
+        formFieldsContainer.appendChild(fieldElement);
+        fieldIndex++;
+    }
+
+    function removeFormField(btn) {
+        const fieldItem = btn.closest('.field-item');
+        if (fieldItem) {
+            fieldItem.remove();
+        }
+    }
+
+    function updateFieldIds(fieldElement, idx) {
+        // Inputs
+        fieldElement.querySelectorAll(
+            '[id*="fieldLabel"], [id*="fieldName"], [id*="fieldType"], [id*="fieldRequired"],' +
+            '[id*="optionSource"], [id*="dbQuery"], [id*="apiUrl"], [id*="apiHeaders"],' +
+            '[id*="maxFileSize"], [id*="fileAccept"], [id*="multipleFiles"], [id*="maxFileCount"]'
+        ).forEach(el => {
+            el.id = el.id.replace(/(\\d+)?$/, idx);
+        });
+        // Labels
+        fieldElement.querySelectorAll(
+            'label[for*="fieldLabel"], label[for*="fieldName"], label[for*="fieldType"], label[for*="fieldRequired"],' +
+            'label[for*="optionSource"], label[for*="dbQuery"], label[for*="apiUrl"], label[for*="apiHeaders"],' +
+            'label[for*="maxFileSize"], label[for*="fileAccept"], label[for*="multipleFiles"], label[for*="maxFileCount"]'
+        ).forEach(lbl => {
+            lbl.setAttribute('for', lbl.getAttribute('for').replace(/(\\d+)?$/, idx));
+        });
+    }
+    function updateFieldLabelDisplay(fieldItem) {
+        const labelInput = fieldItem.querySelector('.field-label');
+        const labelDisplay = fieldItem.querySelector('.field-label-display');
+        labelDisplay.textContent = labelInput.value || 'New Field';
+        labelInput.addEventListener('input', () => {
+            labelDisplay.textContent = labelInput.value || 'New Field';
+        });
+    }
+
+    /*****************************************************/
+    /* SWITCH FIELD TYPE (select, radio, checkbox, etc.) */
+    /*****************************************************/
+    function updateFieldOptions(selectEl) {
+        const fieldItem = selectEl.closest('.field-item');
+        const container = fieldItem.querySelector('.field-options');
+        container.innerHTML = ''; // Clear previous options
+
+        const fileOptionsContainer = fieldItem.querySelector('.file-options-container');
+        const currencyOptionsContainer = fieldItem.querySelector('.currency-options-container');
+        
+        if (selectEl.value === 'file') {
+            fileOptionsContainer.style.display = 'flex'; // Or 'block' based on layout needs
+        } else {
+            fileOptionsContainer.style.display = 'none';
+        }
+        
+        if (selectEl.value === 'currency') {
+            currencyOptionsContainer.style.display = 'flex';
+            setupCurrencyField(fieldItem);
+        } else {
+            currencyOptionsContainer.style.display = 'none';
+        }
+
+        switch (selectEl.value) {
+            case 'country': {
+                const tpl = document.getElementById('countryOptionsTemplate').content.cloneNode(true);
+                container.appendChild(tpl);
+                const countrySelect = container.querySelector('.country-select');
+                fetchAndPopulateCountries(countrySelect, fieldItem);
+                break;
+            }
+            case 'select': {
+                const tpl = document.getElementById('selectOptionsTemplate').content.cloneNode(true);
+                container.appendChild(tpl);
+                // Populate database connections when the select field type is chosen
+                populateDatabaseConnections(fieldItem.querySelector('.db-connection-select'));
+                break;
+            }
+            case 'radio': {
+                const tpl = document.getElementById('radioOptionsTemplate').content.cloneNode(true);
+                container.appendChild(tpl);
+                break;
+            }
+            case 'checkbox': {
+                const tpl = document.getElementById('checkboxOptionsTemplate').content.cloneNode(true);
+                container.appendChild(tpl);
+                break;
+            }
+            default:
+                // text, email, file, date, etc -> no suboptions
+                break;
+        }
+    }
+
+    /*****************************************************/
+    /* MULTIPLE FILES TOGGLE FUNCTIONALITY               */
+    /*****************************************************/
+    function toggleMultipleFilesLimit(toggleElement) {
+        const fieldItem = toggleElement.closest('.field-item');
+        const limitContainer = fieldItem.querySelector('.multiple-files-limit-container');
+        
+        if (toggleElement.checked) {
+            limitContainer.style.display = 'block';
+            // Set default value if empty
+            const maxFileCountInput = limitContainer.querySelector('.max-file-count');
+            if (!maxFileCountInput.value) {
+                maxFileCountInput.value = 3; // Default to 3 files
+            }
+        } else {
+            limitContainer.style.display = 'none';
+        }
+    }
+
+    /*****************************************************/
+    /* COUNTRY/TIMEZONE LOGIC                            */
+    /*****************************************************/
+    async function fetchAndPopulateCountries(countrySelect, fieldItem) {
+        try {
+            const response = await fetch("{% static 'assets/json/Countries_Timezones_Dropdown.json' %}");
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            countryTimezones = data;
+            if (Array.isArray(data)) {
+                data.forEach(country => {
+                    const opt = document.createElement('option');
+                    opt.value = country.code;
+                    opt.textContent = country.name;
+                    countrySelect.appendChild(opt);
+                });
+                countrySelect.addEventListener('change', () => {
+                    updateTimezones(countrySelect, fieldItem);
+                });
+            }
+        } catch (error) {
+            console.error("Failed to fetch country/timezone data:", error);
+        }
+    }
+
+    function updateTimezones(countrySelect, fieldItem) {
+        const timezoneSelect = fieldItem.querySelector('.timezone-select');
+        if (!timezoneSelect) return;
+        timezoneSelect.innerHTML = '<option value="" disabled selected>Select Timezone</option>';
+        timezoneSelect.style.display = 'none';
+
+        const selectedCode = countrySelect.value;
+        if (!selectedCode || !Array.isArray(countryTimezones)) return;
+
+        const selectedCountry = countryTimezones.find(c => c.code === selectedCode);
+        if (selectedCountry && Array.isArray(selectedCountry.timezones) && selectedCountry.timezones.length) {
+            timezoneSelect.style.display = 'block';
+            selectedCountry.timezones.forEach(tz => {
+                const opt = document.createElement('option');
+                opt.value = tz.name;
+                opt.textContent = tz.name;
+                timezoneSelect.appendChild(opt);
+            });
+        }
+    }
+    /*****************************************************/
+    /* MANUAL SELECT OPTIONS                             */
+    /*****************************************************/
+    function addSelectOption(btn) {
+        const fieldOptions = btn.closest('.field-options');
+        const container = fieldOptions.querySelector('.select-options-container');
+        const tpl = document.getElementById('selectOptionItemTemplate').content.cloneNode(true);
+        container.appendChild(tpl);
+
+        // Show sorting options if not already visible
+        const sortOptions = fieldOptions.querySelector('.sort-options-container');
+        if (sortOptions) sortOptions.style.display = 'block';
+    }
+    function removeSelectOption(btn) {
+        const item = btn.closest('.select-option-item');
+        if (item) item.remove();
+    }
+
+    /*****************************************************/
+    /* RADIO OPTIONS                                     */
+    /*****************************************************/
+    function addRadioOption(btn) {
+        const fieldOptions = btn.closest('.field-options');
+        const container = fieldOptions.querySelector('.radio-options-container');
+        const tpl = document.getElementById('radioOptionItemTemplate').content.cloneNode(true);
+        container.appendChild(tpl);
+    }
+    function removeRadioOption(btn) {
+        const item = btn.closest('.radio-option-item');
+        if (item) item.remove();
+    }
+
+    /*****************************************************/
+    /* CHECKBOX OPTIONS                                  */
+    /*****************************************************/
+    function addCheckboxOption(btn) {
+        const fieldOptions = btn.closest('.field-options');
+        const container = fieldOptions.querySelector('.checkbox-options-container');
+        const tpl = document.getElementById('checkboxOptionItemTemplate').content.cloneNode(true);
+        container.appendChild(tpl);
+    }
+    function removeCheckboxOption(btn) {
+        const item = btn.closest('.checkbox-option-item');
+        if (item) item.remove();
+    }
+    /*****************************************************/
+    /* SWITCH FOR SELECT: manual/db/api                  */
+    /*****************************************************/
+    function toggleOptionSource(sourceSelect) {
+        const fieldOptions = sourceSelect.closest('.field-options');
+        if (!fieldOptions) return;
+
+        // Show/hide relevant sections
+        const manual = fieldOptions.querySelector('.manual-options');
+        const dbOpts = fieldOptions.querySelector('.database-options');
+        const apiOpts = fieldOptions.querySelector('.api-options');
+        const preview = fieldOptions.querySelector('.option-preview-container');
+        const selectContainer = fieldOptions.querySelector('.select-options-container');
+
+        // Clear existing content
+        if (preview) preview.innerHTML = '';
+        if (selectContainer) selectContainer.innerHTML = '';
+
+        // Clear dynamically added dropdown in API options
+        const apiDropdown = apiOpts.querySelector('select');
+        if (apiDropdown) {
+            apiDropdown.remove();
+        }
+
+        manual.style.display = 'none';
+        dbOpts.style.display = 'none';
+        apiOpts.style.display = 'none';
+
+        switch (sourceSelect.value) {
+            case 'manual': manual.style.display = 'block'; break;
+            case 'database': dbOpts.style.display = 'block'; break;
+            case 'api': apiOpts.style.display = 'block'; break;
+        }
+    }
+    /*****************************************************/
+    /* FETCH FROM DATABASE                               */
+    /*****************************************************/
+    async function fetchDatabaseOptions(button) {
+        const fieldOptions = button.closest('.field-options');
+        const queryInput = fieldOptions.querySelector('.db-query');
+        const connectionSelect = fieldOptions.querySelector('.db-connection-select');
+        const query = (queryInput.value || '').trim();
+        const connection_id = connectionSelect.value;
+
+        // Clear out old data
+        const selectContainer = fieldOptions.querySelector('.select-options-container');
+        if (selectContainer) selectContainer.innerHTML = '';
+
+        if (!connection_id) {
+            showErrorPopup("Please select a database connection.");
+            return;
+        }
+        if (!query) {
+            showErrorPopup("SQL query cannot be empty.");
+            return;
+        }
+
+        // Loading state
+        const originalLabel = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = `<span class="indicator-progress" style="display: inline-block;">
+                                 Please wait... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                             </span>`;
+
+        try {
+            const response = await fetch("{% url 'fetch_database_data' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                body: JSON.stringify({ query: query, connection_id: connection_id }),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (Array.isArray(data)) {
+                if (!data.length) {
+                    showWarningPopup("No data returned from the database.");
+                } else {
+                    currentFetchedData = data;
+                    currentFieldOptions = fieldOptions;
+                    // Show sorting options
+                    const sortOptions = fieldOptions.querySelector('.sort-options-container');
+                    if (sortOptions) sortOptions.style.display = 'block';
+                    showDataSettingsModal(fieldOptions, button);
+                    showSuccessPopup(`${data.length} options fetched successfully!`);
+                }
+            } else {
+                showErrorPopup("Invalid or empty data from database.");
+            }
+        } catch (error) {
+            showErrorPopup(`Error fetching DB data: ${error.message}`);
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalLabel;
+        }
+    }
+
+    /*****************************************************/
+    /* FETCH FROM API                                    */
+    /*****************************************************/
+    async function fetchApiOptions(button) {
+        const fieldOptions = button.closest('.field-options');
+        const apiUrlInput = fieldOptions.querySelector('.api-url');
+        const apiUrl = (apiUrlInput.value || '').trim();
+        const apiHeadersText = fieldOptions.querySelector('.api-headers').value;
+
+        // Clear out old data
+        const selectContainer = fieldOptions.querySelector('.select-options-container');
+        if (selectContainer) selectContainer.innerHTML = '';
+
+        if (!apiUrl) {
+            showErrorPopup("API URL cannot be empty.");
+            return;
+        }
+
+        let apiHeaders = {};
+        if (apiHeadersText) {
+            try {
+                apiHeaders = JSON.parse(apiHeadersText);
+            } catch (e) {
+                showErrorPopup("Invalid headers JSON format.");
+                return;
+            }
+        }
+
+        // Loading UI
+        const originalLabel = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = `<span class="indicator-progress" style="display: inline-block;">
+                                   Please wait... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                               </span>`;
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: "GET",
+                headers: apiHeaders,
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (Array.isArray(data)) {
+                if (!data.length) {
+                    showWarningPopup("No data returned from the API.");
+                } else {
+                    currentFetchedData = data;
+                    currentFieldOptions = fieldOptions;
+                    // Show sorting options
+                    const sortOptions = fieldOptions.querySelector('.sort-options-container');
+                    if (sortOptions) sortOptions.style.display = 'block';
+                    showDataSettingsModal(fieldOptions, button);
+                    showSuccessPopup(`${data.length} options fetched successfully!`);
+                }
+            } else {
+                showErrorPopup("No data or invalid data received from the API.");
+            }
+        } catch (error) {
+            showErrorPopup(`Error fetching data from API: ${error}`);
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalLabel;
+        }
+    }
+
+    /*****************************************************/
+    /* SORTING LOGIC                                     */
+    /*****************************************************/
+    function sortOptionElements(container, sortType) {
+        const options = Array.from(container.querySelectorAll('.select-option-item'));
+
+        if (sortType === 'none' || options.length === 0) {
+            return; // No sorting needed
+        }
+
+        options.sort((a, b) => {
+            const valA_input = a.querySelector('.select-option-value');
+            const lblA_input = a.querySelector('.select-option-label');
+            const valB_input = b.querySelector('.select-option-value');
+            const lblB_input = b.querySelector('.select-option-label');
+
+            let valA, valB;
+            switch (sortType) {
+                case 'label-asc':
+                    valA = (lblA_input.value || '').toLowerCase();
+                    valB = (lblB_input.value || '').toLowerCase();
+                    return valA.localeCompare(valB);
+                case 'label-desc':
+                    valA = (lblA_input.value || '').toLowerCase();
+                    valB = (lblB_input.value || '').toLowerCase();
+                    return valB.localeCompare(valA);
+                case 'value-asc':
+                    valA = valA_input.value;
+                    valB = valB_input.value;
+                    // Check if values are numeric
+                    if (!isNaN(valA) && !isNaN(valB)) {
+                        return parseFloat(valA) - parseFloat(valB);
+                    }
+                    return String(valA).localeCompare(String(valB));
+                case 'value-desc':
+                    valA = valA_input.value;
+                    valB = valB_input.value;
+                     if (!isNaN(valA) && !isNaN(valB)) {
+                        return parseFloat(valB) - parseFloat(valA);
+                    }
+                    return String(valB).localeCompare(String(valA));
+                default:
+                    return 0;
+            }
+        });
+
+        // Re-append sorted options
+        options.forEach(opt => container.appendChild(opt));
+    }
+
+    function applyOptionSort(button) {
+        const fieldOptions = button.closest('.field-options');
+        const sortType = fieldOptions.querySelector('.sort-type-select')?.value || 'none';
+        const source = fieldOptions.querySelector('.option-source-select')?.value || 'manual';
+
+        // Hidden container used for persistence on save
+        const hiddenContainer = fieldOptions.querySelector('.select-options-container');
+
+        if (source === 'manual') {
+            sortOptionElements(hiddenContainer, sortType);
+            showSuccessPopup("Options sorted.");
+            return;
+        }
+
+        // For database/api, rebuild from either hidden items or current preview select
+        const previewSelect = fieldOptions.querySelector('.option-preview-container select') || fieldOptions.querySelector('.api-options select');
+
+        // Collect choices
+        let choices = [];
+        const itemNodes = Array.from(hiddenContainer.querySelectorAll('.select-option-item'));
+        if (itemNodes.length) {
+            choices = itemNodes.map(n => ({
+                value: n.querySelector('.select-option-value')?.value ?? '',
+                label: n.querySelector('.select-option-label')?.value ?? ''
+            }));
+        } else if (previewSelect) {
+            choices = Array.from(previewSelect.options)
+                .filter(o => o.value !== '')
+                .map(o => ({ value: o.value, label: o.textContent }));
+        }
+
+        // Sort choices
+        const sorted = [...choices].sort((a, b) => {
+            switch (sortType) {
+                case 'label-asc':
+                    return String(a.label || '').toLowerCase().localeCompare(String(b.label || '').toLowerCase());
+                case 'label-desc':
+                    return String(b.label || '').toLowerCase().localeCompare(String(a.label || '').toLowerCase());
+                case 'value-asc': {
+                    const aNum = Number(a.value), bNum = Number(b.value);
+                    if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return aNum - bNum;
+                    return String(a.value || '').localeCompare(String(b.value || ''));
+                }
+                case 'value-desc': {
+                    const aNum = Number(a.value), bNum = Number(b.value);
+                    if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return bNum - aNum;
+                    return String(b.value || '').localeCompare(String(a.value || ''));
+                }
+                default:
+                    return 0;
+            }
+        });
+
+        // Rebuild hidden items
+        if (hiddenContainer) {
+            hiddenContainer.innerHTML = '';
+            sorted.forEach(({ value, label }) => {
+                const optionItem = document.getElementById('selectOptionItemTemplate').content.cloneNode(true);
+                optionItem.querySelector('.select-option-value').value = value;
+                optionItem.querySelector('.select-option-label').value = label;
+                hiddenContainer.appendChild(optionItem);
+            });
+        }
+
+        // Rebuild preview select
+        if (source === 'database') {
+            const previewContainer = fieldOptions.querySelector('.option-preview-container');
+            if (previewContainer) {
+                previewContainer.innerHTML = '';
+                const sel = document.createElement('select');
+                sel.className = 'form-select form-select-sm';
+                const def = document.createElement('option');
+                def.value = '';
+                def.textContent = 'Select an option';
+                def.disabled = true; def.selected = true;
+                sel.appendChild(def);
+                sorted.forEach(({ value, label }) => {
+                    const o = document.createElement('option');
+                    o.value = value; o.textContent = label;
+                    sel.appendChild(o);
+                });
+                previewContainer.appendChild(sel);
+            }
+        } else if (source === 'api') {
+            const apiOpts = fieldOptions.querySelector('.api-options');
+            if (apiOpts) {
+                const existing = apiOpts.querySelector('select');
+                if (existing) existing.remove();
+                const sel = document.createElement('select');
+                sel.className = 'form-select';
+                const def = document.createElement('option');
+                def.value = '';
+                def.textContent = 'Select an option';
+                def.disabled = true; def.selected = true;
+                sel.appendChild(def);
+                sorted.forEach(({ value, label }) => {
+                    const o = document.createElement('option');
+                    o.value = value; o.textContent = label;
+                    sel.appendChild(o);
+                });
+                apiOpts.appendChild(sel);
+            }
+        }
+
+        showSuccessPopup('Options sorted.');
+    }
+
+
+    /*****************************************************/
+    /* SHOW DATA SETTINGS MODAL                          */
+    /*****************************************************/
+    function showDataSettingsModal(fieldOptions, triggerButton) {
+        // Remember which field is being configured
+        currentFieldOptions = fieldOptions;
+
+        const dataSettingsModal = new bootstrap.Modal(document.getElementById('dataSettingsModal'));
+        dataSettingsModal.show();
+
+        // Get references to elements within the modal
+        const valueFieldInput = document.getElementById('valueField');
+        const labelFieldInput = document.getElementById('labelField');
+        const applyButton = document.querySelector('#dataSettingsModal .apply-data-settings-btn');
+        const previewContainer = fieldOptions.querySelector('.option-preview-container');
+        const selectOptionsContainer = fieldOptions.querySelector('.select-options-container');
+        const optionSourceSelect = fieldOptions.querySelector('.option-source-select');
+
+        applyButton.onclick = () => {
+            // Get user-chosen field names
+            const valueFieldName = valueFieldInput.value.trim();
+            const labelFieldName = labelFieldInput.value.trim();
+
+            // Clear old content in the preview and selectOptionsContainer
+            if (previewContainer) previewContainer.innerHTML = '';
+            if (selectOptionsContainer) selectOptionsContainer.innerHTML = '';
+
+            if (optionSourceSelect.value === 'api') {
+                // --- API Logic ---
+                const apiOptionsContainer = fieldOptions.querySelector('.api-options');
+                if (!apiOptionsContainer) {
+                    console.error("API options container not found.");
+                    return;
+                }
+
+                let existingDropdown = apiOptionsContainer.querySelector('select');
+                if (existingDropdown) {
+                    existingDropdown.remove();
+                }
+
+                const dropdown = document.createElement('select');
+                dropdown.className = 'form-select';
+
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select an option';
+                defaultOption.disabled = true;
+                defaultOption.selected = true;
+                dropdown.appendChild(defaultOption);
+
+                if (Array.isArray(currentFetchedData)) {
+                    // Fill preview and hidden items so selection persists
+                    currentFetchedData.forEach(item => {
+                        const value = item[valueFieldName];
+                        const label = item[labelFieldName];
+                        if (value !== undefined && label !== undefined) {
+                            const option = document.createElement('option');
+                            option.value = value;
+                            option.textContent = label;
+                            dropdown.appendChild(option);
+
+                            // Hidden item for persistence
+                            const optionItem = document.getElementById('selectOptionItemTemplate').content.cloneNode(true);
+                            optionItem.querySelector('.select-option-value').value = value;
+                            optionItem.querySelector('.select-option-label').value = label;
+                            selectOptionsContainer.appendChild(optionItem);
+                        }
+                    });
+                }
+                apiOptionsContainer.appendChild(dropdown);
+
+            } else if (optionSourceSelect.value === 'database') {
+                // --- Database Logic ---
+                const previewSelect = document.createElement('select');
+                previewSelect.className = 'form-select form-select-sm';
+
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select an option';
+                defaultOption.disabled = true;
+                defaultOption.selected = true;
+                previewSelect.appendChild(defaultOption);
+
+                if (Array.isArray(currentFetchedData) && currentFetchedData.length) {
+                    for (let i = 0; i < currentFetchedData.length; i++) {
+                        const row = currentFetchedData[i];
+                        const val = row[valueFieldName];
+                        const lbl = row[labelFieldName];
+                        if (val != null && lbl != null) {
+                            const opt = document.createElement('option');
+                            opt.value = val;
+                            opt.textContent = lbl;
+                            previewSelect.appendChild(opt);
+                        }
+                    }
+                }
+                previewContainer.appendChild(previewSelect);
+
+                // Also update the hidden select-option-item elements (for form submission)
+                currentFetchedData.forEach(row => {
+                    const val = row[valueFieldName];
+                    const lbl = row[labelFieldName];
+                    if (val != null && lbl != null) {
+                        const optionItem = document.getElementById('selectOptionItemTemplate')
+                            .content.cloneNode(true);
+                        optionItem.querySelector('.select-option-value').value = val;
+                        optionItem.querySelector('.select-option-label').value = lbl;
+                        selectOptionsContainer.appendChild(optionItem);
+                    }
+                });
+            }
+
+            // Hide modal
+            dataSettingsModal.hide();
+        };
+    }
+
+    /*****************************************************/
+    /* POPULATE DATABASE CONNECTIONS                     */
+    /*****************************************************/
+    function populateDatabaseConnections(selectElement) {
+        if (!selectElement) return;
+        
+        // Safely handle database connections
+        try {
+            // Use the databaseConnections variable defined at the top
+            if (databaseConnections.length > 0) {
+                selectElement.innerHTML = '<option value="">Select a connection</option>';
+                databaseConnections.forEach(conn => {
+                    const option = document.createElement('option');
+                    option.value = conn.id;
+                    option.textContent = conn.name;
+                    selectElement.appendChild(option);
+                });
+            } else {
+                selectElement.innerHTML = '<option value="">No database connections available</option>';
+            }
+        } catch (error) {
+            console.error('Error populating database connections:', error);
+            selectElement.innerHTML = '<option value="">Error loading connections</option>';
+        }
+    }
+
+    /*****************************************************/
+    /* POPULATE FORM FIELDS ON LOAD                      */
+    /*****************************************************/
+    function populateFormFields() {
+        const formConfig = JSON.parse('{{ form.config|escapejs }}');
+        if (formConfig && Array.isArray(formConfig)) {
+            formConfig.forEach(fieldData => {
+                addFormField(); // This creates a new field with the correct index
+                const newFieldItem = formFieldsContainer.lastElementChild;
+
+                // Populate the fields
+                newFieldItem.querySelector('.field-label').value = fieldData.label;
+                newFieldItem.querySelector('.field-name').value = fieldData.name;
+                const fieldTypeSelect = newFieldItem.querySelector('.field-type');
+                fieldTypeSelect.value = fieldData.type;
+                newFieldItem.querySelector('.field-required').checked = fieldData.required;
+
+                // Trigger updateFieldOptions to create the correct sub-options UI
+                updateFieldOptions(fieldTypeSelect);
+
+                // Now populate the sub-options if they exist
+                if (fieldData.type === 'file') {
+                    const maxSizeInput = newFieldItem.querySelector('.max-file-size');
+                    const acceptInput = newFieldItem.querySelector('.file-accept');
+                    const multipleToggle = newFieldItem.querySelector('.multiple-files-toggle');
+                    const maxFileCountInput = newFieldItem.querySelector('.max-file-count');
+                    const limitContainer = newFieldItem.querySelector('.multiple-files-limit-container');
+                    
+                    if (fieldData.maxFileSizeMB) {
+                        maxSizeInput.value = fieldData.maxFileSizeMB;
+                    }
+                    if (fieldData.accept) {
+                        acceptInput.value = fieldData.accept;
+                    }
+                    if (fieldData.multiple) {
+                        multipleToggle.checked = true;
+                        limitContainer.style.display = 'block';
+                        if (fieldData.maxFileCount) {
+                            maxFileCountInput.value = fieldData.maxFileCount;
+                        }
+                    } else {
+                        multipleToggle.checked = false;
+                        limitContainer.style.display = 'none';
+                    }
+                }
+                // Handle options for select, radio, and checkbox
+                const fieldType = fieldData.type;
+                if (fieldType === 'select' || fieldType === 'radio' || fieldType === 'checkbox') {
+                    // If it's a select field, populate the database connections dropdown
+                    if (fieldType === 'select') {
+                        const dbConnectionSelect = newFieldItem.querySelector('.db-connection-select');
+                        if (dbConnectionSelect) {
+                            populateDatabaseConnections(dbConnectionSelect);
+                        }
+                    }
+
+                    if (fieldData.source) {
+                        const optionSourceSelect = newFieldItem.querySelector('.option-source-select');
+                        optionSourceSelect.value = fieldData.source;
+                        toggleOptionSource(optionSourceSelect);
+                        
+                        // If it's database source, restore the connection and query
+                        if (fieldData.source === 'database') {
+                            if (fieldData.connectionId) {
+                                const dbConnectionSelect = newFieldItem.querySelector('.db-connection-select');
+                                if (dbConnectionSelect) {
+                                    dbConnectionSelect.value = fieldData.connectionId;
+                                }
+                            }
+                            if (fieldData.query) {
+                                const queryInput = newFieldItem.querySelector('.db-query');
+                                if (queryInput) {
+                                    queryInput.value = fieldData.query;
+                                }
+                            }
+                        }
+                        
+                        // If it's API source, restore the API details
+                        if (fieldData.source === 'api') {
+                            if (fieldData.apiUrl) {
+                                const apiUrlInput = newFieldItem.querySelector('.api-url');
+                                if (apiUrlInput) {
+                                    apiUrlInput.value = fieldData.apiUrl;
+                                }
+                            }
+                            if (fieldData.apiHeaders) {
+                                const apiHeadersInput = newFieldItem.querySelector('.api-headers');
+                                if (apiHeadersInput) {
+                                    apiHeadersInput.value = fieldData.apiHeaders;
+                                }
+                            }
+                        }
+                    }
+
+                    const optionsContainer = newFieldItem.querySelector('.select-options-container, .radio-options-container, .checkbox-options-container');
+                    
+                    if (fieldData.choices && Array.isArray(fieldData.choices) && fieldData.choices.length > 0) {
+                        fieldData.choices.forEach(choice => {
+                            let optionTemplate;
+                            if (fieldType === 'select') {
+                                optionTemplate = document.getElementById('selectOptionItemTemplate').content.cloneNode(true);
+                                optionTemplate.querySelector('.select-option-value').value = choice.value;
+                                optionTemplate.querySelector('.select-option-label').value = choice.label;
+                                optionsContainer.appendChild(optionTemplate);
+                            } else if (fieldType === 'radio') {
+                                optionTemplate = document.getElementById('radioOptionItemTemplate').content.cloneNode(true);
+                                optionTemplate.querySelector('.radio-option-value').value = choice.value;
+                                optionTemplate.querySelector('.radio-option-label').value = choice.label;
+                                const radioContainer = newFieldItem.querySelector('.radio-options-container');
+                                radioContainer.appendChild(optionTemplate);
+                            } else { // checkbox
+                                optionTemplate = document.getElementById('checkboxOptionItemTemplate').content.cloneNode(true);
+                                optionTemplate.querySelector('.checkbox-option-value').value = choice.value;
+                                optionTemplate.querySelector('.checkbox-option-label').value = choice.label;
+                                const checkboxContainer = newFieldItem.querySelector('.checkbox-options-container');
+                                checkboxContainer.appendChild(optionTemplate);
+                            }
+                        });
+
+                        if (fieldType === 'select') {
+                            const source = fieldData.source || 'manual'; // Default to manual
+                            const sortOptions = newFieldItem.querySelector(`.${source}-options .sort-options-container`);
+                            
+                            if (sortOptions) {
+                                sortOptions.style.display = 'block';
+                            }
+                            if (fieldData.sort) {
+                                const sortSelect = newFieldItem.querySelector('.sort-type-select');
+                                if (sortSelect) {
+                                    sortSelect.value = fieldData.sort;
+                                    // Apply the sort on load
+                                    const container = newFieldItem.querySelector('.select-options-container');
+                                    sortOptionElements(container, fieldData.sort);
+                                }
+                            }
+
+                            // Also rebuild preview for DB/API
+                            if (source === 'database') {
+                                const previewContainer = newFieldItem.querySelector('.option-preview-container');
+                                if (previewContainer) {
+                                    previewContainer.innerHTML = '';
+                                    const sel = document.createElement('select');
+                                    sel.className = 'form-select form-select-sm';
+                                    const def = document.createElement('option');
+                                    def.value = '';
+                                    def.textContent = 'Select an option';
+                                    def.disabled = true; def.selected = true;
+                                    sel.appendChild(def);
+                                    const items = Array.from(newFieldItem.querySelectorAll('.select-option-item')).map(n => ({
+                                        value: n.querySelector('.select-option-value')?.value ?? '',
+                                        label: n.querySelector('.select-option-label')?.value ?? ''
+                                    }));
+                                    // Apply saved sort order to preview
+                                    const savedSort = fieldData.sort || 'none';
+                                    const sorted = [...items].sort((a, b) => {
+                                        switch (savedSort) {
+                                            case 'label-asc':
+                                                return String(a.label||'').toLowerCase().localeCompare(String(b.label||'').toLowerCase());
+                                            case 'label-desc':
+                                                return String(b.label||'').toLowerCase().localeCompare(String(a.label||'').toLowerCase());
+                                            case 'value-asc': {
+                                                const aNum = Number(a.value), bNum = Number(b.value);
+                                                if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return aNum - bNum;
+                                                return String(a.value||'').localeCompare(String(b.value||''));
+                                            }
+                                            case 'value-desc': {
+                                                const aNum = Number(a.value), bNum = Number(b.value);
+                                                if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return bNum - aNum;
+                                                return String(b.value||'').localeCompare(String(a.value||''));
+                                            }
+                                            default:
+                                                return 0;
+                                        }
+                                    });
+                                    sorted.forEach(({value,label}) => {
+                                        const o = document.createElement('option');
+                                        o.value = value; o.textContent = label;
+                                        sel.appendChild(o);
+                                    });
+                                    previewContainer.appendChild(sel);
+                                }
+                            } else if (source === 'api') {
+                                const apiOpts = newFieldItem.querySelector('.api-options');
+                                if (apiOpts) {
+                                    const existing = apiOpts.querySelector('select');
+                                    if (existing) existing.remove();
+                                    const sel = document.createElement('select');
+                                    sel.className = 'form-select';
+                                    const def = document.createElement('option');
+                                    def.value = '';
+                                    def.textContent = 'Select an option';
+                                    def.disabled = true; def.selected = true;
+                                    sel.appendChild(def);
+                                    const items = Array.from(newFieldItem.querySelectorAll('.select-option-item')).map(n => ({
+                                        value: n.querySelector('.select-option-value')?.value ?? '',
+                                        label: n.querySelector('.select-option-label')?.value ?? ''
+                                    }));
+                                    const savedSort = fieldData.sort || 'none';
+                                    const sorted = [...items].sort((a, b) => {
+                                        switch (savedSort) {
+                                            case 'label-asc':
+                                                return String(a.label||'').toLowerCase().localeCompare(String(b.label||'').toLowerCase());
+                                            case 'label-desc':
+                                                return String(b.label||'').toLowerCase().localeCompare(String(a.label||'').toLowerCase());
+                                            case 'value-asc': {
+                                                const aNum = Number(a.value), bNum = Number(b.value);
+                                                if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return aNum - bNum;
+                                                return String(a.value||'').localeCompare(String(b.value||''));
+                                            }
+                                            case 'value-desc': {
+                                                const aNum = Number(a.value), bNum = Number(b.value);
+                                                if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return bNum - aNum;
+                                                return String(b.value||'').localeCompare(String(a.value||''));
+                                            }
+                                            default:
+                                                return 0;
+                                        }
+                                    });
+                                    sorted.forEach(({value,label}) => {
+                                        const o = document.createElement('option');
+                                        o.value = value; o.textContent = label;
+                                        sel.appendChild(o);
+                                    });
+                                    apiOpts.appendChild(sel);
+                                }
+                            }
+                        }
+                    }
+                } else if (fieldType === 'country') {
+                    const countrySelect = newFieldItem.querySelector('.country-select');
+                    const timezoneSelect = newFieldItem.querySelector('.timezone-select');
+                    if (countrySelect && timezoneSelect) {
+                        countrySelect.value = fieldData.country; // Set selected country value
+                        if (fieldData.timezone) {
+                            updateTimezones(countrySelect, newFieldItem); // Update the timezones based on the selected country
+                            timezoneSelect.value = fieldData.timezone; // Set the selected timezone
+                        }
+                    }
+
+                }
+                 // Update the label display
+                updateFieldLabelDisplay(newFieldItem);
+            });
+        }
+    }
+
+    /*****************************************************/
+    /* SSO INTEGRATION FUNCTIONS                         */
+    /*****************************************************/
+    
+    // Toggle SSO settings visibility
+    document.getElementById('enableSsoPrepopulate').addEventListener('change', function() {
+        const ssoSettings = document.getElementById('ssoSettings');
+        ssoSettings.style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Add SSO field mapping
+    function addSsoFieldMapping() {
+        const container = document.getElementById('ssoFieldMappings');
+        const mappingDiv = document.createElement('div');
+        mappingDiv.className = 'row g-2 mb-2 align-items-end';
+        mappingDiv.innerHTML = `
+            <div class="col-md-5">
+                <label class="form-label">Form Field Name</label>
+                <input type="text" class="form-control sso-form-field" placeholder="e.g., user_email">
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">SSO Attribute</label>
+                <select class="form-select sso-attribute">
+                    <option value="email">Email</option>
+                    <option value="username">Username</option>
+                    <option value="first_name">First Name</option>
+                    <option value="last_name">Last Name</option>
+                    <option value="full_name">Full Name</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSsoFieldMapping(this)">
+                    <i class="ki-duotone ki-trash fs-6"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(mappingDiv);
+    }
+
+    // Remove SSO field mapping
+    function removeSsoFieldMapping(btn) {
+        btn.closest('.row').remove();
+    }
+
+    // Add SSO disabled field
+    function addSsoDisabledField() {
+        const container = document.getElementById('ssoDisabledFields');
+        const fieldDiv = document.createElement('div');
+        fieldDiv.className = 'row g-2 mb-2 align-items-end';
+        fieldDiv.innerHTML = `
+            <div class="col-md-10">
+                <label class="form-label">Form Field Name</label>
+                <input type="text" class="form-control sso-disabled-field" placeholder="e.g., user_email">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSsoDisabledField(this)">
+                    <i class="ki-duotone ki-trash fs-6"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(fieldDiv);
+    }
+
+    // Remove SSO disabled field
+    function removeSsoDisabledField(btn) {
+        btn.closest('.row').remove();
+    }
+
+    // Get SSO prepopulate fields data
+    function getSsoPrepopulateFields() {
+        const mappings = {};
+        const mappingRows = document.querySelectorAll('#ssoFieldMappings .row');
+        
+        mappingRows.forEach(row => {
+            const formField = row.querySelector('.sso-form-field').value.trim();
+            const ssoAttribute = row.querySelector('.sso-attribute').value;
+            
+            if (formField && ssoAttribute) {
+                mappings[formField] = ssoAttribute;
+            }
+        });
+        
+        return mappings;
+    }
+
+    // Get SSO disabled fields data
+    function getSsoDisabledFields() {
+        const disabledFields = [];
+        const disabledRows = document.querySelectorAll('#ssoDisabledFields .row');
+        
+        disabledRows.forEach(row => {
+            const fieldName = row.querySelector('.sso-disabled-field').value.trim();
+            if (fieldName) {
+                disabledFields.push(fieldName);
+            }
+        });
+        
+        return disabledFields;
+    }
+
+    // Populate SSO settings from existing form data
+    function populateSsoSettings() {
+        const enableSsoCheckbox = document.getElementById('enableSsoPrepopulate');
+        const ssoSettings = document.getElementById('ssoSettings');
+        
+        if (enableSsoCheckbox.checked) {
+            ssoSettings.style.display = 'block';
+        }
+
+        // Populate field mappings
+        const ssoPrepopulateFields = {{ form.sso_prepopulate_fields|safe }};
+        if (ssoPrepopulateFields && typeof ssoPrepopulateFields === 'object') {
+            Object.entries(ssoPrepopulateFields).forEach(([formField, ssoAttribute]) => {
+                addSsoFieldMapping();
+                const lastMapping = document.getElementById('ssoFieldMappings').lastElementChild;
+                lastMapping.querySelector('.sso-form-field').value = formField;
+                lastMapping.querySelector('.sso-attribute').value = ssoAttribute;
+            });
+        }
+
+        // Populate disabled fields
+        const ssoDisabledFields = {{ form.sso_disabled_fields|safe }};
+        if (ssoDisabledFields && Array.isArray(ssoDisabledFields)) {
+            ssoDisabledFields.forEach(fieldName => {
+                addSsoDisabledField();
+                const lastDisabled = document.getElementById('ssoDisabledFields').lastElementChild;
+                lastDisabled.querySelector('.sso-disabled-field').value = fieldName;
+            });
+        }
+    }
+
+    // Call populateSsoSettings when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        populateSsoSettings();
+    });
+</script>
+{% endblock %}
