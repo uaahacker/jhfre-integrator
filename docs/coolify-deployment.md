@@ -113,44 +113,69 @@ This application is not a plain Django app — it depends on:
 
 ### The `lxml`/`xmlsec` fix
 
-**Symptom** (previously encountered):
+This is actually two related problems, both hit while getting this
+repository building on Coolify. Both are fixed in the `Dockerfile`.
+
+**Problem 1 — the ABI mismatch (ships prebuilt wheels for both):**
 
 ```text
 xmlsec.InternalError: (-1, 'lxml & xmlsec libxml2 library version mismatch')
 ```
 
-**Root cause**: `lxml` (pinned `lxml==5.3.0` in `requirements.txt`) publishes
-a `manylinux` wheel that bundles its **own statically-linked libxml2**.
-`xmlsec` (pinned `xmlsec==1.3.17`, the `pyxmlsec` binding) builds against the
-**system** `libxmlsec1`, which itself links the **system** `libxml2`. If
-`pip install` takes the prebuilt `lxml` wheel while `xmlsec` builds against a
-different (system) `libxml2`, the two extensions disagree about the ABI of
-the `libxml2` structures they pass to each other — `python3-saml` hits this
-the moment it uses both together (parsing and then signing/verifying an XML
-document), and it fails at SAML runtime, not at install time.
+`lxml` (pinned `lxml==5.3.0` in `requirements.txt`) publishes a `manylinux`
+wheel that bundles its **own statically-linked libxml2**. `xmlsec`
+(`pyxmlsec`) builds against the **system** `libxmlsec1`, which itself links
+the **system** `libxml2`. If `pip install` takes the prebuilt `lxml` wheel
+while `xmlsec` builds against a different (system) `libxml2`, the two
+extensions disagree about the ABI of the `libxml2` structures they pass to
+each other — `python3-saml` hits this the moment it uses both together
+(parsing and then signing/verifying an XML document), and it fails at SAML
+*runtime*, not at install time.
 
-**Fix**, both parts required together, already applied in the `Dockerfile`:
+Fix: install the matching apt packages, then force **both** `lxml` and
+`xmlsec` to build from source against that same system `libxml2`, instead of
+letting `lxml` take its prebuilt wheel:
 
-1. Install the matching apt packages so a system `libxml2`/`libxmlsec1`
-   exists to build against:
-   ```text
-   pkg-config libxml2-dev libxslt1-dev libxmlsec1-dev libxmlsec1-openssl zlib1g-dev
-   ```
-2. Force **both** `lxml` and `xmlsec` to build from source against that same
-   system `libxml2`, instead of letting `lxml` take its prebuilt wheel:
-   ```dockerfile
-   RUN pip install --upgrade pip && \
-       PIP_NO_BINARY=lxml,xmlsec pip install --no-cache-dir -r requirements.txt
-   ```
-3. Fail the build immediately if it's still broken:
-   ```dockerfile
-   RUN python -c "import xmlsec; from lxml import etree; print('XML stack OK - libxml2', etree.LIBXML_VERSION, '- xmlsec', xmlsec.__version__)"
-   ```
+```dockerfile
+RUN apt-get install -y --no-install-recommends \
+    pkg-config libxml2-dev libxslt1-dev libxmlsec1-dev libxmlsec1-openssl zlib1g-dev
+...
+RUN pip install --upgrade pip && \
+    PIP_NO_BINARY=lxml,xmlsec pip install --no-cache-dir -r requirements.txt
+```
 
-If `requirements.txt`'s `lxml`/`xmlsec` pins are ever changed, re-verify this
-still holds — the fix is about matching build toolchains, not about these
-specific version numbers, but a very old/new pairing could still have its
-own incompatibilities upstream.
+**Problem 2 — this then exposed a real version incompatibility (build-time
+failure):**
+
+```text
+error: 'xmlSecKeyDataFormatEngine' undeclared (first use in this function);
+did you mean 'xmlSecKeyDataFormat'?
+```
+
+Forcing `xmlsec` to build from source means it now compiles against
+whatever `libxmlsec1` version apt actually installs — and `xmlsec==1.3.17`
+(pyxmlsec) requires the **xmlsec1 C library ≥ 1.3.x** (its own 1.3.14
+changelog states "XMLSec 1.3.x compliance"; that's when
+`xmlSecKeyDataFormatEngine` support was added). Debian **bullseye**'s
+`libxmlsec1-dev` is **1.2.31**. Debian **bookworm**'s is **1.2.37** — still
+not 1.3.x; only Debian sid/experimental carry it. So this isn't fixable by
+switching the base image's Debian release either.
+
+Fix: `requirements.txt` (and `pyproject.toml`) pin **`xmlsec==1.3.13`**
+instead — the last pyxmlsec release before the 1.3.x C-library requirement.
+`python3-saml==1.16.0` only declares `xmlsec>=1.3.9`, so this is fully
+within its supported range; nothing about SAML functionality is lost.
+
+**Build-time validation**, already applied, catches either problem
+immediately instead of at first SAML login in production:
+
+```dockerfile
+RUN python -c "import xmlsec; from lxml import etree; print('XML stack OK - libxml2', etree.LIBXML_VERSION, '- xmlsec', xmlsec.__version__)"
+```
+
+If `requirements.txt`'s `lxml`/`xmlsec` pins are ever changed, re-verify both
+of the above still hold — this is about matching build toolchains *and*
+matching library-version ranges, not just these specific version numbers.
 
 ### ODBC / PostgreSQL client tooling
 
@@ -648,7 +673,7 @@ wrong for this repository.
 PostgreSQL resource (§7) and set its internal connection string as
 `DATABASE_URL` on the Application resource.
 
-### `lxml`/`xmlsec` mismatch
+### `lxml`/`xmlsec` mismatch (runtime)
 
 ```text
 xmlsec.InternalError: (-1, 'lxml & xmlsec libxml2 library version mismatch')
@@ -659,6 +684,21 @@ confirm the `Dockerfile` still installs the `libxml2-dev`/`libxmlsec1-dev`
 toolchain and still forces `PIP_NO_BINARY=lxml,xmlsec` — and confirm the
 build-time `import xmlsec; from lxml import etree` check is still present
 and still passing in the build log.
+
+### `xmlsec` fails to *build* (build-time, not the same as the above)
+
+```text
+error: 'xmlSecKeyDataFormatEngine' undeclared (first use in this function)
+Failed to build wheel for xmlsec
+```
+
+Hit while first deploying this repository on Coolify — `xmlsec==1.3.17`
+needs xmlsec1 C library ≥1.3.x, which Debian bullseye/bookworm don't ship
+via apt (§6). Fixed by pinning `xmlsec==1.3.13` in `requirements.txt` and
+`pyproject.toml`. If this reappears after bumping the `xmlsec` pin, check
+that release's changelog for an "XMLSec 1.3.x compliance" style note before
+assuming it's the same ABI-mismatch issue above — it isn't, and the fix is
+different (a compatible version pin, not a build-toolchain change).
 
 ### Wrong application port
 
@@ -704,6 +744,10 @@ redo:
   level.
 - Added the `lxml`/`xmlsec` native-dependency fix and a build-time
   validation step to the `Dockerfile` (§6).
+- Pinned `xmlsec==1.3.13` (was `1.3.17`) in `requirements.txt` and
+  `pyproject.toml` after the first real Coolify build caught a *second*,
+  separate issue: `xmlsec>=1.3.14` requires the xmlsec1 C library ≥1.3.x,
+  which isn't available via apt on Debian bullseye or bookworm (§6/§27).
 - Hardened `entrypoint.sh` so a failed production/staging migration aborts
   the container instead of starting Gunicorn against a broken schema (§14).
 - Added `GET /healthz/` (§18).

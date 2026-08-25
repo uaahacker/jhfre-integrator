@@ -42,6 +42,14 @@ COPY requirements.txt .
 # runtime -- installing lxml's prebuilt wheel silently sets that trap.
 # Forcing both packages to build from source here makes them share the one
 # system libxml2, so they are guaranteed ABI-compatible.
+#
+# requirements.txt pins xmlsec<1.3.14 deliberately: pyxmlsec >=1.3.14
+# requires the xmlsec1 C library >=1.3.x, which is NOT available via apt on
+# Debian bullseye (system libxmlsec1-dev is 1.2.31) or even bookworm
+# (1.2.37) -- only Debian sid/experimental carry it. Building >=1.3.14 from
+# source on this base image fails with
+# "'xmlSecKeyDataFormatEngine' undeclared". python3-saml==1.16.0 only
+# requires xmlsec>=1.3.9, so the older pin is fully compatible.
 RUN pip install --upgrade pip && \
     PIP_NO_BINARY=lxml,xmlsec pip install --no-cache-dir -r requirements.txt
 
