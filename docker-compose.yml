@@ -1,59 +1,57 @@
+# Local/integration development convenience ONLY.
+#
+# This file is not used in production and Coolify does not read it.
+# Production runs the repository Dockerfile as a standalone application
+# container, with PostgreSQL provisioned as a separate Coolify-managed
+# resource on its own internal network -- see docs/coolify-deployment.md.
+# Do not add anything here that production depends on.
+#
+# All values below (secret key, Fernet key, DB password) are fixed,
+# non-secret, local-only placeholders committed on purpose -- never reuse
+# them anywhere real. Usage:
+#   docker compose up --build
+#   -> app on http://127.0.0.1:8001/  (Django's `runserver` on 8000 remains
+#      the normal day-to-day local workflow described in README.md; this
+#      compose stack is for testing the actual production image + a real
+#      PostgreSQL locally, not a replacement for it.)
+
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:16
     restart: unless-stopped
-
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-jhfre}
-      POSTGRES_USER: ${POSTGRES_USER:-jhfre}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
+      POSTGRES_USER: jhfre
+      POSTGRES_PASSWORD: jhfre_local_dev_only
+      POSTGRES_DB: jhfre
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-
+      - jhfre_local_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jhfre} -d ${POSTGRES_DB:-jhfre}"]
+      test: ["CMD-SHELL", "pg_isready -U jhfre"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-
-    command: ["/app/entrypoint.sh"]
-
-    expose:
-      - "8001"
-
-    environment:
-      APP_ENV: ${APP_ENV:-production}
-      PORT: ${PORT:-8001}
-
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
-      DJANGO_ENCRYPTION_KEY: ${DJANGO_ENCRYPTION_KEY}
-
-      DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
-      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-jhfre.vihub.site}
-      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-https://jhfre.vihub.site}
-
-      DJANGO_SESSION_COOKIE_SAMESITE: ${DJANGO_SESSION_COOKIE_SAMESITE:-None}
-      DJANGO_SESSION_COOKIE_SECURE: ${DJANGO_SESSION_COOKIE_SECURE:-true}
-
-      DJANGO_SECURE_SSL_REDIRECT: ${DJANGO_SECURE_SSL_REDIRECT:-true}
-      DJANGO_TRUST_X_FORWARDED_PROTO: ${DJANGO_TRUST_X_FORWARDED_PROTO:-true}
-      SSO_FORCE_HTTPS: ${SSO_FORCE_HTTPS:-true}
-
-      DATABASE_URL: postgresql://${POSTGRES_USER:-jhfre}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-jhfre}
-
-      AUTO_MIGRATE: ${AUTO_MIGRATE:-true}
-
+    build: .
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-
-    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8001:8001"
+    environment:
+      APP_ENV: development
+      AUTO_MIGRATE: "true"
+      DJANGO_DEBUG: "true"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      # Local-only placeholders -- never used in production.
+      DJANGO_SECRET_KEY: local-dev-secret-key-not-for-production
+      DJANGO_ENCRYPTION_KEY: "-1v6Puw0zk2R8CsmvCYsE_no3Bb_phyv5J_k9bskZDI="
+      DATABASE_URL: postgresql://jhfre:jhfre_local_dev_only@db:5432/jhfre
+    volumes:
+      - .:/app
 
 volumes:
-  postgres_data:
+  jhfre_local_pgdata:

@@ -16,19 +16,30 @@
         <!--begin::Logo-->
         <div class="app-sidebar-logo px-6" id="kt_app_sidebar_logo">
             <!--begin::Logo image-->
-            <a href="{% url 'home' %}">
-                <!-- <img alt="Logo" src="assets/media/logos/default-dark.svg" class="h-25px app-sidebar-logo-default" />
-                <img alt="Logo" src="assets/media/logos/default-small.svg" class="h-20px app-sidebar-logo-minimize" /> -->
+            <a href="{% url 'home' %}" class="sidebar-brand">
                 {% if request.company_data.company %}
                 {% if not request.company_data.company.show_logo_as_text and request.company_data.company.logo %}
                     <img alt="Logo" src="{{ request.company_data.company_logo_display }}" class="h-40px app-sidebar-logo-default" />
                     <img alt="Logo" src="{{ request.company_data.company_logo_display }}" class="h-30px app-sidebar-logo-minimize" />
                 {% elif request.company_data.company.show_logo_as_text or not request.company_data.company.logo %}
-                    <h2 class="h-20px app-sidebar-logo-default">{{ request.company_data.company_logo_display }}</h2>
-                    <h6 class="h-18px app-sidebar-logo-minimize">{{ request.company_data.company_logo_display|slice:":6" }}</h6>
+                    <span class="sidebar-brand-mark-only app-sidebar-logo-minimize" aria-hidden="true">{{ request.company_data.company_logo_display|slice:":1" }}</span>
+                    <span class="app-sidebar-logo-default d-flex align-items-center">
+                        <span class="sidebar-brand-mark" aria-hidden="true">{{ request.company_data.company_logo_display|slice:":1" }}</span>
+                        <span class="sidebar-brand-text">
+                            <span class="sidebar-brand-name">{{ request.company_data.company_logo_display }}</span>
+                            <span class="sidebar-brand-subtitle">Integrator</span>
+                        </span>
+                    </span>
                 {% endif %}
             {% else %}
-                <h2 class="h-20px app-sidebar-logo-default">{{ request.company_data.company_logo_display }}</h2>
+                <span class="sidebar-brand-mark-only app-sidebar-logo-minimize" aria-hidden="true">{{ request.company_data.company_logo_display|slice:":1" }}</span>
+                <span class="app-sidebar-logo-default d-flex align-items-center">
+                    <span class="sidebar-brand-mark" aria-hidden="true">{{ request.company_data.company_logo_display|slice:":1" }}</span>
+                    <span class="sidebar-brand-text">
+                        <span class="sidebar-brand-name">{{ request.company_data.company_logo_display }}</span>
+                        <span class="sidebar-brand-subtitle">Integrator</span>
+                    </span>
+                </span>
             {% endif %}
             </a>
             <!--end::Logo image-->
@@ -125,17 +136,15 @@
         <!--end::sidebar menu-->
         
         <!--begin::Footer-->
-        <div class="app-sidebar-footer flex-column-auto pt-2 pb-6 px-6" id="kt_app_sidebar_footer">
-            <a href="{% url 'publichome' %}" class="btn btn-flex flex-center btn-custom btn-primary overflow-hidden text-nowrap px-0 h-40px w-100" 
-               data-bs-toggle="tooltip" 
-               data-bs-trigger="hover" 
-               data-bs-dismiss="click" 
-               title="200+ in-house components and 3rd-party plugins">
+        <div class="app-sidebar-footer flex-column-auto pb-6 px-6" id="kt_app_sidebar_footer">
+            <a href="{% url 'publichome' %}" class="app-sidebar-footer-link">
+                <span class="menu-icon">
+                    <i class="ki-duotone ki-home-2 fs-2">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                </span>
                 <span class="btn-label">Home</span>
-                <i class="ki-duotone ki-document btn-icon fs-2 m-0">
-                    <span class="path1"></span>
-                    <span class="path2"></span>
-                </i>
             </a>
         </div>
         <!--end::Footer-->

@@ -151,8 +151,13 @@ run it against the wrong selected database.
 ## Docker and entrypoint
 
 The `Dockerfile` builds the application, installs runtime requirements plus
-Unix ODBC/MS ODBC 17 and PostgreSQL 16 client packages, exposes port `8001`,
-and starts `/app/entrypoint.sh`. Build it with:
+Unix ODBC/MS ODBC 17, PostgreSQL 16 client packages, and the native
+XML/SAML toolchain (`libxml2-dev`, `libxslt1-dev`, `libxmlsec1-dev`,
+`libxmlsec1-openssl`, `pkg-config`, `zlib1g-dev` — required so `lxml` and
+`xmlsec` build against the same system `libxml2`; see
+[Coolify deployment](coolify-deployment.md#6-native-dependencies) for why),
+exposes port `8001`, and starts `/app/entrypoint.sh`. The build fails if the
+XML/SAML stack doesn't import correctly. Build it with:
 
 ```bash
 docker build -t jhfre-integrator .
@@ -160,8 +165,14 @@ docker build -t jhfre-integrator .
 
 The entrypoint requires `DATABASE_URL`; it exits if absent. It runs
 `collectstatic`, performs `manage.py check --database default`, then starts
-Gunicorn on `0.0.0.0:${PORT:-8001}`. It defaults `APP_ENV` from the image to
-`development` and defaults `AUTO_MIGRATE` to `false`.
+Gunicorn on `0.0.0.0:${PORT:-8001}` using `core.wsgi:application`. It
+defaults `APP_ENV` from the image to `development` and defaults
+`AUTO_MIGRATE` to `false`. In the production/staging path, a failed
+migration now aborts the container (non-zero exit) instead of starting
+Gunicorn against a partially-migrated database.
+
+A `GET /healthz/` endpoint (unauthenticated, does not query the database)
+is available for container-platform health checks.
 
 When explicitly enabled, entrypoint options have material effects:
 
@@ -174,4 +185,9 @@ When explicitly enabled, entrypoint options have material effects:
 Do not enable the reset, sync, auto-migrate, or bootstrapped-superuser options
 without an approved operational procedure. Docker deployment also requires
 secrets and `DATABASE_URL` passed through the container platform; `.env.example`
-is not automatically read by the application.
+is not automatically read by the application. For the full Coolify
+production procedure (separate PostgreSQL resource, required environment
+variables, domain/HTTPS, SAML validation, backups), see
+[Coolify deployment](coolify-deployment.md). For local development,
+`docker-compose.yml` runs this image against a local PostgreSQL container —
+see [Local development](development.md).

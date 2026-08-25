@@ -99,6 +99,22 @@ set `DATABASE_URL` during local safe test work.
 Visit <http://127.0.0.1:8000/>. Django's development server serves static and
 development media paths; that does not replace production static/media setup.
 
+## Optional: running the production image locally
+
+`docker-compose.yml` at the repository root brings up the actual production
+`Dockerfile` image plus a local PostgreSQL 16 container, useful for testing
+the real image (native dependencies, `entrypoint.sh` behavior) before a
+deploy:
+
+```bash
+docker compose up --build
+```
+
+This is a local-only convenience — Coolify does not read this file, and its
+credentials are fixed non-secret local placeholders. It does not replace
+`runserver` for day-to-day development. See
+[Coolify deployment](coolify-deployment.md#19-local-development).
+
 ## Routine verification
 
 ```powershell

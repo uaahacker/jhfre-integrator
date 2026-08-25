@@ -114,17 +114,20 @@ else
     echo ">> AUTO_MIGRATE=true -> applying migrations…"
     echo ">> Checking current migration status..."
     python manage.py showmigrations integrator || echo ">> Failed to show migrations"
-    
+
     echo ">> Running migrations with verbose output..."
     if python manage.py migrate --noinput -v 3; then
       echo ">> Migrations completed successfully"
       echo ">> Final migration status:"
       python manage.py showmigrations integrator || echo ">> Failed to show final migration status"
     else
-      echo "!! Migration failed with exit code $?"
-      echo ">> Attempting to show migration status after failure:"
+      migrate_status=$?
+      echo "!! Migration failed with exit code ${migrate_status}"
+      echo ">> Migration status at time of failure:"
       python manage.py showmigrations integrator || echo ">> Failed to show migration status after failure"
-      echo "!! Continuing anyway, but this may cause issues..."
+      echo "!! Refusing to start Gunicorn against a database with a failed/partial migration."
+      echo "!! Fix the migration, then redeploy. (Development boot has separate, more lenient behavior.)"
+      exit "${migrate_status}"
     fi
   else
     echo ">> Skipping migrations (set AUTO_MIGRATE=true to enable)"
